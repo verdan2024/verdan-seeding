@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>버던_시딩</title>
+
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="버던시딩">
+<meta name="theme-color" content="#1A1A2E">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;background:#F5F6FA;
+     min-height:100vh;display:flex;flex-direction:column;-webkit-text-size-adjust:100%;}
+
+/* 로그인 */
+#gate{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
+     padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));}
+#gate .box{width:100%;max-width:340px;background:#fff;border-radius:16px;padding:28px 24px;
+     box-shadow:0 2px 12px rgba(0,0,0,.06);text-align:center;}
+#gate .logo{font-size:34px;margin-bottom:10px;}
+#gate h1{font-size:17px;color:#1A1A2E;margin-bottom:20px;}
+#gate input{width:100%;padding:13px 16px;border:1px solid #E0E0E0;border-radius:10px;
+     font-size:16px;margin-bottom:10px;font-family:inherit;background:#F8F8F8;
+     -webkit-user-select:text;user-select:text;touch-action:manipulation;}
+#gate input:focus{outline:none;border-color:#9FA8DA;background:#fff;}
+#gate button{width:100%;padding:13px;border:none;border-radius:10px;background:#1A1A2E;color:#fff;
+     font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+#gateMsg{font-size:13px;color:#C0392B;margin-top:12px;min-height:18px;}
+#gate .hint{font-size:11px;color:#AAA;margin-top:10px;line-height:1.6;}
+
+/* 앱 */
+#app{display:none;flex-direction:column;min-height:100vh;}
+#header{background:#1A1A2E;color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+     display:flex;align-items:center;gap:10px;}
+#header .icon{width:36px;height:36px;border-radius:50%;background:#3F51B5;display:flex;
+     align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+#header .title{font-weight:700;font-size:14px;}
+#header .sub{font-size:11px;opacity:.6;margin-top:2px;}
+#header .sub.stale{opacity:1;color:#FFCDD2;font-weight:700;}
+#header .role{margin-left:auto;font-size:11px;background:#3F51B5;padding:3px 9px;border-radius:10px;
+     white-space:nowrap;}
+#tabs{display:flex;background:#fff;border-bottom:1px solid #EEE;}
+#tabs button{flex:1;padding:12px 6px;border:none;background:none;font-size:13px;font-weight:600;
+     color:#888;font-family:inherit;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+#tabs button.on{color:#1A1A2E;border-bottom-color:#1A1A2E;}
+.page{padding:16px;display:none;}
+.page.on{display:block;}
+
+.card{background:#fff;border:1px solid #E8E8E8;border-radius:12px;padding:14px;margin-bottom:12px;}
+.card h3{font-size:13px;color:#1A1A2E;margin-bottom:10px;}
+select,input.f,button.f{width:100%;padding:12px;border:1px solid #E0E0E0;border-radius:10px;
+     font-size:16px;margin-bottom:9px;font-family:inherit;background:#fff;touch-action:manipulation;}
+input.f{-webkit-user-select:text;user-select:text;}
+button.f{background:#1A1A2E;color:#fff;border:none;font-weight:700;cursor:pointer;}
+button.ghost{background:#fff;color:#1A1A2E;border:1px solid #DDD;}
+button.sm{width:auto;padding:9px 14px;font-size:13px;margin:0 6px 6px 0;border-radius:9px;}
+button:disabled{opacity:.55;}
+
+.seg{display:flex;gap:5px;background:#ECEDF2;border-radius:10px;padding:4px;margin-bottom:12px;
+     overflow-x:auto;}
+.seg button{flex:1;min-width:62px;padding:9px 4px;border:none;border-radius:7px;background:none;
+     font-size:12px;font-weight:700;color:#888;font-family:inherit;cursor:pointer;white-space:nowrap;}
+.seg button.on{background:#fff;color:#1A1A2E;box-shadow:0 1px 3px rgba(0,0,0,.10);}
+
+.sec{font-size:12px;font-weight:700;padding:8px 11px;border-radius:8px;margin:14px 0 8px;
+     display:flex;align-items:center;gap:6px;cursor:pointer;}
+.sec .cnt{margin-left:auto;font-variant-numeric:tabular-nums;}
+.s-red{background:#FDECEA;color:#C0392B;}
+.s-org{background:#FFF3E0;color:#E65100;}
+.s-yel{background:#FFFDE7;color:#7D5A00;}
+.s-gry{background:#F0F0F3;color:#555;}
+.s-pur{background:#F3E5F5;color:#6A1B9A;}
+.s-blu{background:#E8EAF6;color:#1A237E;}
+
+/* 목록 항목 */
+.it{background:#fff;border:1px solid #E8E8E8;border-radius:12px;margin-bottom:8px;overflow:hidden;}
+.it .hd{padding:12px 13px;cursor:pointer;display:flex;align-items:flex-start;gap:9px;}
+.it .nm{font-weight:700;font-size:14px;color:#1A1A2E;}
+.it .meta{font-size:11px;color:#999;margin-top:3px;line-height:1.6;}
+.it .right{margin-left:auto;text-align:right;flex-shrink:0;}
+.it .bd{display:none;padding:0 13px 13px;border-top:1px solid #F2F2F2;}
+.it.open .bd{display:block;}
+.badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:9px;white-space:nowrap;
+       display:inline-block;}
+.b-발송대기{background:#F0F0F3;color:#666;}
+.b-업로드대기{background:#FFF3E0;color:#E65100;}
+.b-게시중{background:#E8F5E9;color:#1B5E20;}
+.b-종료{background:#ECEFF1;color:#546E7A;}
+.b-대가없음{background:#E8EAF6;color:#3949AB;}
+.dd{font-size:11px;font-weight:700;margin-top:4px;}
+.dd.over{color:#C0392B;} .dd.soon{color:#E65100;} .dd.ok{color:#999;}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12px;color:#666;
+    line-height:1.9;padding-top:10px;}
+.kv b{font-weight:700;color:#333;}
+.kv a{color:#1976D2;word-break:break-all;}
+.hr{height:1px;background:#F0F0F0;margin:10px 0;}
+.acts{margin-top:10px;}
+.acts input.f{margin-bottom:7px;}
+.row2{display:flex;gap:7px;}
+.row2 input.f{flex:1;}
+
+.box-danger{background:#FDECEA;border:1px solid #FFCDD2;border-radius:10px;padding:12px 14px;
+     margin-bottom:12px;font-size:13px;line-height:1.8;}
+.box-ok{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:10px;padding:11px 14px;
+     margin-bottom:12px;font-size:13px;color:#1B5E20;line-height:1.8;}
+.box-note{background:#FFFDE7;border:1px solid #FFE082;border-radius:10px;padding:11px 14px;
+     margin-bottom:12px;font-size:12px;color:#7D5A00;line-height:1.7;}
+.sub2{font-size:11px;color:#999;line-height:1.7;}
+.msg{font-size:12px;margin-top:6px;min-height:16px;}
+.msg.err{color:#C0392B;} .msg.good{color:#1B5E20;}
+
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;}
+th{padding:8px 6px;text-align:center;font-size:11px;font-weight:600;color:#555;
+   background:#F5F5F5;border-bottom:2px solid #E0E0E0;white-space:nowrap;}
+td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
+.tbl-wrap{overflow-x:auto;border:1px solid #E8E8E8;border-radius:12px;margin-bottom:12px;}
+.ctr{text-align:center;}
+.danger{color:#C0392B;font-weight:700;} .ok{color:#1B5E20;font-weight:600;}
+.foot{font-size:11px;color:#AAA;text-align:center;padding:14px 0 calc(14px + env(safe-area-inset-bottom));}
+
+#wm{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;display:none;}
+#wm span{position:absolute;white-space:nowrap;font-size:13px;font-weight:700;color:#1A1A2E;
+    opacity:var(--wm-op,.05);transform:rotate(-30deg);}
+</style>
+</head>
+<body>
+
+<!-- ── 로그인 ───────────────────────────── -->
+<div id="gate">
+  <div class="box">
+    <div class="logo">📮</div>
+    <h1>버던_시딩</h1>
+    <input type="text" id="nm" placeholder="이름" autocomplete="name" maxlength="20"
+           onkeydown="if(event.key==='Enter')document.getElementById('pw').focus()">
+    <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter')login()">
+    <button id="loginBtn" onclick="login()">확인</button>
+    <div id="gateMsg"></div>
+    <div class="hint">본인 이름을 입력하세요. 입력 기록에 함께 남습니다.<br>v1.0 · 2026-08</div>
+  </div>
+</div>
+
+<!-- ── 앱 ───────────────────────────────── -->
+<div id="app">
+  <div id="header">
+    <div class="icon">📮</div>
+    <div>
+      <div class="title">버던_시딩</div>
+      <div class="sub" id="updated"></div>
+    </div>
+    <div class="role" id="roleBadge"></div>
+  </div>
+
+  <div id="tabs">
+    <button id="t1" class="on" onclick="tab('p1')">오늘</button>
+    <button id="t2" onclick="tab('p2')">현황</button>
+    <button id="t3" onclick="tab('p3')" style="display:none">접근로그</button>
+  </div>
+
+  <!-- 오늘 -->
+  <div id="p1" class="page on">
+    <div id="sumBody"></div>
+    <div id="todayBody"></div>
+    <button class="f ghost" id="reloadBtn" onclick="reload(true)">새로고침</button>
+  </div>
+
+  <!-- 현황 -->
+  <div id="p2" class="page">
+    <div class="seg" id="stSeg">
+      <button class="on" data-k="all"      onclick="setState('all')">전체</button>
+      <button          data-k="발송대기"   onclick="setState('발송대기')">발송대기</button>
+      <button          data-k="업로드대기" onclick="setState('업로드대기')">업로드대기</button>
+      <button          data-k="게시중"     onclick="setState('게시중')">게시중</button>
+      <button          data-k="종료"       onclick="setState('종료')">종료</button>
+    </div>
+    <input class="f" type="text" id="q" placeholder="이름 · 캠페인 · 상품 검색" oninput="renderList()">
+    <div id="listBody"></div>
+  </div>
+
+  <!-- 접근로그 -->
+  <div id="p3" class="page">
+    <div id="accessBody"></div>
+    <button class="f ghost" onclick="loadAccess()">새로고침</button>
+  </div>
+
+  <div class="foot">
+    <button class="f ghost" style="width:auto;padding:9px 22px;font-size:12px"
+            onclick="logout()">로그아웃</button>
+    <div class="sub2" style="margin-top:10px">버던_시딩 · v1.0</div>
+  </div>
+</div>
+
+<div id="wm" aria-hidden="true"></div>
+
+<script>
+/* Apps Script 웹앱 배포 URL. 재배포해서 URL 이 바뀌면 이 줄만 고치면 된다. */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2IwIgHUNrCJC6Nd7GhKG7b5pkvj1zPRb5wASUK4TzI9w9YWB3n3B9oZWpz-XYJ_Ru/exec";
+
+const PW_STORE = 'verdan_seed_pw';
+const NM_STORE = 'verdan_seed_user';
+const TIMEOUT_MS = 25000;   /* 통합DB 새로고침이 붙어 있어 넉넉히 잡는다 */
+const RECHECK_MS = 60000;
+const WM_OPACITY = 0.05;
+
+const PERM = {
+  admin: { label:'관리자', write:true,  access:true  },
+  staff: { label:'담당자', write:true,  access:false }
+};
+const NOPERM = { label:'—', write:false, access:false };
+
+/* 알림 구획 정의 — 순서가 화면 표시 순서입니다 */
+const FLAGS = [
+  { k:'overdue',   t:'🔴 업로드 마감 초과',      c:'s-red' },
+  { k:'dueSoon',   t:'🟠 업로드 마감 임박',      c:'s-org' },
+  { k:'noUpload',  t:'⚪ 발송 후 방치 (확인 필요)', c:'s-gry' },
+  { k:'postEnd',   t:'🟡 게시기간 만료 임박',    c:'s-yel' },
+  { k:'recheck',   t:'⚫ 게시 재확인 필요',      c:'s-blu' },
+  { k:'secondEnd', t:'🟣 2차 활용 종료 임박',    c:'s-pur' }
+];
+
+let PW='', USER='', ROLE='', D=null, BUSY=false, LAST=0, accessLoaded=false;
+let STATE='all', OPEN={};
+
+/* ── 통신 ─────────────────────────────── */
+async function api(params){
+  const q = new URLSearchParams(Object.assign({ key:PW, user:USER }, params||{}));
+  const ctl = new AbortController();
+  const timer = setTimeout(function(){ ctl.abort(); }, TIMEOUT_MS);
+  try{
+    const res = await fetch(SCRIPT_URL + '?' + q.toString(), { signal: ctl.signal });
+    return await res.json();
+  } finally { clearTimeout(timer); }
+}
+function isTimeout(e){ return e && (e.name==='AbortError' || e.name==='TimeoutError'); }
+
+function busy(on){
+  BUSY = on;
+  const b=document.getElementById('loginBtn');
+  if(b){ b.disabled=on; b.textContent = on ? '확인 중...' : '확인'; }
+  const r=document.getElementById('reloadBtn');
+  if(r){ r.disabled=on; r.textContent = on ? '불러오는 중...' : '새로고침'; }
+}
+function stamp(t, stale){
+  const el=document.getElementById('updated');
+  el.textContent=t; el.className='sub'+(stale?' stale':'');
+}
+function gm(t){ document.getElementById('gateMsg').textContent=t; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function n(v){ return (v===null||v===undefined||isNaN(v))?'—':Number(v).toLocaleString('ko-KR'); }
+
+/* ── 워터마크 ─────────────────────────── */
+function watermark(on){
+  const el=document.getElementById('wm');
+  if(!on||!USER){ el.style.display='none'; el.innerHTML=''; return; }
+  const d=new Date(), p2=function(x){ return String(x).padStart(2,'0'); };
+  const txt=USER+' · '+d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+
+            ' '+p2(d.getHours())+':'+p2(d.getMinutes());
+  let h='';
+  for(let y=-120;y<window.innerHeight+200;y+=130)
+    for(let x=-180;x<window.innerWidth+240;x+=210)
+      h+='<span style="left:'+x+'px;top:'+y+'px">'+esc(txt)+'</span>';
+  el.style.setProperty('--wm-op', WM_OPACITY);
+  el.innerHTML=h; el.style.display='block';
+}
+let wmT=null;
+window.addEventListener('resize',function(){ if(!PW) return;
+  clearTimeout(wmT); wmT=setTimeout(function(){ watermark(true); },200); });
+
+/* ── 로그인 ───────────────────────────── */
+async function login(){
+  if(BUSY) return;
+  const nm=document.getElementById('nm').value.trim();
+  const pw=document.getElementById('pw').value.trim();
+  if(!nm){ gm('이름을 입력하세요.'); return; }
+  if(!pw){ gm('비밀번호를 입력하세요.'); return; }
+  gm('확인 중...'); busy(true);
+  PW=pw; USER=nm;
+  try{
+    const r=await api();
+    if(!r.ok){ PW=''; USER=''; gm(r.msg||'비밀번호가 올바르지 않습니다.'); return; }
+    try{ localStorage.setItem(PW_STORE,pw); localStorage.setItem(NM_STORE,nm); }catch(e){}
+    LAST=Date.now(); start(r);
+  }catch(e){
+    PW=''; USER='';
+    gm(isTimeout(e)?'서버 응답이 없습니다. [확인]을 다시 눌러주세요.':'연결 실패: '+e.message);
+  }finally{ busy(false); }
+}
+
+function logout(){
+  try{ localStorage.removeItem(PW_STORE); }catch(e){}
+  PW=''; USER=''; ROLE=''; D=null; accessLoaded=false; LAST=0; OPEN={}; STATE='all';
+  busy(false); watermark(false);
+  document.getElementById('app').style.display='none';
+  document.getElementById('gate').style.display='flex';
+  document.getElementById('pw').value='';
+  document.getElementById('t3').style.display='none';
+  document.getElementById('roleBadge').textContent='';
+  ['sumBody','todayBody','listBody','accessBody'].forEach(function(id){
+    document.getElementById(id).innerHTML='';
+  });
+  document.getElementById('q').value='';
+  tab('p1'); gm('');
+}
+
+/* ── 화면 구성 ────────────────────────── */
+function start(r){
+  D=r; ROLE=r.role;
+  const perm=PERM[ROLE]||NOPERM;
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('roleBadge').textContent=perm.label;
+  stamp('갱신 '+r.updated, false);
+  watermark(true);
+  document.getElementById('t3').style.display = perm.access ? 'block' : 'none';
+  accessLoaded=false;
+  renderAll();
+  tab('p1');
+}
+
+function renderAll(){ renderSummary(); renderToday(); renderList(); }
+
+function tab(p){
+  for(let i=1;i<=3;i++){
+    const on=('p'+i)===p;
+    document.getElementById('p'+i).className='page'+(on?' on':'');
+    document.getElementById('t'+i).className=on?'on':'';
+  }
+  if(p==='p3' && !accessLoaded) loadAccess();
+}
+
+/* ── 이번 달 요약 ─────────────────────── */
+function renderSummary(){
+  const s=D.summary;
+  const cats=Object.keys(s.byCat||{}).map(function(k){
+    return esc(k)+' '+s.byCat[k]+'건';
+  }).join(' · ') || '—';
+  document.getElementById('sumBody').innerHTML =
+    '<div class="box-ok"><b>'+esc(s.ym)+' 시딩 '+n(s.total)+'건</b>'+
+    ' · 업로드완료 '+n(s.uploaded)+' · 대기 '+n(s.waiting)+'<br>'+
+    '<span class="sub2" style="color:#1B5E20">'+cats+'</span><br>'+
+    '원고료 '+n(s.fee)+'원 · 현재 게시중 '+n(s.posting)+'건</div>';
+}
+
+/* ── 오늘: 알림 구획 ──────────────────── */
+function renderToday(){
+  let h='', any=false;
+  FLAGS.forEach(function(f){
+    const list=D.items.filter(function(x){ return x.flags.indexOf(f.k)>=0; });
+    if(!list.length) return;
+    any=true;
+    h+='<div class="sec '+f.c+'" onclick="toggleSec(\''+f.k+'\')">'+
+       '<span>'+f.t+'</span><span class="cnt">'+list.length+'건 ▾</span></div>'+
+       '<div id="sec_'+f.k+'">'+list.map(function(x){ return itemHtml(x,f.k); }).join('')+'</div>';
+  });
+  document.getElementById('todayBody').innerHTML = any ? h :
+    '<div class="box-ok">🟢 지금 처리할 일이 없습니다. 마감·게시기간 모두 여유가 있습니다.</div>';
+}
+
+function toggleSec(k){
+  const el=document.getElementById('sec_'+k);
+  if(el) el.style.display = (el.style.display==='none') ? 'block' : 'none';
+}
+
+/* ── 현황 목록 ────────────────────────── */
+function setState(k){
+  STATE=k;
+  document.querySelectorAll('#stSeg button').forEach(function(b){
+    b.className = (b.dataset.k===k) ? 'on' : '';
+  });
+  renderList();
+}
+
+function renderList(){
+  const q=document.getElementById('q').value.trim().toLowerCase();
+  let list=D.items;
+  if(STATE!=='all') list=list.filter(function(x){ return x.state===STATE; });
+  if(q) list=list.filter(function(x){
+    return (x.name+' '+x.campaign+' '+x.product+' '+x.handle+' '+x.cat).toLowerCase().indexOf(q)>=0;
+  });
+  const body=document.getElementById('listBody');
+  if(!list.length){ body.innerHTML='<div class="box-note">조건에 맞는 건이 없습니다.</div>'; return; }
+  body.innerHTML='<div class="sub2" style="margin-bottom:8px">'+list.length+'건</div>'+
+    list.slice(0,300).map(function(x){ return itemHtml(x,'list'); }).join('')+
+    (list.length>300 ? '<div class="box-note">최근 300건만 표시했습니다. 검색으로 좁혀주세요.</div>' : '');
+}
+
+/* ── 항목 카드 ────────────────────────── */
+/* ctx 는 같은 건이 여러 구획에 나와도 id 가 겹치지 않게 하기 위한 접두사 */
+function itemHtml(x, ctx){
+  const uid = ctx+'_'+x.id.replace(':','_');
+  const open = OPEN[uid] ? ' open' : '';
+  let note='';
+  if(!x.uploadDate && x.dDeadline!==null){
+    note = x.dDeadline<0 ? '<div class="dd over">마감 '+(-x.dDeadline)+'일 초과</div>'
+         : '<div class="dd soon">마감까지 '+x.dDeadline+'일</div>';
+  }else if(x.uploadDate && x.dPost!==null && x.dPost>=0){
+    note = '<div class="dd '+(x.dPost<=7?'soon':'ok')+'">게시 종료까지 '+x.dPost+'일</div>';
+  }
+
+  return '<div class="it'+open+'" id="'+uid+'">'+
+    '<div class="hd" onclick="toggleIt(\''+uid+'\')">'+
+      '<div><div class="nm">'+esc(x.name)+'</div>'+
+        '<div class="meta">'+esc(x.cat)+(x.campaign?' · '+esc(x.campaign):'')+'<br>'+
+        esc(x.product||'—')+(x.option?' / '+esc(x.option):'')+'</div></div>'+
+      '<div class="right"><span class="badge b-'+esc(x.state)+'">'+esc(x.state)+'</span>'+note+'</div>'+
+    '</div>'+
+    '<div class="bd">'+detailHtml(x, uid)+'</div></div>';
+}
+
+function toggleIt(uid){
+  const el=document.getElementById(uid);
+  if(!el) return;
+  const now = el.className.indexOf('open')===-1;
+  el.className = now ? 'it open' : 'it';
+  OPEN[uid]=now;
+}
+
+function detailHtml(x, uid){
+  const perm=PERM[ROLE]||NOPERM;
+  let h='<div class="kv">'+
+    '<span>계정 · 주문</span><b>'+esc(x.handle||'—')+'</b>'+
+    '<span>신청일시</span><b>'+esc(x.applied||'—')+'</b>'+
+    '<span>발송상태</span><b>'+esc(x.ship||'—')+(x.courier?' · '+esc(x.courier):'')+'</b>'+
+    '<span>업로드마감</span><b>'+esc(x.deadline||'—')+'</b>'+
+    '<span>업로드일</span><b>'+esc(x.uploadDate||'—')+'</b>'+
+    '<span>게시기간</span><b>'+esc(x.postPeriod||'—')+'</b>'+
+    '<span>최종확인</span><b>'+esc(x.check||'미확인')+'</b>'+
+    '<span>2차 활용</span><b>'+(x.s2s||x.s2e ? esc(x.s2s||'—')+' ~ '+esc(x.s2e||'—') : '—')+'</b>'+
+    (x.url ? '<span>콘텐츠</span><b><a href="'+esc(x.url)+'" target="_blank" rel="noopener">링크 열기</a></b>' : '')+
+    '</div>';
+
+  if(!perm.write) return h;
+  h+='<div class="hr"></div><div class="acts">';
+
+  if(!x.uploadDate){
+    h+='<input class="f" type="url" id="u_'+uid+'" placeholder="콘텐츠 URL 붙여넣기" inputmode="url">'+
+       '<div class="row2"><input class="f" type="date" id="ud_'+uid+'" value="'+esc(D.today)+'">'+
+       '<button class="f" style="flex:1;margin-bottom:9px" onclick="doUpload(\''+x.id+'\',\''+uid+'\')">업로드 완료</button></div>'+
+       '<div class="sub2">저장하면 업로드일·게시기간(+'+D.months+'개월)·업로드여부가 한 번에 채워집니다.</div>';
+  }else{
+    h+='<button class="f ghost sm" onclick="doCheck(\''+x.id+'\',\''+uid+'\')">게시 확인 (오늘)</button>'+
+       (x.url ? '<button class="f ghost sm" onclick="window.open(\''+esc(x.url)+'\',\'_blank\')">글 열기</button>' : '')+
+       '<div class="row2" style="margin-top:8px">'+
+         '<input class="f" type="date" id="s1_'+uid+'" value="'+esc(x.s2s)+'">'+
+         '<input class="f" type="date" id="s2_'+uid+'" value="'+esc(x.s2e)+'">'+
+       '</div>'+
+       '<button class="f ghost" onclick="doSecond(\''+x.id+'\',\''+uid+'\')">2차 활용 기간 저장</button>';
+  }
+
+  h+='<div class="msg" id="m_'+uid+'"></div></div>';
+  return h;
+}
+
+function im(uid, t, err){
+  const el=document.getElementById('m_'+uid);
+  if(el){ el.textContent=t; el.className='msg'+(err?' err':' good'); }
+}
+
+/* ── 쓰기 동작 ────────────────────────── */
+async function act(params, uid, okMsg){
+  if(BUSY) return;
+  BUSY=true; im(uid,'저장 중...',false);
+  try{
+    const r=await api(params);
+    if(!r.ok){ im(uid, r.msg||'저장에 실패했습니다.', true); return; }
+    D=r; LAST=Date.now();
+    stamp('갱신 '+r.updated, false);
+    im(uid, okMsg, false);
+    setTimeout(function(){ renderAll(); }, 500);
+  }catch(e){
+    /* 시간 초과는 서버에 들어갔는지 알 수 없다. 중복 저장을 막기 위해 확인부터 안내한다. */
+    im(uid, isTimeout(e) ? '응답이 없습니다. 새로고침으로 반영 여부를 먼저 확인하세요.'
+                         : '오류: '+e.message, true);
+  }finally{ BUSY=false; }
+}
+
+function doUpload(id, uid){
+  const url=(document.getElementById('u_'+uid).value||'').trim();
+  const date=document.getElementById('ud_'+uid).value;
+  if(!url){ im(uid,'콘텐츠 URL을 입력하세요.',true); return; }
+  act({ action:'upload', id:id, url:url, date:date }, uid, '업로드 정보를 저장했습니다.');
+}
+function doCheck(id, uid){
+  act({ action:'check', id:id }, uid, '게시 확인을 기록했습니다.');
+}
+function doSecond(id, uid){
+  act({ action:'second', id:id,
+        start:document.getElementById('s1_'+uid).value,
+        end:document.getElementById('s2_'+uid).value }, uid, '2차 활용 기간을 저장했습니다.');
+}
+
+/* ── 접근로그 ─────────────────────────── */
+async function loadAccess(){
+  const body=document.getElementById('accessBody');
+  body.innerHTML='<div class="box-note">불러오는 중...</div>';
+  try{
+    const r=await api({ action:'access' });
+    if(!r.ok){ body.innerHTML='<div class="box-note">'+esc(r.msg||'불러오지 못했습니다.')+'</div>'; return; }
+    accessLoaded=true;
+    if(!r.logs.length){ body.innerHTML='<div class="box-note">기록이 없습니다.</div>'; return; }
+    const rows=r.logs.map(function(l){
+      let cls='';
+      if(l.result==='실패') cls='danger';
+      else if(l.result==='입력'||l.result==='확인') cls='ok';
+      return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
+        '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
+        '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
+        '<td style="font-size:12px">'+esc(l.memo)+'</td></tr>';
+    }).join('');
+    body.innerHTML='<div class="tbl-wrap"><table><thead><tr>'+
+      '<th>시각</th><th>결과</th><th>사용자</th><th style="text-align:left">상세</th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<div class="sub2">최근 '+r.logs.length+'건 · 시트에는 500건까지 보관됩니다.</div>';
+  }catch(e){
+    body.innerHTML='<div class="box-note">'+
+      (isTimeout(e)?'응답이 없습니다. 새로고침을 눌러주세요.':'연결 실패: '+esc(e.message))+'</div>';
+  }
+}
+
+/* ── 새로고침 ─────────────────────────── */
+async function reload(manual){
+  if(BUSY||!PW) return;
+  busy(true);
+  try{
+    const r=await api();
+    LAST=Date.now();
+    if(!r.ok){ logout(); gm('다시 로그인해 주세요.'); return; }
+    if(r.role!==ROLE){ start(r); return; }
+    D=r; renderAll();
+    stamp('갱신 '+r.updated, false);
+  }catch(e){
+    /* 끊긴 요청으로 로그아웃시키지는 않되, 화면 숫자가 예전 것임은 반드시 보이게 한다. */
+    stamp('연결 실패 · 새로고침 필요', true);
+    if(manual) alert('서버 응답이 없습니다.\n잠시 후 새로고침을 다시 눌러주세요.');
+  }finally{ busy(false); }
+}
+
+/* ── 세션 감시 ────────────────────────── */
+window.addEventListener('storage',function(e){
+  if(e.key===PW_STORE && !e.newValue && PW) logout();
+});
+function onResume(){
+  if(!PW||BUSY) return;
+  let saved=null; try{ saved=localStorage.getItem(PW_STORE); }catch(e){}
+  if(saved!==PW){ logout(); return; }
+  if(Date.now()-LAST<RECHECK_MS) return;
+  reload(false);
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible') onResume();
+});
+window.addEventListener('pageshow',function(){ onResume(); });
+
+/* ── 자동 로그인 ──────────────────────── */
+(async function(){
+  let sp=null, sn=null;
+  try{ sp=localStorage.getItem(PW_STORE); sn=localStorage.getItem(NM_STORE); }catch(e){}
+  if(sn) document.getElementById('nm').value=sn;
+  if(!sp||!sn) return;
+  PW=sp; USER=sn; gm('확인 중...'); busy(true);
+  try{
+    const r=await api();
+    if(r.ok){ LAST=Date.now(); start(r); }
+    else{
+      PW=''; USER='';
+      try{ localStorage.removeItem(PW_STORE); }catch(e){}
+      gm('비밀번호가 변경되었습니다. 다시 입력해 주세요.');
+    }
+  }catch(e){
+    PW=''; USER='';
+    gm(isTimeout(e)?'서버 응답이 없습니다. [확인]을 눌러 다시 시도하세요.':'');
+  }finally{ busy(false); }
+})();
+</script>
+</body>
+</html>
