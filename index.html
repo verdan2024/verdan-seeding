@@ -157,7 +157,40 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
 .notice .ttl{font-size:12px;color:#999;font-weight:700;margin-bottom:8px;}
 .notice b{font-variant-numeric:tabular-nums;}
 .notice .hl{color:#C0392B;font-weight:700;}
+
+/* ── 그래프 (외부 라이브러리 없이 CSS로만) ── */
+.chart{background:#fff;border:1px solid #E8E8E8;border-radius:12px;padding:14px;margin-bottom:12px;}
+.chart h3{font-size:13px;color:#1A1A2E;margin-bottom:12px;}
+.vbars{display:flex;align-items:flex-end;gap:4px;height:150px;}
+.vcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-width:0;}
+.vcol .tot{font-size:10px;color:#666;text-align:center;font-weight:700;margin-bottom:3px;
+   font-variant-numeric:tabular-nums;}
+.vcol .stack{display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
+.vcol .seg{width:100%;}
+.vcol .lb{font-size:9px;color:#AAA;text-align:center;margin-top:5px;white-space:nowrap;}
+.hbar{margin-bottom:10px;}
+.hbar .top{display:flex;font-size:12.5px;color:#333;margin-bottom:5px;}
+.hbar .top b{margin-left:auto;font-variant-numeric:tabular-nums;}
+.hbar .track{height:9px;background:#F0F0F3;border-radius:5px;overflow:hidden;}
+.hbar .fill{height:100%;border-radius:5px;}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:11px;color:#666;}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;
+   vertical-align:middle;}
+.donut{display:flex;align-items:center;gap:18px;}
+.donut .ring{width:112px;height:112px;border-radius:50%;flex-shrink:0;position:relative;}
+.donut .hole{position:absolute;inset:26px;background:#fff;border-radius:50%;display:flex;
+   flex-direction:column;align-items:center;justify-content:center;}
+.donut .hole b{font-size:17px;color:#1A1A2E;font-variant-numeric:tabular-nums;}
+.donut .hole span{font-size:10px;color:#999;}
+.donut .side{flex:1;font-size:12px;line-height:2;}
+.donut .side i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;}
+.donut .side b{float:right;font-variant-numeric:tabular-nums;}
+.money{font-size:13px;line-height:2.1;}
+.money .row{display:flex;}
+.money .row b{margin-left:auto;font-variant-numeric:tabular-nums;}
+.money .big{font-size:19px;font-weight:800;color:#1A1A2E;font-variant-numeric:tabular-nums;}
 </style>
+
 </head>
 <body>
 
@@ -172,7 +205,7 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
            onkeydown="if(event.key==='Enter')login()">
     <button id="loginBtn" onclick="login()">확인</button>
     <div id="gateMsg"></div>
-    <div class="hint">본인 이름을 입력하세요. 입력 기록에 함께 남습니다.<br>v2.0 · 2026-08</div>
+    <div class="hint">본인 이름을 입력하세요. 입력 기록에 함께 남습니다.<br>v2.1 · 2026-08</div>
   </div>
 </div>
 
@@ -188,8 +221,8 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
   </div>
 
   <div id="tabs">
-    <button id="t1" class="on" onclick="tab('p1')">오늘</button>
-    <button id="t2" onclick="tab('p2')">현황</button>
+    <button id="t1" class="on" onclick="tab('p1')">할일</button>
+    <button id="t2" onclick="tab('p2')">기록</button>
     <button id="t3" onclick="tab('p3')">2차활용</button>
     <button id="t4" onclick="tab('p4')" style="display:none">접근로그</button>
   </div>
@@ -232,10 +265,12 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
   <!-- ── 2차 활용 ───────────────────────── -->
   <div id="p3" class="page">
     <div class="seg" id="segSecond">
-      <button class="on" data-k="reg"  onclick="setSecond('reg')">등록</button>
+      <button class="on" data-k="dash" onclick="setSecond('dash')">대시보드</button>
+      <button          data-k="reg"  onclick="setSecond('reg')">등록</button>
       <button          data-k="list" onclick="setSecond('list')">현황</button>
     </div>
-    <div id="v3reg">
+    <div id="v3dash"></div>
+    <div id="v3reg" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
         <select id="sCat" onchange="renderSecReg()"></select>
@@ -257,13 +292,15 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
   <div class="foot">
     <button class="f ghost" style="width:auto;padding:9px 22px;font-size:12px"
             onclick="logout()">로그아웃</button>
-    <div class="sub2" style="margin-top:10px">버던_시딩 · v2.0</div>
+    <div class="sub2" style="margin-top:10px">버던_시딩 · v2.1</div>
   </div>
 </div>
 
 <div id="wm" aria-hidden="true"></div>
 
+
 <script>
+
 /* Apps Script 웹앱 배포 URL. 재배포해서 URL 이 바뀌면 이 줄만 고치면 된다. */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2IwIgHUNrCJC6Nd7GhKG7b5pkvj1zPRb5wASUK4TzI9w9YWB3n3B9oZWpz-XYJ_Ru/exec";
 
@@ -279,9 +316,18 @@ const PERM = {
 };
 const NOPERM = { label:'—', write:false, access:false };
 
+/* 플랫폼 색 — 그래프와 범례가 같은 색을 씁니다 */
+const CAT_COLOR = {
+  '구글폼':'#3F51B5', '브랜더진':'#26A69A', '리뷰노트':'#EF6C00', '무신사':'#7E57C2'
+};
+const FALLBACK_COLORS = ['#90A4AE','#8D6E63','#5C6BC0','#66BB6A','#EC407A'];
+function catColor(name, i){
+  return CAT_COLOR[name] || FALLBACK_COLORS[(i||0) % FALLBACK_COLORS.length];
+}
+
 let PW='', USER='', ROLE='', D=null, BUSY=false, LAST=0, accessLoaded=false;
 let OPEN={};
-let V1='notice', V2='dash', V3='reg';
+let V1='notice', V2='dash', V3='dash';
 
 /* ── 통신 ─────────────────────────────── */
 async function api(params){
@@ -350,7 +396,7 @@ async function login(){
 function logout(){
   try{ localStorage.removeItem(PW_STORE); }catch(e){}
   PW=''; USER=''; ROLE=''; D=null; accessLoaded=false; LAST=0; OPEN={};
-  V1='notice'; V2='dash'; V3='reg';
+  V1='notice'; V2='dash'; V3='dash';
   busy(false); watermark(false);
   document.getElementById('app').style.display='none';
   document.getElementById('gate').style.display='flex';
@@ -358,7 +404,7 @@ function logout(){
   document.getElementById('t4').style.display='none';
   document.getElementById('roleBadge').textContent='';
   ['v1notice','v1upchk','v1post','v2dash','v2noupload','v2deleted','allBody',
-   'secRegBody','v3list','accessBody'].forEach(function(id){
+   'v3dash','secRegBody','v3list','accessBody'].forEach(function(id){
     document.getElementById(id).innerHTML='';
   });
   ['aName','sName'].forEach(function(id){ document.getElementById(id).value=''; });
@@ -424,7 +470,7 @@ function applyFilter(k){
 function renderAll(){
   renderNotice(); renderUpchk(); renderPost();
   renderDash(); renderNoUpload(); renderDeleted(); renderAllList();
-  renderSecReg(); renderSecList();
+  renderSecDash(); renderSecReg(); renderSecList();
 }
 
 function tab(p){
@@ -447,9 +493,9 @@ function segSwitch(segId, key, pairs){
 function setToday(k){ V1=k; segSwitch('segToday',k,{notice:'v1notice',upchk:'v1upchk',post:'v1post'}); }
 function setStat(k){ V2=k; segSwitch('segStat',k,
   {dash:'v2dash',noupload:'v2noupload',deleted:'v2deleted',all:'v2all'}); }
-function setSecond(k){ V3=k; segSwitch('segSecond',k,{reg:'v3reg',list:'v3list'}); }
+function setSecond(k){ V3=k; segSwitch('segSecond',k,{dash:'v3dash',reg:'v3reg',list:'v3list'}); }
 
-/* ── 오늘 · 공지 ──────────────────────── */
+/* ── 할일 · 공지 ──────────────────────── */
 function renderNotice(){
   const s=D.summary;
   const hl=function(v){ return v>0 ? '<span class="hl">'+n(v)+'건</span>' : n(v)+'건'; };
@@ -468,7 +514,7 @@ function renderNotice(){
     '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
-/* ── 오늘 · 업로드확인 ────────────────── */
+/* ── 할일 · 업로드확인 ────────────────── */
 /* 마감일 당일부터 등장. [완료]를 눌러야 사라지고, [미완료]는 하루만 넘깁니다. */
 function renderUpchk(){
   const list=D.items.filter(function(x){ return x.flags.indexOf('needUpload')>=0; })
@@ -481,7 +527,7 @@ function renderUpchk(){
     list.map(function(x){ return itemHtml(x,'upc'); }).join('');
 }
 
-/* ── 오늘 · 게시확인 ──────────────────── */
+/* ── 할일 · 게시확인 ──────────────────── */
 /* 업로드일(또는 마지막 확인일)로부터 7일마다 등장 */
 function renderPost(){
   const list=D.items.filter(function(x){ return x.flags.indexOf('needPost')>=0; })
@@ -494,9 +540,96 @@ function renderPost(){
     list.map(function(x){ return itemHtml(x,'pst'); }).join('');
 }
 
-/* ── 현황 · 대시보드 ──────────────────── */
+
+/* ── 그래프 조각 ──────────────────────── */
+/* 최근 N개월의 'yyyy-MM' 목록 */
+function recentMonths(cnt){
+  const out=[], d=new Date();
+  for(let i=cnt-1;i>=0;i--){
+    const t=new Date(d.getFullYear(), d.getMonth()-i, 1);
+    out.push(t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'));
+  }
+  return out;
+}
+
+/* 세로 누적 막대 — 시간 흐름을 왼쪽에서 오른쪽으로 읽게 한다 */
+function stackedBars(months, cats, matrix){
+  let max=1;
+  months.forEach(function(m,i){
+    let sum=0; cats.forEach(function(c){ sum+=matrix[c][i]||0; });
+    if(sum>max) max=sum;
+  });
+  const cols=months.map(function(m,i){
+    let sum=0; cats.forEach(function(c){ sum+=matrix[c][i]||0; });
+    const segs=cats.map(function(c,ci){
+      const v=matrix[c][i]||0;
+      if(!v) return '';
+      return '<div class="seg" style="height:'+(v/max*118)+'px;background:'+catColor(c,ci)+'"></div>';
+    }).join('');
+    return '<div class="vcol">'+
+      '<div class="tot">'+(sum||'')+'</div>'+
+      '<div class="stack">'+segs+'</div>'+
+      '<div class="lb">'+esc(m.slice(2).replace('-','.'))+'</div></div>';
+  }).join('');
+  const legend=cats.map(function(c,ci){
+    return '<span><i style="background:'+catColor(c,ci)+'"></i>'+esc(c)+'</span>'; }).join('');
+  return '<div class="vbars">'+cols+'</div><div class="legend">'+legend+'</div>';
+}
+
+/* 가로 막대 — 항목 이름이 길어 읽기 편하다 */
+function hBars(pairs){
+  let max=1;
+  pairs.forEach(function(p){ if(p.v>max) max=p.v; });
+  const total=pairs.reduce(function(s,p){ return s+p.v; },0)||1;
+  return pairs.map(function(p,i){
+    return '<div class="hbar"><div class="top"><span>'+esc(p.k)+'</span>'+
+      '<b>'+n(p.v)+'건 · '+Math.round(p.v/total*100)+'%</b></div>'+
+      '<div class="track"><div class="fill" style="width:'+(p.v/max*100)+'%;background:'+
+      catColor(p.k,i)+'"></div></div></div>';
+  }).join('');
+}
+
+/* 도넛 — 비중을 한눈에 */
+function donut(pairs, centerLabel){
+  const total=pairs.reduce(function(s,p){ return s+p.v; },0);
+  if(!total) return '<div class="sub2">표시할 데이터가 없습니다.</div>';
+  let acc=0;
+  const stops=pairs.map(function(p,i){
+    const from=acc/total*360; acc+=p.v;
+    const to=acc/total*360;
+    return catColor(p.k,i)+' '+from+'deg '+to+'deg';
+  }).join(',');
+  const side=pairs.map(function(p,i){
+    return '<div><i style="background:'+catColor(p.k,i)+'"></i>'+esc(p.k)+
+      '<b>'+n(p.v)+'건</b></div>'; }).join('');
+  return '<div class="donut"><div class="ring" style="background:conic-gradient('+stops+')">'+
+    '<div class="hole"><b>'+n(total)+'</b><span>'+esc(centerLabel||'건')+'</span></div></div>'+
+    '<div class="side">'+side+'</div></div>';
+}
+
+/* ── 기록 · 대시보드 ──────────────────── */
 function renderDash(){
   const s=D.summary, cats=s.byCat||{};
+
+  /* 전체 누계 — 플랫폼별 */
+  const allCats=[];
+  D.items.forEach(function(x){ if(x.cat && allCats.indexOf(x.cat)<0) allCats.push(x.cat); });
+  const totalPairs=allCats.map(function(c){
+    return { k:c, v:D.items.filter(function(x){ return x.cat===c; }).length };
+  }).sort(function(a,b){ return b.v-a.v; });
+  const grand=D.items.length;
+
+  /* 최근 12개월 추이 */
+  const months=recentMonths(12);
+  const matrix={};
+  allCats.forEach(function(c){ matrix[c]=months.map(function(){ return 0; }); });
+  D.items.forEach(function(x){
+    const ym=String(x.applied).slice(0,7);
+    const i=months.indexOf(ym);
+    if(i>=0 && matrix[x.cat]) matrix[x.cat][i]++;
+  });
+
+  /* 당월 표 */
   const keys=Object.keys(cats);
   let tot=0, up=0;
   const rows = keys.length
@@ -509,7 +642,6 @@ function renderDash(){
           '<td class="ctr '+(no>0?'danger':'')+'">'+n(no)+'</td></tr>';
       }).join('')
     : '<tr><td colspan="4" class="ctr sub2">이번 달 시딩 내역이 없습니다.</td></tr>';
-
   const foot = keys.length
     ? '<tr style="background:#F5F5F5"><td><b>합계</b></td>'+
       '<td class="ctr"><b>'+n(tot)+'</b></td>'+
@@ -518,16 +650,93 @@ function renderDash(){
     : '';
 
   document.getElementById('v2dash').innerHTML =
-    '<div class="notice"><div class="ttl" style="margin:0">'+esc(s.ym.replace('-','.'))+' 기준</div></div>'+
-    '<div class="tbl-wrap"><table><thead><tr>'+
-    '<th style="text-align:left">플랫폼</th><th>협찬</th><th>업로드</th><th>미업로드</th>'+
-    '</tr></thead><tbody>'+rows+foot+'</tbody></table></div>'+
-    '<div class="sub2">· 신청일시 기준 이번 달 집계입니다.<br>'+
+    '<div class="notice"><div class="ttl" style="margin:0">전체 누적</div>'+
+      '<span class="money big">'+n(grand)+'건</span></div>'+
+
+    '<div class="chart"><h3>📈 월별 시딩 추이 (최근 12개월)</h3>'+
+      stackedBars(months, allCats, matrix)+'</div>'+
+
+    '<div class="chart"><h3>📊 플랫폼별 누계</h3>'+
+      (totalPairs.length ? hBars(totalPairs) : '<div class="sub2">데이터가 없습니다.</div>')+'</div>'+
+
+    '<div class="chart"><h3>'+esc(s.ym.replace('-','.'))+' 기준</h3>'+
+      '<div class="tbl-wrap" style="margin-bottom:0"><table><thead><tr>'+
+      '<th style="text-align:left">플랫폼</th><th>협찬</th><th>업로드</th><th>미업로드</th>'+
+      '</tr></thead><tbody>'+rows+foot+'</tbody></table></div></div>'+
+
+    '<div class="sub2">· 추이·누계는 신청일시 기준입니다.<br>'+
     '· "미업로드"는 업로드일이 아직 비어 있는 건입니다.</div>'+
     '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
-/* ── 현황 · 미업로드 ──────────────────── */
+/* ── 2차활용 · 대시보드 ───────────────── */
+function renderSecDash(){
+  const list=D.items.filter(function(x){ return x.s2type || x.legacy2; });
+
+  if(!list.length){
+    document.getElementById('v3dash').innerHTML =
+      '<div class="box-note">2차 활용 건이 없습니다.</div>'+
+      '<button class="f ghost" onclick="reload(true)">새로고침</button>';
+    return;
+  }
+
+  /* 플랫폼별 건수 */
+  const cats=[];
+  list.forEach(function(x){ if(x.cat && cats.indexOf(x.cat)<0) cats.push(x.cat); });
+  const catPairs=cats.map(function(c){
+    return { k:c, v:list.filter(function(x){ return x.cat===c; }).length };
+  }).sort(function(a,b){ return b.v-a.v; });
+
+  /* 종류별 비중 — 종류 미등록 건은 따로 묶는다 */
+  const typePairs=[];
+  (D.secondTypes||[]).forEach(function(t){
+    const v=list.filter(function(x){ return x.s2type===t; }).length;
+    if(v) typePairs.push({ k:t, v:v });
+  });
+  const noType=list.filter(function(x){ return !x.s2type; }).length;
+  if(noType) typePairs.push({ k:'미등록', v:noType });
+
+  /* 금액 — 사용권 구매일이 있으면 그 날짜, 없으면 신청일시 기준 */
+  const byYear={}, byMonth={};
+  let grand=0;
+  list.forEach(function(x){
+    const amt=x.amount||0;
+    if(!amt) return;
+    grand+=amt;
+    const base=(x.s2s || x.applied || '');
+    const y=base.slice(0,4), m=base.slice(0,7);
+    if(y){ byYear[y]=(byYear[y]||0)+amt; }
+    if(m){ byMonth[m]=(byMonth[m]||0)+amt; }
+  });
+  const thisYear=String(new Date().getFullYear());
+  const months=Object.keys(byMonth).filter(function(m){ return m.slice(0,4)===thisYear; }).sort().reverse();
+  const years=Object.keys(byYear).sort().reverse();
+
+  const moneyHtml =
+    '<div class="money"><div class="row"><span>누적 총액</span></div>'+
+    '<div class="money big" style="margin-bottom:10px">'+n(grand)+'원</div>'+
+    '<div class="hr"></div>'+
+    '<div class="sub2" style="margin-bottom:4px">'+thisYear+'년 월별</div>'+
+    (months.length
+      ? months.map(function(m){
+          return '<div class="row"><span>'+esc(m.replace('-','.'))+'</span><b>'+n(byMonth[m])+'원</b></div>'; }).join('')
+      : '<div class="sub2">올해 집행 내역이 없습니다.</div>')+
+    '<div class="hr"></div>'+
+    '<div class="sub2" style="margin-bottom:4px">연도별</div>'+
+    years.map(function(y){
+      return '<div class="row"><span>'+esc(y)+'년</span><b>'+n(byYear[y])+'원</b></div>'; }).join('')+
+    '</div>';
+
+  document.getElementById('v3dash').innerHTML =
+    '<div class="chart"><h3>📊 플랫폼별 2차 활용</h3>'+hBars(catPairs)+'</div>'+
+    '<div class="chart"><h3>🍩 활용 종류별 비중</h3>'+donut(typePairs,'건')+'</div>'+
+    '<div class="chart"><h3>💰 2차 활용 금액</h3>'+moneyHtml+'</div>'+
+    '<div class="sub2">· 금액은 통합DB 2차활용 열(04_브랜더진 W열 등)에서 합산합니다.<br>'+
+    '· 집계 기준일은 사용권 구매일이며, 없으면 신청일시를 씁니다.</div>'+
+    '<button class="f ghost" onclick="reload(true)">새로고침</button>';
+}
+
+/* ── 기록 · 미업로드 ──────────────────── */
 /* 업로드일이 등록되면 이 목록에서 자동으로 빠집니다. */
 function renderNoUpload(){
   const list=D.items.filter(function(x){ return !x.uploadDate && x.state!=='삭제'; })
@@ -543,7 +752,7 @@ function renderNoUpload(){
     listHtml(list,'nou');
 }
 
-/* ── 현황 · 삭제확인 ──────────────────── */
+/* ── 기록 · 삭제확인 ──────────────────── */
 /* 게시확인에서 "미확인"으로 처리된 건이 모입니다. */
 function renderDeleted(){
   const list=D.items.filter(function(x){ return x.state==='삭제'; })
@@ -557,7 +766,7 @@ function renderDeleted(){
     list.map(function(x){ return itemHtml(x,'del'); }).join('');
 }
 
-/* ── 현황 · 전체 ──────────────────────── */
+/* ── 기록 · 전체 ──────────────────────── */
 function renderAllList(){
   const r=applyFilter('a');
   const body=document.getElementById('allBody');
@@ -807,7 +1016,7 @@ function doCheck(id, uid){
   act({ action:'check', id:id }, uid, '게시확인 완료. 7일 뒤 다시 뜹니다.');
 }
 function doDel(id, uid){
-  if(!confirm('게시글이 내려간 건으로 표시할까요?\n현황 > 삭제확인 탭으로 이동합니다.')) return;
+  if(!confirm('게시글이 내려간 건으로 표시할까요?\n기록 > 삭제확인 탭으로 이동합니다.')) return;
   act({ action:'del', id:id }, uid, '삭제확인으로 옮겼습니다.');
 }
 function doRestore(id, uid){
