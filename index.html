@@ -222,7 +222,7 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
 
   <div id="tabs">
     <button id="t1" class="on" onclick="tab('p1')">할일</button>
-    <button id="t2" onclick="tab('p2')">기록</button>
+    <button id="t2" onclick="tab('p2')">현황</button>
     <button id="t3" onclick="tab('p3')">2차활용</button>
     <button id="t4" onclick="tab('p4')" style="display:none">접근로그</button>
   </div>
@@ -285,6 +285,10 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
 
   <!-- ── 접근로그 ───────────────────────── -->
   <div id="p4" class="page">
+    <div class="seg" id="segLog">
+      <button class="on" data-k="access" onclick="logView('access')">접속</button>
+      <button          data-k="work"   onclick="logView('work')">기록</button>
+    </div>
     <div id="accessBody"></div>
     <button class="f ghost" onclick="loadAccess()">새로고침</button>
   </div>
@@ -396,6 +400,7 @@ async function login(){
 function logout(){
   try{ localStorage.removeItem(PW_STORE); }catch(e){}
   PW=''; USER=''; ROLE=''; D=null; accessLoaded=false; LAST=0; OPEN={};
+  LOGS=[]; LOGVIEW='access';
   V1='notice'; V2='dash'; V3='dash';
   busy(false); watermark(false);
   document.getElementById('app').style.display='none';
@@ -607,7 +612,7 @@ function donut(pairs, centerLabel){
     '<div class="side">'+side+'</div></div>';
 }
 
-/* ── 기록 · 대시보드 ──────────────────── */
+/* ── 현황 · 대시보드 ──────────────────── */
 function renderDash(){
   const s=D.summary, cats=s.byCat||{};
 
@@ -736,7 +741,7 @@ function renderSecDash(){
     '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
-/* ── 기록 · 미업로드 ──────────────────── */
+/* ── 현황 · 미업로드 ──────────────────── */
 /* 업로드일이 등록되면 이 목록에서 자동으로 빠집니다. */
 function renderNoUpload(){
   const list=D.items.filter(function(x){ return !x.uploadDate && x.state!=='삭제'; })
@@ -752,7 +757,7 @@ function renderNoUpload(){
     listHtml(list,'nou');
 }
 
-/* ── 기록 · 삭제확인 ──────────────────── */
+/* ── 현황 · 삭제확인 ──────────────────── */
 /* 게시확인에서 "미확인"으로 처리된 건이 모입니다. */
 function renderDeleted(){
   const list=D.items.filter(function(x){ return x.state==='삭제'; })
@@ -766,7 +771,7 @@ function renderDeleted(){
     list.map(function(x){ return itemHtml(x,'del'); }).join('');
 }
 
-/* ── 기록 · 전체 ──────────────────────── */
+/* ── 현황 · 전체 ──────────────────────── */
 function renderAllList(){
   const r=applyFilter('a');
   const body=document.getElementById('allBody');
@@ -1016,7 +1021,7 @@ function doCheck(id, uid){
   act({ action:'check', id:id }, uid, '게시확인 완료. 7일 뒤 다시 뜹니다.');
 }
 function doDel(id, uid){
-  if(!confirm('게시글이 내려간 건으로 표시할까요?\n기록 > 삭제확인 탭으로 이동합니다.')) return;
+  if(!confirm('게시글이 내려간 건으로 표시할까요?\n현황 > 삭제확인 탭으로 이동합니다.')) return;
   act({ action:'del', id:id }, uid, '삭제확인으로 옮겼습니다.');
 }
 function doRestore(id, uid){
@@ -1037,6 +1042,9 @@ function doSecondClear(id, uid){
 }
 
 /* ── 접근로그 ─────────────────────────── */
+/* 접속 = 로그인 성공·실패 / 기록 = 업로드·게시확인 등 값이 바뀐 작업 */
+let LOGS=[], LOGVIEW='access';
+
 async function loadAccess(){
   const body=document.getElementById('accessBody');
   body.innerHTML='<div class="box-note">불러오는 중...</div>';
@@ -1044,24 +1052,43 @@ async function loadAccess(){
     const r=await api({ action:'access' });
     if(!r.ok){ body.innerHTML='<div class="box-note">'+esc(r.msg||'불러오지 못했습니다.')+'</div>'; return; }
     accessLoaded=true;
-    if(!r.logs.length){ body.innerHTML='<div class="box-note">기록이 없습니다.</div>'; return; }
-    const rows=r.logs.map(function(l){
-      let cls='';
-      if(l.result==='실패') cls='danger';
-      else if(l.result==='입력'||l.result==='확인') cls='ok';
-      return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
-        '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
-        '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
-        '<td style="font-size:12px">'+esc(l.memo)+'</td></tr>';
-    }).join('');
-    body.innerHTML='<div class="tbl-wrap"><table><thead><tr>'+
-      '<th>시각</th><th>결과</th><th>사용자</th><th style="text-align:left">상세</th>'+
-      '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
-      '<div class="sub2">최근 '+r.logs.length+'건 · 시트에는 500건까지 보관됩니다.</div>';
+    LOGS=r.logs||[];
+    logView(LOGVIEW);
   }catch(e){
     body.innerHTML='<div class="box-note">'+
       (isTimeout(e)?'응답이 없습니다. 새로고침을 눌러주세요.':'연결 실패: '+esc(e.message))+'</div>';
   }
+}
+
+function logView(k){
+  LOGVIEW=k;
+  document.querySelectorAll('#segLog button').forEach(function(b){
+    b.className = (b.dataset.k===k) ? 'on' : '';
+  });
+  const body=document.getElementById('accessBody');
+  const list=LOGS.filter(function(l){ return l.kind===k; });
+
+  if(!list.length){
+    body.innerHTML='<div class="box-note">'+
+      (k==='access' ? '접속 기록이 없습니다.' : '작업 기록이 없습니다.')+'</div>';
+    return;
+  }
+
+  const rows=list.map(function(l){
+    let cls='';
+    if(l.result==='실패') cls='danger';
+    else if(l.result==='입력'||l.result==='확인'||l.result==='접속') cls='ok';
+    return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
+      '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
+      '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
+      '<td style="font-size:12px">'+esc(l.memo)+'</td></tr>';
+  }).join('');
+
+  body.innerHTML='<div class="tbl-wrap"><table><thead><tr>'+
+    '<th>시각</th><th>결과</th><th>사용자</th>'+
+    '<th style="text-align:left">'+(k==='access'?'권한 · 상세':'작업 내용')+'</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div class="sub2">'+list.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>';
 }
 
 /* ── 새로고침 ─────────────────────────── */
