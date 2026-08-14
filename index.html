@@ -43,10 +43,9 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;backgrou
 #header .title{font-weight:700;font-size:14px;}
 #header .sub{font-size:11px;opacity:.6;margin-top:2px;}
 #header .sub.stale{opacity:1;color:#FFCDD2;font-weight:700;}
-#header .titleRow{display:flex;align-items:center;gap:7px;}
-#header .role{font-size:10.5px;background:#3F51B5;padding:2px 8px;border-radius:9px;
-     white-space:nowrap;}
-#header .logoutBtn{margin-left:auto;font-size:11px;color:#fff;background:none;
+#header .role{margin-left:auto;font-size:10.5px;background:#3F51B5;padding:4px 9px;
+     border-radius:9px;white-space:nowrap;}
+#header .logoutBtn{margin-left:7px;font-size:11px;color:#fff;background:none;
      border:1px solid rgba(255,255,255,.35);padding:5px 11px;border-radius:10px;
      white-space:nowrap;cursor:pointer;font-family:inherit;}
 #tabs{display:flex;background:#fff;border-bottom:1px solid #EEE;}
@@ -104,6 +103,9 @@ button:disabled{opacity:.55;}
 /* 2차 활용 — 배경 없이 O / X 만 두고, 옆의 [상세보기]로 펼칩니다 */
 .more{color:#1A1A2E;font-weight:800;cursor:pointer;text-decoration:underline;
       margin-left:6px;font-size:12px;}
+textarea.f.memo{width:100%;padding:11px 12px;border:1px solid #E0E0E0;border-radius:10px;
+  font-size:15px;font-family:inherit;background:#fff;resize:vertical;margin-bottom:9px;
+  line-height:1.6;-webkit-user-select:text;user-select:text;}
 .qa2{margin-top:10px;font-size:12.5px;line-height:1.75;}
 .qa2 b{display:block;font-size:11px;color:#999;margin-bottom:3px;}
 .qa2 div{white-space:pre-wrap;word-break:break-word;background:#FAFAFC;
@@ -268,12 +270,10 @@ body.chatmode{overflow:hidden;}
   <div id="header">
     <div class="icon">📮</div>
     <div>
-      <div class="titleRow">
-        <span class="title">버던_시딩</span>
-        <span class="role" id="roleBadge"></span>
-      </div>
+      <div class="title">버던_시딩</div>
       <div class="sub" id="updated"></div>
     </div>
+    <span class="role" id="roleBadge"></span>
     <button class="logoutBtn" onclick="askLogout()">로그아웃</button>
   </div>
 
@@ -301,20 +301,28 @@ body.chatmode{overflow:hidden;}
   <div id="p2" class="page">
     <div class="seg" id="segStat">
       <button class="on" data-k="dash"     onclick="setStat('dash')">대시보드</button>
-      <button          data-k="noupload" onclick="setStat('noupload')">미업로드</button>
-      <button          data-k="deleted"  onclick="setStat('deleted')">삭제확인</button>
       <button          data-k="posted"   onclick="setStat('posted')">게시확인</button>
+      <button          data-k="deleted"  onclick="setStat('deleted')">삭제확인</button>
+      <button          data-k="influ"    onclick="setStat('influ')">인플루언서</button>
       <button          data-k="all"      onclick="setStat('all')">전체</button>
     </div>
     <div id="v2dash"></div>
-    <div id="v2noupload" style="display:none"></div>
-    <div id="v2deleted" style="display:none"></div>
     <div id="v2posted" style="display:none"></div>
+    <div id="v2deleted" style="display:none"></div>
+    <div id="v2influ" style="display:none">
+      <div class="card">
+        <h3>인플루언서 검색</h3>
+        <input class="f" type="text" id="iName" placeholder="이름 · 계정"
+               oninput="debounce(renderInflu)">
+        <div class="sub2">이름이나 계정으로 찾은 뒤 눌러 펼치면 진행 이력과 비고를 볼 수 있습니다.</div>
+      </div>
+      <div id="influBody"></div>
+    </div>
     <div id="v2all" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
-        <select id="aCat" onchange="renderAllList()"></select>
-        <select id="aProd" onchange="renderAllList()"></select>
+        <select id="aCat" onchange="debounce(renderAllList)"></select>
+        <select id="aProd" onchange="debounce(renderAllList)"></select>
         <input class="f" type="text" id="aName" placeholder="이름 · 계정" oninput="debounce(renderAllList)">
         <button class="f ghost" onclick="resetFilter('a')">조건 초기화</button>
       </div>
@@ -333,8 +341,8 @@ body.chatmode{overflow:hidden;}
     <div id="v3reg" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
-        <select id="sCat" onchange="renderSecReg()"></select>
-        <select id="sProd" onchange="renderSecReg()"></select>
+        <select id="sCat" onchange="debounce(renderSecReg)"></select>
+        <select id="sProd" onchange="debounce(renderSecReg)"></select>
         <input class="f" type="text" id="sName" placeholder="이름 · 계정" oninput="debounce(renderSecReg)">
         <button class="f ghost" onclick="resetFilter('s')">조건 초기화</button>
       </div>
@@ -343,10 +351,10 @@ body.chatmode{overflow:hidden;}
     <div id="v3list" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
-        <select id="lCat" onchange="renderSecList()"></select>
-        <select id="lProd" onchange="renderSecList()"></select>
-        <select id="lChan" onchange="renderSecList()"></select>
-        <select id="lPer" onchange="renderSecList()"></select>
+        <select id="lCat" onchange="debounce(renderSecList)"></select>
+        <select id="lProd" onchange="debounce(renderSecList)"></select>
+        <select id="lChan" onchange="debounce(renderSecList)"></select>
+        <select id="lPer" onchange="debounce(renderSecList)"></select>
         <input class="f" type="text" id="lName" placeholder="이름 · 계정" oninput="debounce(renderSecList)">
         <button class="f ghost" onclick="resetFilter('l')">조건 초기화</button>
       </div>
@@ -520,10 +528,11 @@ function logout(){
   document.getElementById('t5').style.display='none';
   document.getElementById('roleBadge').textContent='';
   ['v1notice','v1upchk','v1post','v2dash','v2noupload','v2deleted','allBody',
-   'v2posted','v3dash','secRegBody','secListBody','accessBody','chatChips'].forEach(function(id){
+   'v2posted','influBody','v3dash','secRegBody','secListBody',
+   'accessBody','chatChips'].forEach(function(id){
     document.getElementById(id).innerHTML='';
   });
-  ['aName','sName','lName','qInput'].forEach(function(id){
+  ['aName','sName','lName','iName','qInput'].forEach(function(id){
     const el=document.getElementById(id); if(el) el.value='';
   });
   document.getElementById('chatBody').innerHTML='';
@@ -550,6 +559,7 @@ function start(r){
 }
 
 /* 드롭다운 항목은 실제 데이터에 있는 값만 넣는다 */
+let OPT_CACHE='';
 function fillFilters(){
   const cats=[], prods=[];
   D.items.forEach(function(x){
@@ -557,6 +567,11 @@ function fillFilters(){
     if(x.product && prods.indexOf(x.product)<0) prods.push(x.product);
   });
   prods.sort();
+
+  /* 항목이 그대로면 다시 그리지 않습니다 (드롭다운을 매번 새로 만들면 느려집니다) */
+  const sig=cats.join('|')+'##'+prods.join('|');
+  if(sig===OPT_CACHE) return;
+  OPT_CACHE=sig;
   const catOpt='<option value="">플랫폼 전체</option>'+
     cats.map(function(c){ return '<option value="'+esc(c)+'">'+esc(catLabel(c))+'</option>'; }).join('');
   const prodOpt='<option value="">상품 전체</option>'+
@@ -610,7 +625,7 @@ function applyFilter(k){
 
 function renderAll(){
   renderNotice(); renderUpchk(); renderPost();
-  renderDash(); renderNoUpload(); renderDeleted(); renderPosted(); renderAllList();
+  renderDash(); renderDeleted(); renderPosted(); renderInflu(); renderAllList();
   renderSecDash(); renderSecReg(); renderSecList();
 }
 
@@ -634,8 +649,8 @@ function segSwitch(segId, key, pairs){
 }
 function setToday(k){ V1=k; segSwitch('segToday',k,{notice:'v1notice',upchk:'v1upchk',post:'v1post'}); }
 function setStat(k){ V2=k; segSwitch('segStat',k,
-  {dash:'v2dash',noupload:'v2noupload',deleted:'v2deleted',
-   posted:'v2posted',all:'v2all'}); }
+  {dash:'v2dash',posted:'v2posted',deleted:'v2deleted',
+   influ:'v2influ',all:'v2all'}); }
 function setSecond(k){ V3=k; segSwitch('segSecond',k,{dash:'v3dash',reg:'v3reg',list:'v3list'}); }
 
 /* 이번 달 플랫폼별 표 — 공지 탭에서 씁니다 */
@@ -920,31 +935,19 @@ function renderSecDash(){
     '</div>';
 
   document.getElementById('v3dash').innerHTML =
+    '<div class="notice"><div class="ttl">전체 누적</div>'+
+      '<span class="money big">'+n(list.length)+'건</span>'+
+      '<div class="sub2" style="margin-top:4px">비용 '+n(grand)+'원'+
+      (feeTotal?' + 수수료 '+n(feeTotal)+'원':'')+'</div></div>'+
     '<div class="chart"><h3>📊 플랫폼별 2차 활용</h3>'+hBars(catPairs)+'</div>'+
     '<div class="chart"><h3>🍩 활용 채널별 비중</h3>'+donut(typePairs,'건')+'</div>'+
-    '<div class="chart"><h3>💰 2차 활용 금액</h3>'+moneyHtml+'</div>'+
-    '<div class="chart"><h3>🧾 수수료</h3>'+feeHtml+'</div>'+
+    '<div class="sec s-blu" onclick="toggleBox(\'moneyBox\')">'+
+      '<span>💰 2차 활용 금액 · 수수료</span><span class="cnt">펼치기 ▾</span></div>'+
+    '<div id="moneyBox" style="display:none">'+
+      '<div class="chart"><h3>💰 2차 활용 금액</h3>'+moneyHtml+'</div>'+
+      '<div class="chart"><h3>🧾 수수료</h3>'+feeHtml+'</div></div>'+
     '<div class="sub2">· 금액은 04_브랜더진 W열 등 2차활용 비용 열에서 합산합니다.<br>'+
     '· 집계 기준일은 사용권 구매일이며, 없으면 신청일시를 씁니다.</div>'+
-    '<button class="f ghost" onclick="reload(true)">새로고침</button>';
-}
-
-/* ── 현황 · 미업로드 ──────────────────── */
-/* 업로드일이 등록되면 이 목록에서 자동으로 빠집니다. */
-function renderNoUpload(){
-  /* 대가없음(유빈지인 등)은 업로드 의무가 없어 목록에서 제외합니다. */
-  const list=D.items.filter(function(x){
-    return !x.uploadDate && x.state!=='삭제' && x.state!=='대가없음'; })
-    .slice().sort(function(a,b){
-      if(a.dDeadline===null && b.dDeadline===null) return 0;
-      if(a.dDeadline===null) return 1;
-      if(b.dDeadline===null) return -1;
-      return a.dDeadline-b.dDeadline;   /* 급한 것부터 */
-    });
-  document.getElementById('v2noupload').innerHTML =
-    (list.length ? '<div class="box-note">업로드일이 비어 있는 '+list.length+'건입니다. '+
-      '<b>URL</b>을 확인하고 <b>확인</b>을 누르면 오늘 날짜로 업로드 처리됩니다.</div>' : '')+
-    listHtml(list,'nou')+
     '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
@@ -991,30 +994,129 @@ function renderDeleted(){
 /* 업로드가 끝나 게시 중인 건입니다. URL을 열어 확인한 뒤 [확인]을 누르면
    최종확인일이 오늘로 기록됩니다. (할일 · 게시확인과 같은 동작) */
 function renderPosted(){
-  /* 여기는 "게시 중인 건 전부"를 확인 상태와 함께 훑어보는 곳입니다.
-     최종확인일이 비어 있거나 오래된 건이 위로 올라옵니다.
-     (할일 · 게시확인은 7일 주기가 도래한 건만 골라 보여줍니다) */
   const days=(D.thresholds && D.thresholds.postCheck) || 7;
-  const list=D.items.filter(function(x){ return x.state==='게시중'; })
+
+  /* ① 미업로드 — 업로드일이 비어 있는 건 (대가없음·삭제 제외) */
+  const nou=D.items.filter(function(x){
+    return !x.uploadDate && x.state!=='삭제' && x.state!=='대가없음'; })
     .slice().sort(function(a,b){
-      const ac=a.check||'', bc=b.check||'';
-      if(!ac && bc) return -1;          /* 미확인이 맨 위 */
-      if(ac && !bc) return 1;
-      return ac.localeCompare(bc);      /* 오래 확인 안 한 것부터 */
+      if(a.dDeadline===null && b.dDeadline===null) return 0;
+      if(a.dDeadline===null) return 1;
+      if(b.dDeadline===null) return -1;
+      return a.dDeadline-b.dDeadline;   /* 급한 것부터 */
     });
 
-  const due=list.filter(function(x){
+  /* ② 게시중 — 게시 중인 건 전부 (확인 후에도 목록에 남습니다) */
+  const post=D.items.filter(function(x){ return x.state==='게시중'; })
+    .slice().sort(function(a,b){
+      const ac=a.check||'', bc=b.check||'';
+      if(!ac && bc) return -1;
+      if(ac && !bc) return 1;
+      return ac.localeCompare(bc);
+    });
+  const due=post.filter(function(x){
     return !x.check || dayGap(x.check, D.today) >= days; }).length;
 
   document.getElementById('v2posted').innerHTML =
-    (list.length
-      ? '<div class="box-note">게시 중인 <b>'+list.length+'건 전부</b>를 보여줍니다. '+
-        '확인 후에도 목록에 남습니다.<br>'+
-        '🔴 표시된 <b>'+due+'건</b>은 확인한 지 '+days+'일이 넘었거나 아직 확인 전입니다.<br>'+
-        '오늘 처리할 것만 보려면 [할일 · 게시확인]을 쓰세요.</div>'
+    '<div class="sec s-org"><span>⬆ 미업로드</span>'+
+      '<span class="cnt">'+nou.length+'건</span></div>'+
+    (nou.length
+      ? '<div class="box-note"><b>URL</b>을 확인하고 <b>업로드</b> 또는 <b>미업로드</b>를 '+
+        '누르면 오늘 날짜가 최종확인에 기록됩니다.</div>'+
+        nou.map(function(x){ return itemHtml(x,'nou'); }).join('')
+      : '<div class="box-ok">🟢 미업로드 건이 없습니다.</div>')+
+
+    '<div class="sec s-blu" style="margin-top:18px"><span>📌 게시중</span>'+
+      '<span class="cnt">'+post.length+'건</span></div>'+
+    (post.length
+      ? '<div class="box-note">🔴 표시된 <b>'+due+'건</b>은 확인한 지 '+days+
+        '일이 넘었거나 아직 확인 전입니다. 확인 후에도 목록에 남습니다.</div>'+
+        post.map(function(x){ return itemHtml(x,'pchk'); }).join('')
       : '<div class="box-ok">🟢 게시 중인 건이 없습니다.</div>')+
-    list.map(function(x){ return itemHtml(x,'pchk'); }).join('')+
+
     '<button class="f ghost" onclick="reload(true)">새로고침</button>';
+}
+
+/* ── 관리 · 인플루언서 ────────────────── */
+/* 같은 사람의 여러 협업을 한 곳에 모아 보고, 사람 단위 비고를 남깁니다. */
+function renderInflu(){
+  const q=document.getElementById('iName').value.trim().toLowerCase().replace(/^@/,'');
+  const body=document.getElementById('influBody');
+  if(!q){
+    body.innerHTML='<div class="box-note">이름이나 계정을 입력하면 결과가 나옵니다.</div>';
+    return;
+  }
+
+  const map={};
+  D.items.forEach(function(x){
+    const key=x.pkey||('이름:'+x.name);
+    const hay=(x.name+' '+(x.handleShown||x.handle||'')).toLowerCase().replace(/@/g,'');
+    if(hay.indexOf(q)<0) return;
+    if(!map[key]) map[key]={ key:key, name:x.name, handle:x.handleShown||x.handle||'',
+                             acctUrl:x.acctUrl, rows:[] };
+    map[key].rows.push(x);
+  });
+
+  const list=Object.keys(map).map(function(k){ return map[k]; });
+  if(!list.length){
+    body.innerHTML='<div class="box-note">조건에 맞는 인플루언서가 없습니다.</div>';
+    return;
+  }
+  body.innerHTML='<div class="sub2" style="margin-bottom:8px">'+list.length+'명</div>'+
+    list.map(function(p){ return influCard(p); }).join('');
+}
+
+function influCard(p){
+  const uid='inf_'+p.key.replace(/[^A-Za-z0-9가-힣]/g,'_');
+  const open=OPEN[uid]?' open':'';
+  const memo=(D.memos&&D.memos[p.key])||{ memo:'', at:'', by:'' };
+
+  const cats=[];
+  p.rows.forEach(function(x){ if(cats.indexOf(x.cat)<0) cats.push(x.cat); });
+
+  const dates=p.rows.map(function(x){ return x.uploadDate; }).filter(Boolean).sort();
+
+  const urls=p.rows.filter(function(x){ return x.url; });
+  const urlHtml = urls.length
+    ? urls.map(function(x){
+        return '<div style="margin-bottom:6px">'+
+          '<span class="sub2">'+esc(x.uploadDate||'—')+' · '+esc(catLabel(x.cat))+'</span><br>'+
+          '<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.url)+'</a></div>';
+      }).join('')
+    : '<span class="sub2">등록된 콘텐츠가 없습니다.</span>';
+
+  const perm=PERM[ROLE]||NOPERM;
+
+  return '<div class="it'+open+'" id="'+uid+'">'+
+    '<div class="hd" onclick="toggleIt(\''+uid+'\')">'+
+      '<div><div class="nm">'+esc(p.name)+'</div>'+
+        '<div class="meta">'+esc(p.handle||'계정 없음')+'</div></div>'+
+      '<div class="right"><span class="badge b-게시중">'+p.rows.length+'건</span>'+
+        (memo.memo?'<div class="dd over">비고 있음</div>':'')+'</div>'+
+    '</div>'+
+    '<div class="bd"><div class="kv">'+
+      '<span>계정</span><b>'+(p.acctUrl
+        ? '<a href="'+esc(p.acctUrl)+'" target="_blank" rel="noopener">'+esc(p.handle||'열기')+'</a>'
+        : esc(p.handle||'—'))+'</b>'+
+      '<span>플랫폼</span><b>'+cats.map(catLabel).map(esc).join(' · ')+'</b>'+
+      '<span>진행일자</span><b>'+(dates.length?dates.map(esc).join(' · '):'—')+'</b>'+
+      '</div>'+
+      '<div class="hr"></div>'+
+      '<div class="lb2">콘텐츠</div>'+urlHtml+
+      '<div class="hr"></div>'+
+      '<div class="lb2">비고'+(memo.at?' <span class="sub2">('+esc(memo.at)+' '+esc(memo.by)+')</span>':'')+'</div>'+
+      (perm.write
+        ? '<textarea class="f memo" id="mm_'+uid+'" rows="3" '+
+            'placeholder="조건 불이행, DM 미응답 등 다음 시딩에 참고할 내용">'+esc(memo.memo)+'</textarea>'+
+          '<button class="f" onclick="doMemo(\''+p.key+'\',\''+uid+'\',\''+esc(p.name)+'\')">비고 저장</button>'+
+          '<div class="msg" id="m_'+uid+'"></div>'
+        : '<div class="sub2">'+esc(memo.memo||'—')+'</div>')+
+    '</div></div>';
+}
+
+function doMemo(key, uid, name){
+  const memo=document.getElementById('mm_'+uid).value;
+  act({ action:'memo', key:key, name:name, memo:memo }, uid, '비고를 저장했습니다.');
 }
 
 /* yyyy-MM-dd 두 날짜의 차이(일) */
@@ -1183,12 +1285,11 @@ function quickHtml(x, uid, ctx){
       '<button class="pri" onclick="event.stopPropagation();doCheck(\''+x.id+'\',\''+uid+'\')">확인</button>'+
       '<button class="no" onclick="event.stopPropagation();doDel(\''+x.id+'\',\''+uid+'\')">미확인</button>';
   }else if(ctx==='nou'){
-    /* 미업로드 건은 계정을 열어 올라왔는지 확인합니다 */
-    const chk = x.acctUrl
-      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.acctUrl)+'\',\'_blank\')">URL</button>'
-      : '';
-    b = chk +
-      '<button class="pri" onclick="event.stopPropagation();doUpload(\''+x.id+'\',\''+uid+'\',1)">확인</button>';
+    /* 계정을 열어 올라왔는지 확인한 뒤 둘 중 하나를 누릅니다.
+       어느 쪽이든 최종확인에 오늘 날짜가 기록됩니다. */
+    b = urlBtn(x, acct) +
+      '<button class="no" onclick="event.stopPropagation();doRecheck(\''+x.id+'\',\''+uid+'\')">미업로드</button>'+
+      '<button class="pri" onclick="event.stopPropagation();doUpload(\''+x.id+'\',\''+uid+'\',1)">업로드</button>';
   }else if(ctx==='pchk'){
     b = urlBtn(x, acct) +
       '<button class="no" onclick="event.stopPropagation();doDel(\''+x.id+'\',\''+uid+'\')">삭제</button>'+
