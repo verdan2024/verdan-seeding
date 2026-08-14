@@ -166,7 +166,9 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
 .vcol .tot{font-size:10px;color:#666;text-align:center;font-weight:700;margin-bottom:3px;
    font-variant-numeric:tabular-nums;}
 .vcol .stack{display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
-.vcol .seg{width:100%;}
+.vcol .seg{width:100%;display:flex;align-items:center;justify-content:center;}
+.vcol .seg span{font-size:9px;font-weight:700;color:#fff;line-height:1;
+   text-shadow:0 0 2px rgba(0,0,0,.25);}
 .vcol .lb{font-size:9px;color:#AAA;text-align:center;margin-top:5px;white-space:nowrap;}
 .hbar{margin-bottom:10px;}
 .hbar .top{display:flex;font-size:12.5px;color:#333;margin-bottom:5px;}
@@ -324,6 +326,11 @@ const NOPERM = { label:'—', write:false, access:false };
 const CAT_COLOR = {
   '구글폼':'#3F51B5', '브랜더진':'#26A69A', '리뷰노트':'#EF6C00', '무신사':'#7E57C2'
 };
+
+/* 화면에 보여줄 이름. 시트·통합DB의 실제 값은 '구글폼' 그대로 둔다.
+   (통계 수식이 '구글폼'을 기준으로 잡혀 있어 데이터를 바꾸면 안 된다) */
+const CAT_LABEL = { '구글폼':'개인협찬(구글폼)' };
+function catLabel(name){ return CAT_LABEL[name] || name; }
 const FALLBACK_COLORS = ['#90A4AE','#8D6E63','#5C6BC0','#66BB6A','#EC407A'];
 function catColor(name, i){
   return CAT_COLOR[name] || FALLBACK_COLORS[(i||0) % FALLBACK_COLORS.length];
@@ -441,7 +448,7 @@ function fillFilters(){
   });
   prods.sort();
   const catOpt='<option value="">플랫폼 전체</option>'+
-    cats.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
+    cats.map(function(c){ return '<option value="'+esc(c)+'">'+esc(catLabel(c))+'</option>'; }).join('');
   const prodOpt='<option value="">상품 전체</option>'+
     prods.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
   ['a','s'].forEach(function(k){
@@ -569,7 +576,10 @@ function stackedBars(months, cats, matrix){
     const segs=cats.map(function(c,ci){
       const v=matrix[c][i]||0;
       if(!v) return '';
-      return '<div class="seg" style="height:'+(v/max*118)+'px;background:'+catColor(c,ci)+'"></div>';
+      const h=v/max*118;
+      /* 칸이 너무 얇으면 숫자가 뭉개지므로 13px 이상일 때만 안에 넣는다 */
+      const label = h>=13 ? '<span>'+v+'</span>' : '';
+      return '<div class="seg" style="height:'+h+'px;background:'+catColor(c,ci)+'">'+label+'</div>';
     }).join('');
     return '<div class="vcol">'+
       '<div class="tot">'+(sum||'')+'</div>'+
@@ -577,7 +587,7 @@ function stackedBars(months, cats, matrix){
       '<div class="lb">'+esc(m.slice(2).replace('-','.'))+'</div></div>';
   }).join('');
   const legend=cats.map(function(c,ci){
-    return '<span><i style="background:'+catColor(c,ci)+'"></i>'+esc(c)+'</span>'; }).join('');
+    return '<span><i style="background:'+catColor(c,ci)+'"></i>'+esc(catLabel(c))+'</span>'; }).join('');
   return '<div class="vbars">'+cols+'</div><div class="legend">'+legend+'</div>';
 }
 
@@ -587,7 +597,7 @@ function hBars(pairs){
   pairs.forEach(function(p){ if(p.v>max) max=p.v; });
   const total=pairs.reduce(function(s,p){ return s+p.v; },0)||1;
   return pairs.map(function(p,i){
-    return '<div class="hbar"><div class="top"><span>'+esc(p.k)+'</span>'+
+    return '<div class="hbar"><div class="top"><span>'+esc(catLabel(p.k))+'</span>'+
       '<b>'+n(p.v)+'건 · '+Math.round(p.v/total*100)+'%</b></div>'+
       '<div class="track"><div class="fill" style="width:'+(p.v/max*100)+'%;background:'+
       catColor(p.k,i)+'"></div></div></div>';
@@ -605,7 +615,7 @@ function donut(pairs, centerLabel){
     return catColor(p.k,i)+' '+from+'deg '+to+'deg';
   }).join(',');
   const side=pairs.map(function(p,i){
-    return '<div><i style="background:'+catColor(p.k,i)+'"></i>'+esc(p.k)+
+    return '<div><i style="background:'+catColor(p.k,i)+'"></i>'+esc(catLabel(p.k))+
       '<b>'+n(p.v)+'건</b></div>'; }).join('');
   return '<div class="donut"><div class="ring" style="background:conic-gradient('+stops+')">'+
     '<div class="hole"><b>'+n(total)+'</b><span>'+esc(centerLabel||'건')+'</span></div></div>'+
@@ -641,7 +651,7 @@ function renderDash(){
     ? keys.map(function(k){
         const c=cats[k]; tot+=c.total; up+=c.uploaded;
         const no=c.total-c.uploaded;
-        return '<tr><td><b>'+esc(k)+'</b></td>'+
+        return '<tr><td><b>'+esc(catLabel(k))+'</b></td>'+
           '<td class="ctr">'+n(c.total)+'</td>'+
           '<td class="ctr ok">'+n(c.uploaded)+'</td>'+
           '<td class="ctr '+(no>0?'danger':'')+'">'+n(no)+'</td></tr>';
@@ -824,8 +834,10 @@ function renderSecList(){
     '<span class="sub2" style="color:#1B5E20">'+sum+'</span></div>'+
     (soon ? '<div class="box-danger"><b style="color:#C0392B">🟣 종료 임박 '+soon+'건</b><br>'+
       '만료 전에 연장 협의 또는 소재 내리기를 확인하세요.</div>' : '')+
-    (legacy.length ? '<div class="box-note">⚠️ 시트에만 표시된 '+legacy.length+'건이 있습니다.<br>'+
-      '종류·기간이 없어 만료 알림이 뜨지 않습니다. 눌러서 다시 등록해주세요.</div>' : '')+
+    (legacy.length ? '<div class="box-note">⚠️ 금액만 있고 <b>기간이 등록되지 않은 '+legacy.length+'건</b>이 있습니다.<br>'+
+      '시트(예: 04_브랜더진 W열)에 금액은 있지만 종류·구매일·기간이 없어 '+
+      '<b>언제 만료되는지 알 수 없고 알림도 뜨지 않습니다.</b><br>'+
+      '항목을 눌러 [등록]에서 종류·기간을 채워주세요.</div>' : '')+
     list.map(function(x){ return itemHtml(x,'seclist'); }).join('');
 }
 
@@ -859,7 +871,7 @@ function itemHtml(x, ctx){
   return '<div class="it'+open+'" id="'+uid+'">'+
     '<div class="hd" onclick="toggleIt(\''+uid+'\')">'+
       '<div><div class="nm">'+esc(x.name)+'</div>'+
-        '<div class="meta">'+esc(x.cat)+(x.campaign?' · '+esc(x.campaign):'')+'<br>'+
+        '<div class="meta">'+esc(catLabel(x.cat))+(x.campaign?' · '+esc(x.campaign):'')+'<br>'+
         esc(x.product||'—')+(x.option?' / '+esc(x.option):'')+'</div></div>'+
       '<div class="right"><span class="badge b-'+esc(x.state)+'">'+esc(tagText(x))+'</span>'+note+'</div>'+
     '</div>'+
@@ -915,8 +927,14 @@ function quickHtml(x, uid, ctx){
 
 /* 2차 활용 표기 문구 */
 function secondText(x){
-  if(!x.s2type) return x.legacy2 ? '시트 표시만 (기간 미등록)' : '미등록';
-  return esc(x.s2type)+' · '+esc(x.s2s||'—')+' ~ '+(x.s2forever?'무기한':esc(x.s2e||'—'));
+  if(!x.s2type){
+    /* 시트에 금액만 있고 종류·기간이 없는 건 = 만료일을 모르는 상태 */
+    return x.legacy2 ? '금액만 있음 · 기간 미등록 ('+n(x.amount)+'원)' : '미등록';
+  }
+  let t=esc(x.s2type)+' · '+esc(x.s2s||'—')+' ~ '+(x.s2forever?'무기한':esc(x.s2e||'—'));
+  if(x.amount) t+=' · '+n(x.amount)+'원';
+  if(x.s2memo) t+='<br><span class="sub2">'+esc(x.s2memo)+'</span>';
+  return t;
 }
 
 function detailHtml(x, uid, ctx){
@@ -959,18 +977,27 @@ function secondFormHtml(x, uid){
     return '<option value="'+esc(t)+'"'+(x.s2type===t?' selected':'')+'>'+esc(t)+'</option>'; }).join('');
   const periods=(D.secondPeriods||[]).map(function(p){
     return '<option value="'+p.v+'">'+esc(p.t)+'</option>'; }).join('');
+  const cost = x.s2cost ? x.s2cost : (x.amount||'');
 
   return '<div class="g2">'+
-      '<div style="flex:1"><div class="lb2">활용 종류</div>'+
-        '<select id="st_'+uid+'"><option value="">선택</option>'+types+'</select></div>'+
+      '<div style="flex:1"><div class="lb2">사용권 구매일</div>'+
+        '<input class="f" type="date" id="ss_'+uid+'" value="'+esc(x.s2s||D.today)+'"></div>'+
       '<div style="flex:1"><div class="lb2">활용 기간</div>'+
         '<select id="sp_'+uid+'"><option value="">선택</option>'+periods+'</select></div>'+
     '</div>'+
-    '<div class="lb2">사용권 구매일 (계약일)</div>'+
-    '<input class="f" type="date" id="ss_'+uid+'" value="'+esc(x.s2s||D.today)+'">'+
+    '<div class="g2">'+
+      '<div style="flex:1"><div class="lb2">활용 종류</div>'+
+        '<select id="st_'+uid+'"><option value="">선택</option>'+types+'</select></div>'+
+      '<div style="flex:1"><div class="lb2">2차활용 비용</div>'+
+        '<input class="f" type="number" id="sc_'+uid+'" placeholder="0" inputmode="numeric" '+
+        'value="'+esc(cost)+'"></div>'+
+    '</div>'+
+    '<div class="lb2">비고</div>'+
+    '<input class="f" type="text" id="sm_'+uid+'" placeholder="메모 (선택)" value="'+esc(x.s2memo||'')+'">'+
     '<button class="f" onclick="doSecond(\''+x.id+'\',\''+uid+'\')">2차 활용 등록</button>'+
     (x.s2type ? '<button class="f ghost" onclick="doSecondClear(\''+x.id+'\',\''+uid+'\')">등록 해제</button>' : '')+
-    '<div class="sub2">구매일 + 선택한 기간으로 <b>활용 마감일이 자동 계산</b>됩니다.</div>';
+    '<div class="sub2">구매일 + 선택한 기간으로 <b>활용 마감일이 자동 계산</b>됩니다.<br>'+
+    '비용을 입력하면 2차활용 대시보드 금액에 반영됩니다.</div>';
 }
 
 /* 메시지는 펼친 폼과 카드 버튼 양쪽에 같이 씁니다 */
@@ -1031,10 +1058,13 @@ function doSecond(id, uid){
   const type=document.getElementById('st_'+uid).value;
   const months=document.getElementById('sp_'+uid).value;
   const start=document.getElementById('ss_'+uid).value;
+  const cost=document.getElementById('sc_'+uid).value;
+  const memo=document.getElementById('sm_'+uid).value;
   if(!type){ im(uid,'활용 종류를 선택하세요.',true); return; }
   if(months===''){ im(uid,'활용 기간을 선택하세요.',true); return; }
   if(!start){ im(uid,'사용권 구매일을 입력하세요.',true); return; }
-  act({ action:'second', id:id, type:type, months:months, start:start }, uid, '2차 활용을 등록했습니다.');
+  act({ action:'second', id:id, type:type, months:months, start:start,
+        cost:cost, memo:memo }, uid, '2차 활용을 등록했습니다.');
 }
 function doSecondClear(id, uid){
   if(!confirm('이 건의 2차 활용 등록을 해제할까요?')) return;
