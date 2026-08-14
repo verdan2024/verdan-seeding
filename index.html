@@ -195,6 +195,8 @@ body.chatmode{overflow:hidden;}
 .cmsg.ai{align-self:flex-start;background:#EEF1FB;border:1px solid #C5CAE9;color:#283593;}
 .cmsg .tok{margin-top:8px;padding-top:7px;border-top:1px solid #C5CAE9;
            font-size:10.5px;color:#5C6BC0;}
+.cmsg a{color:#1976D2;text-decoration:underline;word-break:break-all;}
+.cmsg.me a{color:#BBDEFB;}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px;}
 .chip{font-size:12px;padding:7px 11px;border-radius:16px;border:1px solid #C5CAE9;background:#fff;
       color:#283593;cursor:pointer;font-family:inherit;}
@@ -624,6 +626,33 @@ function setStat(k){ V2=k; segSwitch('segStat',k,
    posted:'v2posted',all:'v2all'}); }
 function setSecond(k){ V3=k; segSwitch('segSecond',k,{dash:'v3dash',reg:'v3reg',list:'v3list'}); }
 
+/* 이번 달 플랫폼별 표 — 공지 탭에서 씁니다 */
+function monthTableHtml(){
+  const s=D.summary, cats=s.byCat||{};
+  const keys=catSort(Object.keys(cats));
+  let tot=0, up=0;
+  const rows = keys.length
+    ? keys.map(function(k){
+        const c=cats[k]; tot+=c.total; up+=c.uploaded;
+        const no=c.total-c.uploaded;
+        return '<tr><td><b>'+esc(catLabel(k))+'</b></td>'+
+          '<td class="ctr">'+n(c.total)+'</td>'+
+          '<td class="ctr ok">'+n(c.uploaded)+'</td>'+
+          '<td class="ctr '+(no>0?'danger':'')+'">'+n(no)+'</td></tr>';
+      }).join('')
+    : '<tr><td colspan="4" class="ctr sub2">이번 달 시딩 내역이 없습니다.</td></tr>';
+  const foot = keys.length
+    ? '<tr style="background:#F5F5F5"><td><b>합계</b></td>'+
+      '<td class="ctr"><b>'+n(tot)+'</b></td>'+
+      '<td class="ctr ok"><b>'+n(up)+'</b></td>'+
+      '<td class="ctr '+((tot-up)>0?'danger':'')+'"><b>'+n(tot-up)+'</b></td></tr>'
+    : '';
+  return '<div class="chart"><h3>'+esc(s.ym.replace('-','.'))+' 기준</h3>'+
+    '<div class="tbl-wrap" style="margin-bottom:0"><table><thead><tr>'+
+    '<th style="text-align:left">플랫폼</th><th>협찬</th><th>업로드</th><th>미업로드</th>'+
+    '</tr></thead><tbody>'+rows+foot+'</tbody></table></div></div>';
+}
+
 /* ── 할일 · 공지 ──────────────────────── */
 function renderNotice(){
   const s=D.summary;
@@ -643,6 +672,7 @@ function renderNotice(){
     '게시기간 중 삭제확인 '+hl(D.items.filter(function(x){
        return x.state==='삭제' && x.postPeriod && x.delchk && x.delchk<=x.postPeriod;
      }).length)+'</div>'+
+    monthTableHtml()+
     '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
@@ -795,13 +825,8 @@ function renderDash(){
     '<div class="chart"><h3>📊 플랫폼별 누계</h3>'+
       (totalPairs.length ? hBars(totalPairs) : '<div class="sub2">데이터가 없습니다.</div>')+'</div>'+
 
-    '<div class="chart"><h3>'+esc(s.ym.replace('-','.'))+' 기준</h3>'+
-      '<div class="tbl-wrap" style="margin-bottom:0"><table><thead><tr>'+
-      '<th style="text-align:left">플랫폼</th><th>협찬</th><th>업로드</th><th>미업로드</th>'+
-      '</tr></thead><tbody>'+rows+foot+'</tbody></table></div></div>'+
-
     '<div class="sub2">· 추이·누계는 신청일시 기준입니다.<br>'+
-    '· "미업로드"는 업로드일이 아직 비어 있는 건입니다.</div>'+
+    '· 이번 달 플랫폼별 표는 [할일 · 공지]에서 볼 수 있습니다.</div>'+
     '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
@@ -906,7 +931,7 @@ function renderNoUpload(){
     });
   document.getElementById('v2noupload').innerHTML =
     (list.length ? '<div class="box-note">업로드일이 비어 있는 '+list.length+'건입니다. '+
-      '<b>URL을 확인</b>하고 <b>확인</b>을 누르면 오늘 날짜로 업로드 처리됩니다.</div>' : '')+
+      '<b>URL</b>을 확인하고 <b>확인</b>을 누르면 오늘 날짜로 업로드 처리됩니다.</div>' : '')+
     listHtml(list,'nou');
 }
 
@@ -934,12 +959,17 @@ function renderDeleted(){
          '원고료 정산에 반영하세요.</div>'+
          during.map(function(x){ return itemHtml(x,'del'); }).join('');
     }
-    if(after.length){
-      h+='<div class="sec s-gry" style="margin-top:'+(during.length?'16px':'0')+'">'+
-         '<span>⚪ 게시기간 종료 후 확인 '+after.length+'건</span></div>'+
-         '<div class="box-note">계약 기간을 채우고 내려간 건입니다. 조치할 것이 없습니다.</div>'+
-         after.map(function(x){ return itemHtml(x,'del'); }).join('');
-    }
+    /* 종료 후 건은 조치할 게 없으므로 평소엔 건수만 보이고, 눌러야 목록이 나옵니다 */
+    h+='<div class="sec s-gry" style="margin-top:'+(during.length?'16px':'0')+'" '+
+       'onclick="toggleBox(\'delAfter\')">'+
+       '<span>⚪ 게시기간 종료 후 확인</span>'+
+       '<span class="cnt">'+after.length+'건 ▾</span></div>'+
+       '<div id="delAfter" style="display:none">'+
+       (after.length
+         ? '<div class="box-note">계약 기간을 채우고 내려간 건입니다. 조치할 것이 없습니다.</div>'+
+           after.map(function(x){ return itemHtml(x,'delok'); }).join('')
+         : '<div class="box-note">해당하는 건이 없습니다.</div>')+
+       '</div>';
   }
   document.getElementById('v2deleted').innerHTML=h;
 }
@@ -948,23 +978,27 @@ function renderDeleted(){
 /* 업로드가 끝나 게시 중인 건입니다. URL을 열어 확인한 뒤 [확인]을 누르면
    최종확인일이 오늘로 기록됩니다. (할일 · 게시확인과 같은 동작) */
 function renderPosted(){
-  /* 게시 중이면서, 최종확인일이 비어 있거나 7일 이상 지난 건만 보여줍니다.
-     [게시중]을 누르면 그날로 기록되고 8일째부터 다시 나타납니다. */
+  /* 여기는 "게시 중인 건 전부"를 확인 상태와 함께 훑어보는 곳입니다.
+     최종확인일이 비어 있거나 오래된 건이 위로 올라옵니다.
+     (할일 · 게시확인은 7일 주기가 도래한 건만 골라 보여줍니다) */
   const days=(D.thresholds && D.thresholds.postCheck) || 7;
-  const list=D.items.filter(function(x){
-    if(x.state!=='게시중') return false;
-    if(!x.check) return true;
-    return dayGap(x.check, D.today) >= days;
-  }).slice().sort(function(a,b){
-    return String(a.check||'').localeCompare(String(b.check||''));   /* 오래된 것부터 */
-  });
+  const list=D.items.filter(function(x){ return x.state==='게시중'; })
+    .slice().sort(function(a,b){
+      const ac=a.check||'', bc=b.check||'';
+      if(!ac && bc) return -1;          /* 미확인이 맨 위 */
+      if(ac && !bc) return 1;
+      return ac.localeCompare(bc);      /* 오래 확인 안 한 것부터 */
+    });
+
+  const due=list.filter(function(x){
+    return !x.check || dayGap(x.check, D.today) >= days; }).length;
 
   document.getElementById('v2posted').innerHTML =
     (list.length
-      ? '<div class="box-note">확인이 필요한 '+list.length+'건입니다. '+
-        'URL을 열어보고 <b>게시중</b> 또는 <b>삭제</b>를 눌러주세요.<br>'+
-        '게시중을 누르면 '+days+'일 뒤에 다시 나타납니다.</div>'
-      : '<div class="box-ok">🟢 지금 확인할 게시 건이 없습니다.</div>')+
+      ? '<div class="box-note">게시 중인 '+list.length+'건입니다. '+
+        '이 중 <b>'+due+'건</b>은 확인한 지 '+days+'일이 넘었거나 아직 확인 전입니다.<br>'+
+        '<b>URL</b>을 열어보고 <b>게시중</b> 또는 <b>삭제</b>를 눌러주세요.</div>'
+      : '<div class="box-ok">🟢 게시 중인 건이 없습니다.</div>')+
     list.map(function(x){ return itemHtml(x,'pchk'); }).join('');
 }
 
@@ -1103,7 +1137,7 @@ function toggleIt(uid){
 function urlBtn(x, fallback){
   const u = x.url || x.acctUrl;
   if(!u) return fallback||'';
-  return '<button onclick="event.stopPropagation();window.open(\''+esc(u)+'\',\'_blank\')">URL 확인</button>';
+  return '<button onclick="event.stopPropagation();window.open(\''+esc(u)+'\',\'_blank\')">URL</button>';
 }
 
 function quickHtml(x, uid, ctx){
@@ -1129,7 +1163,7 @@ function quickHtml(x, uid, ctx){
   }else if(ctx==='nou'){
     /* 미업로드 건은 계정을 열어 올라왔는지 확인합니다 */
     const chk = x.acctUrl
-      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.acctUrl)+'\',\'_blank\')">URL 확인</button>'
+      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.acctUrl)+'\',\'_blank\')">URL</button>'
       : '';
     b = chk +
       '<button class="pri" onclick="event.stopPropagation();doUpload(\''+x.id+'\',\''+uid+'\',1)">확인</button>';
@@ -1242,7 +1276,9 @@ function detailHtml(x, uid, ctx){
 function toggleBox(id){
   const el=document.getElementById(id);
   if(!el) return;
-  el.style.display = (el.style.display==='none') ? 'block' : 'none';
+  const open = el.style.display==='none';
+  /* 표 안의 행은 block 으로 펴면 레이아웃이 깨지므로 table-row 로 되돌립니다 */
+  el.style.display = open ? (el.tagName==='TR' ? 'table-row' : 'block') : 'none';
 }
 
 function secondFormHtml(x, uid){
@@ -1372,11 +1408,18 @@ function chatReset(){
       return '<button class="chip" onclick="send(this.textContent)">'+esc(t)+'</button>'; }).join('');
 }
 
+/* 본문 안의 http(s) 주소를 눌러서 열 수 있는 링크로 바꿉니다 */
+function linkify(text){
+  return esc(text).replace(/(https?:\/\/[^\s<]+)/g, function(u){
+    return '<a href="'+u+'" target="_blank" rel="noopener">'+u+'</a>';
+  });
+}
+
 function say(who, text){
   const b=document.getElementById('chatBody');
   const d=document.createElement('div');
   d.className='cmsg '+who;
-  d.textContent=text;
+  d.innerHTML=linkify(text);
   b.appendChild(d);
   const sc=document.getElementById('chatScroll');
   if(sc) sc.scrollTop=sc.scrollHeight;
@@ -1397,14 +1440,17 @@ function fitChat(){
   const vh=vv?vv.height:window.innerHeight;
   const top=document.getElementById('header').offsetHeight+
             document.getElementById('tabs').offsetHeight;
-  p4.style.height=Math.max(vh-top,240)+'px';
-  window.scrollTo(0,0);
+  const h=Math.max(vh-top,240)+'px';
+  if(p4.style.height!==h) p4.style.height=h;   /* 값이 같으면 건드리지 않습니다 */
 }
+/* 키보드가 오르내릴 때마다 높이를 다시 계산하면 입력이 버벅입니다.
+   scroll 은 듣지 않고, resize 도 잠시 모아서 한 번만 처리합니다. */
+let fitT=null;
+function fitChatSoon(){ clearTimeout(fitT); fitT=setTimeout(fitChat,120); }
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize',fitChat);
-  window.visualViewport.addEventListener('scroll',fitChat);
+  window.visualViewport.addEventListener('resize',fitChatSoon);
 }
-window.addEventListener('resize',fitChat);
+window.addEventListener('resize',fitChatSoon);
 
 let PENDING_Q='';   /* AI에게 넘길지 확인 중인 질문 */
 
@@ -1511,11 +1557,16 @@ function logView(k){
       if(m){ tag=m[1]; a=a.slice(0,m.index); }
       const id='lg'+i;
       detail='<span class="more" style="margin:0" onclick="toggleBox(\''+id+'\')">더보기</span>'+
-        (tag==='llm'?' <span class="badge b-대가없음">AI</span>':'')+
-        '<div id="'+id+'" style="display:none">'+
+        (tag==='llm'?' <span class="badge b-대가없음">AI</span>':'');
+      /* 질문·답변은 표 아래 별도 행으로 넓게 펼칩니다 */
+      return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
+        '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
+        '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
+        '<td style="font-size:12px">'+detail+'</td></tr>'+
+        '<tr id="'+id+'" style="display:none"><td colspan="4" style="padding:0 10px 12px">'+
           '<div class="qa2"><b>질문</b><div>'+esc(q)+'</div></div>'+
-          '<div class="qa2"><b>답변</b><div>'+esc(a||'—')+'</div></div>'+
-        '</div>';
+          '<div class="qa2"><b>답변</b><div>'+linkify(a||'—')+'</div></div>'+
+        '</td></tr>';
     }
 
     return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
