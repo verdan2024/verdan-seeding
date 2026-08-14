@@ -43,8 +43,12 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;backgrou
 #header .title{font-weight:700;font-size:14px;}
 #header .sub{font-size:11px;opacity:.6;margin-top:2px;}
 #header .sub.stale{opacity:1;color:#FFCDD2;font-weight:700;}
-#header .role{margin-left:auto;font-size:11px;background:#3F51B5;padding:5px 11px;border-radius:10px;
-     white-space:nowrap;cursor:pointer;}
+#header .titleRow{display:flex;align-items:center;gap:7px;}
+#header .role{font-size:10.5px;background:#3F51B5;padding:2px 8px;border-radius:9px;
+     white-space:nowrap;}
+#header .logoutBtn{margin-left:auto;font-size:11px;color:#fff;background:none;
+     border:1px solid rgba(255,255,255,.35);padding:5px 11px;border-radius:10px;
+     white-space:nowrap;cursor:pointer;font-family:inherit;}
 #tabs{display:flex;background:#fff;border-bottom:1px solid #EEE;}
 #tabs button{flex:1;padding:12px 6px;border:none;background:none;font-size:13px;font-weight:600;
      color:#888;font-family:inherit;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
@@ -264,10 +268,13 @@ body.chatmode{overflow:hidden;}
   <div id="header">
     <div class="icon">📮</div>
     <div>
-      <div class="title">버던_시딩</div>
+      <div class="titleRow">
+        <span class="title">버던_시딩</span>
+        <span class="role" id="roleBadge"></span>
+      </div>
       <div class="sub" id="updated"></div>
     </div>
-    <div class="role" id="roleBadge" onclick="askLogout()"></div>
+    <button class="logoutBtn" onclick="askLogout()">로그아웃</button>
   </div>
 
   <div id="tabs">
