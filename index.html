@@ -97,11 +97,9 @@ button:disabled{opacity:.55;}
 .dd.over{color:#C0392B;} .dd.soon{color:#E65100;} .dd.ok{color:#999;}
 .dd.rent{color:#6A1B9A;}
 
-/* 2차 활용 O / X — O 를 누르면 상세가 펼쳐집니다 */
-.ox{display:inline-block;min-width:22px;text-align:center;font-weight:800;
-    border-radius:6px;padding:1px 7px;font-size:12px;}
-.ox.yes{background:#E8F5E9;color:#1B5E20;cursor:pointer;border:1px solid #A5D6A7;}
-.ox.no{background:#F0F0F3;color:#999;}
+/* 2차 활용 — 배경 없이 O / X 만 두고, 옆의 [상세보기]로 펼칩니다 */
+.more{color:#1A1A2E;font-weight:800;cursor:pointer;text-decoration:underline;
+      margin-left:6px;font-size:12px;}
 .box2{background:#FAFAFC;border:1px solid #EEE;border-radius:10px;
       padding:10px 12px;margin-top:10px;}
 
@@ -191,6 +189,8 @@ body.chatmode{overflow:hidden;}
 .cmsg.bot{align-self:flex-start;background:#fff;border:1px solid #E8E8E8;color:#222;
           border-bottom-left-radius:4px;}
 .cmsg.ai{align-self:flex-start;background:#EEF1FB;border:1px solid #C5CAE9;color:#283593;}
+.cmsg .tok{margin-top:8px;padding-top:7px;border-top:1px solid #C5CAE9;
+           font-size:10.5px;color:#5C6BC0;}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px;}
 .chip{font-size:12px;padding:7px 11px;border-radius:16px;border:1px solid #C5CAE9;background:#fff;
       color:#283593;cursor:pointer;font-family:inherit;}
@@ -351,7 +351,9 @@ body.chatmode{overflow:hidden;}
         <button class="f" id="askBtn" onclick="ask()">전송</button>
       </div>
       <div class="sub2" style="margin-top:8px">
-        정해진 형태의 질문은 즉시 답합니다. 이해하지 못한 질문만 AI가 처리합니다.</div>
+        흰색 답변은 저장된 데이터에서 바로 찾은 것입니다.<br>
+        <b style="color:#283593">파란색 답변은 AI가 처리한 것으로 토큰이 소모됩니다.</b><br>
+        AI로 넘기기 전에 항상 먼저 확인을 받습니다.</div>
     </div>
   </div>
 
@@ -506,6 +508,7 @@ function logout(){
   });
   document.getElementById('chatBody').innerHTML='';
   document.body.classList.remove('chatmode');
+  PENDING_Q='';
   tab('p1'); gm('');
 }
 
@@ -883,7 +886,9 @@ function renderSecDash(){
 /* ── 현황 · 미업로드 ──────────────────── */
 /* 업로드일이 등록되면 이 목록에서 자동으로 빠집니다. */
 function renderNoUpload(){
-  const list=D.items.filter(function(x){ return !x.uploadDate && x.state!=='삭제'; })
+  /* 대가없음(유빈지인 등)은 업로드 의무가 없어 목록에서 제외합니다. */
+  const list=D.items.filter(function(x){
+    return !x.uploadDate && x.state!=='삭제' && x.state!=='대가없음'; })
     .slice().sort(function(a,b){
       if(a.dDeadline===null && b.dDeadline===null) return 0;
       if(a.dDeadline===null) return 1;
@@ -1019,7 +1024,7 @@ function itemHtml(x, ctx){
     '<div class="hd" onclick="toggleIt(\''+uid+'\')">'+
       '<div><div class="nm">'+esc(x.name)+'</div>'+
         '<div class="meta">'+esc(catLabel(x.cat))+(x.campaign?' · '+esc(x.campaign):'')+'<br>'+
-        esc(x.product||'—')+(x.option?' / '+esc(x.option):'')+'</div></div>'+
+        esc(x.product||'—')+'</div></div>'+
       '<div class="right"><span class="badge b-'+esc(x.state)+'">'+esc(tagText(x))+'</span>'+
         (x.isRental ? '<div class="dd rent">대여</div>' : '')+note+'</div>'+
     '</div>'+
@@ -1062,7 +1067,7 @@ function quickHtml(x, uid, ctx){
       '<button class="pri" onclick="event.stopPropagation();doUpload(\''+x.id+'\',\''+uid+'\',1)">확인</button>';
   }else if(ctx==='del'){
     const open = x.url
-      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.url)+'\',\'_blank\')">글 열기</button>'
+      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.url)+'\',\'_blank\')">URL 확인</button>'
       : acct;
     b = open +
       '<button class="pri" onclick="event.stopPropagation();doRestore(\''+x.id+'\',\''+uid+'\')">복구</button>';
@@ -1106,8 +1111,8 @@ function detailHtml(x, uid, ctx){
   /* 2차 활용 — O/X 로 접어두고 눌러야 펼쳐지게 */
   const has = !!(x.s2type || x.legacy2);
   const second = has
-    ? '<span class="ox yes" onclick="toggleBox(\'s2_'+uid+'\')">O</span>'
-    : '<span class="ox no">X</span>';
+    ? 'O <span class="more" onclick="toggleBox(\'s2_'+uid+'\')">상세보기</span>'
+    : 'X';
 
   let h='<div class="kv">'+
     (x.orderNo
@@ -1325,28 +1330,59 @@ if(window.visualViewport){
 }
 window.addEventListener('resize',fitChat);
 
-async function ask(){
+let PENDING_Q='';   /* AI에게 넘길지 확인 중인 질문 */
+
+async function ask(confirmed){
   if(BUSY) return;
   const inp=document.getElementById('qInput');
-  const q=inp.value.trim();
+  const q = confirmed ? PENDING_Q : inp.value.trim();
   if(!q) return;
-  say('me',q);
-  inp.value='';
+
+  if(!confirmed){ say('me',q); inp.value=''; }
   document.getElementById('chatChips').innerHTML='';
+
   const btn=document.getElementById('askBtn');
   BUSY=true; btn.disabled=true; btn.textContent='...';
-  const wait=say('bot','찾는 중...');
+  const wait=say('bot','답변 중...');
+
   try{
-    const r=await api({ action:'chat', q:q });
+    const params={ action:'chat', q:q };
+    if(confirmed) params.confirm='1';
+    const r=await api(params);
     wait.remove();
+
     if(!r.ok){ say('bot', r.msg||'답하지 못했습니다.'); return; }
-    say(r.source==='llm' ? 'ai' : 'bot', r.reply);
+
+    /* 규칙으로 못 푼 경우 — 바로 AI로 넘기지 않고 먼저 되묻습니다 */
+    if(r.source==='confirm'){
+      PENDING_Q=q;
+      say('bot', r.reply);
+      document.getElementById('chatChips').innerHTML=
+        '<button class="chip" onclick="ask(true)">네, 물어봐 주세요</button>'+
+        '<button class="chip gray" onclick="chatNo()">아니오</button>';
+      return;
+    }
+
+    const d=say(r.source==='llm' ? 'ai' : 'bot', r.reply);
+    if(r.source==='llm' && r.usage){
+      const u=document.createElement('div');
+      u.className='tok';
+      u.textContent='토큰 '+n(r.usage.total)+'개 사용 (입력 '+n(r.usage.input)+
+                    ' · 출력 '+n(r.usage.output)+')';
+      d.appendChild(u);
+    }
   }catch(e){
     wait.remove();
     say('bot', isTimeout(e) ? '응답이 없습니다. 잠시 후 다시 물어봐 주세요.' : '오류: '+e.message);
   }finally{
     BUSY=false; btn.disabled=false; btn.textContent='전송';
   }
+}
+
+function chatNo(){
+  document.getElementById('chatChips').innerHTML='';
+  PENDING_Q='';
+  say('bot','다시 질문해주세요.\n플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣으면 더 정확합니다.');
 }
 
 /* ── 접근로그 ─────────────────────────── */
