@@ -43,8 +43,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;backgrou
 #header .title{font-weight:700;font-size:14px;}
 #header .sub{font-size:11px;opacity:.6;margin-top:2px;}
 #header .sub.stale{opacity:1;color:#FFCDD2;font-weight:700;}
-#header .role{margin-left:auto;font-size:11px;background:#3F51B5;padding:3px 9px;border-radius:10px;
-     white-space:nowrap;}
+#header .role{margin-left:auto;font-size:11px;background:#3F51B5;padding:5px 11px;border-radius:10px;
+     white-space:nowrap;cursor:pointer;}
 #tabs{display:flex;background:#fff;border-bottom:1px solid #EEE;}
 #tabs button{flex:1;padding:12px 6px;border:none;background:none;font-size:13px;font-weight:600;
      color:#888;font-family:inherit;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
@@ -267,7 +267,7 @@ body.chatmode{overflow:hidden;}
       <div class="title">버던_시딩</div>
       <div class="sub" id="updated"></div>
     </div>
-    <div class="role" id="roleBadge"></div>
+    <div class="role" id="roleBadge" onclick="askLogout()"></div>
   </div>
 
   <div id="tabs">
@@ -308,7 +308,7 @@ body.chatmode{overflow:hidden;}
         <h3>조건 검색</h3>
         <select id="aCat" onchange="renderAllList()"></select>
         <select id="aProd" onchange="renderAllList()"></select>
-        <input class="f" type="text" id="aName" placeholder="이름 · 계정" oninput="renderAllList()">
+        <input class="f" type="text" id="aName" placeholder="이름 · 계정" oninput="debounce(renderAllList)">
         <button class="f ghost" onclick="resetFilter('a')">조건 초기화</button>
       </div>
       <div id="allBody"></div>
@@ -328,7 +328,7 @@ body.chatmode{overflow:hidden;}
         <h3>조건 검색</h3>
         <select id="sCat" onchange="renderSecReg()"></select>
         <select id="sProd" onchange="renderSecReg()"></select>
-        <input class="f" type="text" id="sName" placeholder="이름 · 계정" oninput="renderSecReg()">
+        <input class="f" type="text" id="sName" placeholder="이름 · 계정" oninput="debounce(renderSecReg)">
         <button class="f ghost" onclick="resetFilter('s')">조건 초기화</button>
       </div>
       <div id="secRegBody"></div>
@@ -340,7 +340,7 @@ body.chatmode{overflow:hidden;}
         <select id="lProd" onchange="renderSecList()"></select>
         <select id="lChan" onchange="renderSecList()"></select>
         <select id="lPer" onchange="renderSecList()"></select>
-        <input class="f" type="text" id="lName" placeholder="이름 · 계정" oninput="renderSecList()">
+        <input class="f" type="text" id="lName" placeholder="이름 · 계정" oninput="debounce(renderSecList)">
         <button class="f ghost" onclick="resetFilter('l')">조건 초기화</button>
       </div>
       <div id="secListBody"></div>
@@ -376,11 +376,7 @@ body.chatmode{overflow:hidden;}
     <button class="f ghost" onclick="loadAccess()">새로고침</button>
   </div>
 
-  <div class="foot">
-    <button class="f ghost" style="width:auto;padding:9px 22px;font-size:12px"
-            onclick="logout()">로그아웃</button>
-    <div class="sub2" style="margin-top:10px">버던_시딩 · v3.0</div>
-  </div>
+
 </div>
 
 <div id="wm" aria-hidden="true"></div>
@@ -389,7 +385,7 @@ body.chatmode{overflow:hidden;}
 <script>
 
 /* Apps Script 웹앱 배포 URL. 재배포해서 URL 이 바뀌면 이 줄만 고치면 된다. */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2IwIgHUNrCJC6Nd7GhKG7b5pkvj1zPRb5wASUK4TzI9w9YWB3n3B9oZWpz-XYJ_Ru/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3svD8sJrB-gWMNKvRzai1wnTh9YB-VQGacvpryTlKCzD56iq30BWBH0X752KsMDkw/exec";
 
 const PW_STORE = 'verdan_seed_pw';
 const NM_STORE = 'verdan_seed_user';
@@ -454,6 +450,10 @@ function stamp(t, stale){
   el.textContent=t; el.className='sub'+(stale?' stale':'');
 }
 function gm(t){ document.getElementById('gateMsg').textContent=t; }
+/* 글자를 칠 때마다 목록을 다시 그리면 느려집니다. 0.25초 모아서 한 번만 그립니다. */
+let debT=null;
+function debounce(fn){ clearTimeout(debT); debT=setTimeout(fn,250); }
+
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 function n(v){ return (v===null||v===undefined||isNaN(v))?'—':Number(v).toLocaleString('ko-KR'); }
@@ -494,6 +494,11 @@ async function login(){
     PW=''; USER='';
     gm(isTimeout(e)?'서버 응답이 없습니다. [확인]을 다시 눌러주세요.':'연결 실패: '+e.message);
   }finally{ busy(false); }
+}
+
+/* 헤더의 권한 뱃지를 누르면 로그아웃 */
+function askLogout(){
+  if(confirm('로그아웃할까요?')) logout();
 }
 
 function logout(){
@@ -932,7 +937,8 @@ function renderNoUpload(){
   document.getElementById('v2noupload').innerHTML =
     (list.length ? '<div class="box-note">업로드일이 비어 있는 '+list.length+'건입니다. '+
       '<b>URL</b>을 확인하고 <b>확인</b>을 누르면 오늘 날짜로 업로드 처리됩니다.</div>' : '')+
-    listHtml(list,'nou');
+    listHtml(list,'nou')+
+    '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
 /* ── 관리 · 삭제확인 ──────────────────── */
@@ -954,9 +960,8 @@ function renderDeleted(){
     h='<div class="box-ok">🟢 삭제로 표시된 건이 없습니다.</div>';
   }else{
     if(during.length){
-      h+='<div class="box-danger"><b style="color:#C0392B">🔴 게시기간 중 삭제 '+during.length+'건</b><br>'+
-         '약속한 게시기간이 남았는데 글이 내려갔습니다. 재업로드를 요청하거나 '+
-         '원고료 정산에 반영하세요.</div>'+
+      h+='<div class="box-danger"><b style="color:#C0392B">🔴 게시기간 중 삭제 '+during.length+'건</b> · '+
+         '재업로드를 요청하세요.</div>'+
          during.map(function(x){ return itemHtml(x,'del'); }).join('');
     }
     /* 종료 후 건은 조치할 게 없으므로 평소엔 건수만 보이고, 눌러야 목록이 나옵니다 */
@@ -971,7 +976,8 @@ function renderDeleted(){
          : '<div class="box-note">해당하는 건이 없습니다.</div>')+
        '</div>';
   }
-  document.getElementById('v2deleted').innerHTML=h;
+  document.getElementById('v2deleted').innerHTML=
+    h+'<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
 /* ── 관리 · 게시확인 ──────────────────── */
@@ -995,11 +1001,13 @@ function renderPosted(){
 
   document.getElementById('v2posted').innerHTML =
     (list.length
-      ? '<div class="box-note">게시 중인 '+list.length+'건입니다. '+
-        '이 중 <b>'+due+'건</b>은 확인한 지 '+days+'일이 넘었거나 아직 확인 전입니다.<br>'+
-        '<b>URL</b>을 열어보고 <b>게시중</b> 또는 <b>삭제</b>를 눌러주세요.</div>'
+      ? '<div class="box-note">게시 중인 <b>'+list.length+'건 전부</b>를 보여줍니다. '+
+        '확인 후에도 목록에 남습니다.<br>'+
+        '🔴 표시된 <b>'+due+'건</b>은 확인한 지 '+days+'일이 넘었거나 아직 확인 전입니다.<br>'+
+        '오늘 처리할 것만 보려면 [할일 · 게시확인]을 쓰세요.</div>'
       : '<div class="box-ok">🟢 게시 중인 건이 없습니다.</div>')+
-    list.map(function(x){ return itemHtml(x,'pchk'); }).join('');
+    list.map(function(x){ return itemHtml(x,'pchk'); }).join('')+
+    '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
 /* yyyy-MM-dd 두 날짜의 차이(일) */
@@ -1109,6 +1117,13 @@ function itemHtml(x, ctx){
          : '<div class="dd soon">마감까지 '+x.dDeadline+'일</div>';
   }else if(x.state==='삭제' && x.delchk){
     note = '<div class="dd over">'+esc(x.delchk)+' 확인</div>';
+  }
+  /* 관리·게시확인에서 확인 주기가 지난 건을 눈에 띄게 */
+  if(ctx==='pchk'){
+    const days=(D.thresholds && D.thresholds.postCheck) || 7;
+    const over = !x.check || dayGap(x.check, D.today) >= days;
+    note = (over ? '<div class="dd over">🔴 확인 필요</div>' : '')+
+      '<div class="dd ok">최종확인 '+esc(x.check||'없음')+'</div>';
   }
 
   return '<div class="it'+open+'" id="'+uid+'">'+
@@ -1402,6 +1417,7 @@ const CHAT_SAMPLES = [
 function chatReset(){
   document.getElementById('chatBody').innerHTML='';
   document.getElementById('qInput').value='';
+  CARDS=[]; CARDN=0;
   say('bot','플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣어 물어보면 바로 답합니다.');
   document.getElementById('chatChips').innerHTML =
     CHAT_SAMPLES.map(function(t){
@@ -1485,6 +1501,13 @@ async function ask(confirmed){
       return;
     }
 
+    /* 목록형 답변은 20건씩 나눠 보여줍니다 */
+    if(r.cards && r.cards.length){
+      CARDS=r.cards; CARDN=0;
+      say('bot', r.head || (r.cards.length+'건입니다.'));
+      showCards();
+      return;
+    }
     const d=say(r.source==='llm' ? 'ai' : 'bot', r.reply);
     if(r.source==='llm' && r.usage){
       const u=document.createElement('div');
@@ -1499,6 +1522,27 @@ async function ask(confirmed){
   }finally{
     BUSY=false; btn.disabled=false; btn.textContent='전송';
   }
+}
+
+/* 채팅 결과 페이지 처리 */
+let CARDS=[], CARDN=0;
+const CARD_PAGE=20;
+
+function showCards(){
+  const chunk=CARDS.slice(CARDN, CARDN+CARD_PAGE);
+  if(!chunk.length) return;
+  say('bot', chunk.join('\n\n'));
+  CARDN+=chunk.length;
+
+  const box=document.getElementById('chatChips');
+  if(CARDN<CARDS.length){
+    box.innerHTML='<button class="chip" onclick="showCards()">'+
+      '더보기 ('+CARDN+' / '+CARDS.length+')</button>';
+  }else{
+    box.innerHTML='';
+  }
+  const sc=document.getElementById('chatScroll');
+  if(sc) sc.scrollTop=sc.scrollHeight;
 }
 
 function chatNo(){
