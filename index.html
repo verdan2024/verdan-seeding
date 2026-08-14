@@ -31,7 +31,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;backgrou
 #gate input:focus{outline:none;border-color:#9FA8DA;background:#fff;}
 #gate button{width:100%;padding:13px;border:none;border-radius:10px;background:#1A1A2E;color:#fff;
      font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
-#gateMsg{font-size:13px;color:#C0392B;margin-top:12px;min-height:18px;}
+#gateMsg{font-size:13px;color:#C0392B;margin-top:12px;min-height:18px;line-height:1.6;}
 #gate .hint{font-size:11px;color:#AAA;margin-top:10px;line-height:1.6;}
 
 /* 앱 */
@@ -253,7 +253,7 @@ body.chatmode{overflow:hidden;}
            onkeydown="if(event.key==='Enter')login()">
     <button id="loginBtn" onclick="login()">확인</button>
     <div id="gateMsg"></div>
-    <div class="hint">본인 이름을 입력하세요. 입력 기록에 함께 남습니다.<br>v3.0 · 2026-08</div>
+    <div class="hint">본인 이름을 입력하세요. 접근로그에 기록됩니다.<br>v3.0 · 2026-08</div>
   </div>
 </div>
 
@@ -481,7 +481,7 @@ async function login(){
   const pw=document.getElementById('pw').value.trim();
   if(!nm){ gm('이름을 입력하세요.'); return; }
   if(!pw){ gm('비밀번호를 입력하세요.'); return; }
-  gm('확인 중...'); busy(true);
+  gm('접속 중입니다. 잠시만 기다려주세요.'); busy(true);
   PW=pw; USER=nm;
   try{
     const r=await api();
@@ -640,7 +640,9 @@ function renderNotice(){
     '<div class="notice"><div class="ttl">오늘 처리할 것</div>'+
     '업로드확인 '+hl(s.needUpload)+'<br>'+
     '게시확인 '+hl(s.needPost)+'<br>'+
-    '삭제확인 대기 '+hl(s.deleted)+'</div>'+
+    '게시기간 중 삭제확인 '+hl(D.items.filter(function(x){
+       return x.state==='삭제' && x.postPeriod && x.delchk && x.delchk<=x.postPeriod;
+     }).length)+'</div>'+
     '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
 
@@ -904,7 +906,7 @@ function renderNoUpload(){
     });
   document.getElementById('v2noupload').innerHTML =
     (list.length ? '<div class="box-note">업로드일이 비어 있는 '+list.length+'건입니다. '+
-      '<b>계정</b>으로 확인하고 <b>확인</b>을 누르면 오늘 날짜로 업로드 처리됩니다.</div>' : '')+
+      '<b>URL을 확인</b>하고 <b>확인</b>을 누르면 오늘 날짜로 업로드 처리됩니다.</div>' : '')+
     listHtml(list,'nou');
 }
 
@@ -946,19 +948,31 @@ function renderDeleted(){
 /* 업로드가 끝나 게시 중인 건입니다. URL을 열어 확인한 뒤 [확인]을 누르면
    최종확인일이 오늘로 기록됩니다. (할일 · 게시확인과 같은 동작) */
 function renderPosted(){
-  const list=D.items.filter(function(x){ return x.state==='게시중'; })
-    .slice().sort(function(a,b){
-      const ac=a.check||'', bc=b.check||'';
-      if(ac!==bc) return ac.localeCompare(bc);   /* 오래 확인 안 한 것부터 */
-      return (a.dPost||0)-(b.dPost||0);
-    });
+  /* 게시 중이면서, 최종확인일이 비어 있거나 7일 이상 지난 건만 보여줍니다.
+     [게시중]을 누르면 그날로 기록되고 8일째부터 다시 나타납니다. */
+  const days=(D.thresholds && D.thresholds.postCheck) || 7;
+  const list=D.items.filter(function(x){
+    if(x.state!=='게시중') return false;
+    if(!x.check) return true;
+    return dayGap(x.check, D.today) >= days;
+  }).slice().sort(function(a,b){
+    return String(a.check||'').localeCompare(String(b.check||''));   /* 오래된 것부터 */
+  });
 
   document.getElementById('v2posted').innerHTML =
     (list.length
-      ? '<div class="box-note">게시 중인 '+list.length+'건입니다. '+
-        'URL을 열어 확인한 뒤 <b>확인</b>을 누르면 오늘 날짜로 기록됩니다.</div>'
-      : '<div class="box-ok">🟢 게시 중인 건이 없습니다.</div>')+
+      ? '<div class="box-note">확인이 필요한 '+list.length+'건입니다. '+
+        'URL을 열어보고 <b>게시중</b> 또는 <b>삭제</b>를 눌러주세요.<br>'+
+        '게시중을 누르면 '+days+'일 뒤에 다시 나타납니다.</div>'
+      : '<div class="box-ok">🟢 지금 확인할 게시 건이 없습니다.</div>')+
     list.map(function(x){ return itemHtml(x,'pchk'); }).join('');
+}
+
+/* yyyy-MM-dd 두 날짜의 차이(일) */
+function dayGap(from, to){
+  const a=new Date(from+'T00:00:00'), b=new Date(to+'T00:00:00');
+  if(isNaN(a)||isNaN(b)) return 9999;
+  return Math.round((b-a)/86400000);
 }
 
 /* ── 현황 · 전체 ──────────────────────── */
@@ -1029,9 +1043,6 @@ function renderSecList(){
   const fee=list.reduce(function(v,x){ return v+(x.brandFee||0); },0);
 
   body.innerHTML=
-    '<div class="box-ok"><b>2차 활용 '+list.length+'건</b> · 비용 '+n(money)+'원'+
-    (fee?' + 수수료 '+n(fee)+'원':'')+'<br>'+
-    '<span class="sub2" style="color:#1B5E20">'+sum+'</span></div>'+
     (soon ? '<div class="box-danger"><b style="color:#C0392B">🟣 종료 임박 '+soon+'건</b><br>'+
       '만료 전에 연장 협의 또는 소재 내리기를 확인하세요.</div>' : '')+
     (legacy.length ? '<div class="box-note">⚠️ 금액만 있고 <b>기간이 등록되지 않은 '+legacy.length+'건</b>이 있습니다.<br>'+
@@ -1088,6 +1099,13 @@ function toggleIt(uid){
 
 /* ── 카드에 바로 붙는 버튼 ────────────── */
 /* 펼치지 않고 한 번에 처리할 수 있게 하기 위한 것 */
+/* 콘텐츠 URL 이 있으면 그것을, 없으면 계정 주소를 여는 버튼 */
+function urlBtn(x, fallback){
+  const u = x.url || x.acctUrl;
+  if(!u) return fallback||'';
+  return '<button onclick="event.stopPropagation();window.open(\''+esc(u)+'\',\'_blank\')">URL 확인</button>';
+}
+
 function quickHtml(x, uid, ctx){
   const perm=PERM[ROLE]||NOPERM;
   if(!perm.write) return '';
@@ -1116,19 +1134,16 @@ function quickHtml(x, uid, ctx){
     b = chk +
       '<button class="pri" onclick="event.stopPropagation();doUpload(\''+x.id+'\',\''+uid+'\',1)">확인</button>';
   }else if(ctx==='pchk'){
-    const open = x.url
-      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.url)+'\',\'_blank\')">URL 확인</button>'
-      : (x.acctUrl
-        ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.acctUrl)+'\',\'_blank\')">URL 확인</button>'
-        : '');
-    b = open +
-      '<button class="pri" onclick="event.stopPropagation();doCheck(\''+x.id+'\',\''+uid+'\')">확인</button>';
+    b = urlBtn(x, acct) +
+      '<button class="no" onclick="event.stopPropagation();doDel(\''+x.id+'\',\''+uid+'\')">삭제</button>'+
+      '<button class="pri" onclick="event.stopPropagation();doCheck(\''+x.id+'\',\''+uid+'\')">게시중</button>';
   }else if(ctx==='del'){
-    const open = x.url
-      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.url)+'\',\'_blank\')">URL 확인</button>'
-      : acct;
-    b = open +
-      '<button class="pri" onclick="event.stopPropagation();doRestore(\''+x.id+'\',\''+uid+'\')">복구</button>';
+    /* 게시기간 중 삭제 — 미처리는 확인만, 처리완료는 업로드완료로 복구 */
+    b = urlBtn(x, acct) +
+      '<button class="no" onclick="event.stopPropagation();doRecheck(\''+x.id+'\',\''+uid+'\')">미처리</button>'+
+      '<button class="pri" onclick="event.stopPropagation();doRestore(\''+x.id+'\',\''+uid+'\')">처리완료</button>';
+  }else if(ctx==='delok'){
+    return '';   /* 게시기간 종료 후 건은 조치할 것이 없어 버튼을 두지 않습니다 */
   }else{
     return '';
   }
@@ -1313,11 +1328,14 @@ function doCheck(id, uid){
   act({ action:'check', id:id }, uid, '게시확인 완료. 7일 뒤 다시 뜹니다.');
 }
 function doDel(id, uid){
-  if(!confirm('게시글이 내려간 건으로 표시할까요?\n현황 > 삭제확인 탭으로 이동합니다.')) return;
+  if(!confirm('게시글이 내려간 건으로 표시할까요?\n삭제확인 탭으로 옮기고, 시트의 업로드 여부가 "삭제"로 바뀝니다.')) return;
   act({ action:'del', id:id }, uid, '삭제확인으로 옮겼습니다.');
 }
+function doRecheck(id, uid){
+  act({ action:'recheck', id:id }, uid, '미처리로 확인만 기록했습니다.');
+}
 function doRestore(id, uid){
-  act({ action:'del', id:id, restore:'1' }, uid, '삭제 표시를 해제했습니다.');
+  act({ action:'del', id:id, restore:'1' }, uid, '처리완료 — 업로드완료로 복구했습니다.');
 }
 function doSecond(id, uid){
   const type=document.getElementById('st_'+uid).value;
@@ -1476,50 +1494,40 @@ function logView(k){
     return;
   }
 
-  /* 채팅은 한 줄에 담기엔 너무 길어 [상세보기]로 접어둡니다. */
-  if(k==='chat'){
-    body.innerHTML=list.map(function(l,i){
-      const parts=String(l.memo||'').split(' ▸ ');
-      const q=parts[0]||'';
-      let a=parts.slice(1).join(' ▸ ');
-      let tag='';
-      const m=a.match(/\s\[(rule|llm|none|error)[^\]]*\]\s*$/);
-      if(m){ tag=m[1]; a=a.slice(0,m.index); }
-      const id='lg'+i;
-      return '<div class="it">'+
-        '<div class="hd" style="padding:11px 13px" onclick="toggleBox(\''+id+'\')">'+
-          '<div><div class="nm" style="font-size:13px">'+esc(q.slice(0,40))+
-            (q.length>40?'…':'')+'</div>'+
-          '<div class="meta">'+esc(l.t)+' · '+esc(l.user)+
-            (l.role?' ('+esc(l.role)+')':'')+'</div></div>'+
-          '<div class="right">'+
-            (tag==='llm'?'<span class="badge b-대가없음">AI</span>':
-             tag?'<span class="badge b-종료">'+esc(tag.toUpperCase())+'</span>':'')+
-            '<div class="more" style="margin:4px 0 0">상세보기</div></div>'+
-        '</div>'+
-        '<div id="'+id+'" style="display:none;padding:0 13px 13px">'+
-          '<div class="qa2"><b>질문</b><div>'+esc(q)+'</div></div>'+
-          '<div class="qa2"><b>답변</b><div>'+esc(a||'—')+'</div></div>'+
-        '</div></div>';
-    }).join('')+
-    '<div class="sub2">'+list.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>';
-    return;
-  }
-
-  const rows=list.map(function(l){
+  const rows=list.map(function(l,i){
     let cls='';
     if(l.result==='실패') cls='danger';
     else if(l.result==='입력'||l.result==='확인'||l.result==='접속') cls='ok';
+
+    let detail=esc(l.memo);
+
+    /* 채팅은 질문·답변이 길어 [더보기]로 접어둡니다 */
+    if(k==='chat'){
+      const parts=String(l.memo||'').split(' ▸ ');
+      const q=parts[0]||'';
+      let a=parts.slice(1).join(' ▸ ');
+      const m=a.match(/\s\[(rule|llm|none|error)[^\]]*\]\s*$/);
+      let tag='';
+      if(m){ tag=m[1]; a=a.slice(0,m.index); }
+      const id='lg'+i;
+      detail='<span class="more" style="margin:0" onclick="toggleBox(\''+id+'\')">더보기</span>'+
+        (tag==='llm'?' <span class="badge b-대가없음">AI</span>':'')+
+        '<div id="'+id+'" style="display:none">'+
+          '<div class="qa2"><b>질문</b><div>'+esc(q)+'</div></div>'+
+          '<div class="qa2"><b>답변</b><div>'+esc(a||'—')+'</div></div>'+
+        '</div>';
+    }
+
     return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
       '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
-      '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+
-        (l.role?'<br><span class="sub2">'+esc(l.role)+'</span>':'')+'</td>'+
-      '<td style="font-size:12px">'+esc(l.memo)+'</td></tr>';
+      '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
+      '<td style="font-size:12px">'+detail+'</td></tr>';
   }).join('');
 
   body.innerHTML='<div class="tbl-wrap"><table><thead><tr>'+
     '<th>시각</th><th>결과</th><th>사용자</th>'+
-    '<th style="text-align:left">'+(k==='access'?'상세':'작업 내용')+'</th>'+
+    '<th style="text-align:left">'+
+      (k==='access'?'권한':(k==='chat'?'질문 · 답변':'작업 내용'))+'</th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="sub2">'+list.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>';
 }
@@ -1564,7 +1572,7 @@ window.addEventListener('pageshow',function(){ onResume(); });
   try{ sp=localStorage.getItem(PW_STORE); sn=localStorage.getItem(NM_STORE); }catch(e){}
   if(sn) document.getElementById('nm').value=sn;
   if(!sp||!sn) return;
-  PW=sp; USER=sn; gm('확인 중...'); busy(true);
+  PW=sp; USER=sn; gm('접속 중입니다. 잠시만 기다려주세요.'); busy(true);
   try{
     const r=await api();
     if(r.ok){ LAST=Date.now(); start(r); }
