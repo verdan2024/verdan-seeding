@@ -97,6 +97,14 @@ button:disabled{opacity:.55;}
 .dd.over{color:#C0392B;} .dd.soon{color:#E65100;} .dd.ok{color:#999;}
 .dd.rent{color:#6A1B9A;}
 
+/* 2차 활용 O / X — O 를 누르면 상세가 펼쳐집니다 */
+.ox{display:inline-block;min-width:22px;text-align:center;font-weight:800;
+    border-radius:6px;padding:1px 7px;font-size:12px;}
+.ox.yes{background:#E8F5E9;color:#1B5E20;cursor:pointer;border:1px solid #A5D6A7;}
+.ox.no{background:#F0F0F3;color:#999;}
+.box2{background:#FAFAFC;border:1px solid #EEE;border-radius:10px;
+      padding:10px 12px;margin-top:10px;}
+
 .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12px;color:#666;
     line-height:1.9;padding-top:10px;}
 .kv b{font-weight:700;color:#333;}
@@ -170,6 +178,28 @@ select.fld{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='
 .notice b{font-variant-numeric:tabular-nums;}
 .notice .hl{color:#C0392B;font-weight:700;}
 
+/* ── 채팅 ─────────────────────────────── */
+#p4.on{display:flex;flex-direction:column;padding:12px 16px 0;}
+body.chatmode{overflow:hidden;}
+#chatScroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px 4px;}
+#chatTop{text-align:center;padding:0 0 8px;flex-shrink:0;}
+#chatTop .chip{padding:5px 14px;font-size:11.5px;}
+#chatBody{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;}
+.cmsg{max-width:90%;padding:11px 13px;border-radius:14px;font-size:13px;line-height:1.75;
+      white-space:pre-wrap;word-break:break-word;}
+.cmsg.me{align-self:flex-end;background:#1A1A2E;color:#fff;border-bottom-right-radius:4px;}
+.cmsg.bot{align-self:flex-start;background:#fff;border:1px solid #E8E8E8;color:#222;
+          border-bottom-left-radius:4px;}
+.cmsg.ai{align-self:flex-start;background:#EEF1FB;border:1px solid #C5CAE9;color:#283593;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px;}
+.chip{font-size:12px;padding:7px 11px;border-radius:16px;border:1px solid #C5CAE9;background:#fff;
+      color:#283593;cursor:pointer;font-family:inherit;}
+.chip.gray{border-color:#DDD;color:#666;}
+#chatFoot{padding:8px 0 calc(10px + env(safe-area-inset-bottom));background:#F5F6FA;flex-shrink:0;}
+#chatBar{display:flex;gap:8px;}
+#chatBar input{flex:1;margin-bottom:0;}
+#chatBar button{width:auto;padding:12px 18px;margin-bottom:0;}
+
 /* ── 그래프 (외부 라이브러리 없이 CSS로만) ── */
 .chart{background:#fff;border:1px solid #E8E8E8;border-radius:12px;padding:14px;margin-bottom:12px;}
 .chart h3{font-size:13px;color:#1A1A2E;margin-bottom:12px;}
@@ -238,7 +268,8 @@ select.fld{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='
     <button id="t1" class="on" onclick="tab('p1')">할일</button>
     <button id="t2" onclick="tab('p2')">현황</button>
     <button id="t3" onclick="tab('p3')">2차활용</button>
-    <button id="t4" onclick="tab('p4')" style="display:none">접근로그</button>
+    <button id="t4" onclick="tab('p4')">채팅</button>
+    <button id="t5" onclick="tab('p5')" style="display:none">접근로그</button>
   </div>
 
   <!-- ── 오늘 ───────────────────────────── -->
@@ -281,7 +312,7 @@ select.fld{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='
     <div class="seg" id="segSecond">
       <button class="on" data-k="dash" onclick="setSecond('dash')">대시보드</button>
       <button          data-k="reg"  onclick="setSecond('reg')">등록</button>
-      <button          data-k="list" onclick="setSecond('list')">현황</button>
+      <button          data-k="list" onclick="setSecond('list')">전체</button>
     </div>
     <div id="v3dash"></div>
     <div id="v3reg" style="display:none">
@@ -294,14 +325,42 @@ select.fld{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='
       </div>
       <div id="secRegBody"></div>
     </div>
-    <div id="v3list" style="display:none"></div>
+    <div id="v3list" style="display:none">
+      <div class="card">
+        <h3>조건 검색</h3>
+        <select id="lCat" onchange="renderSecList()"></select>
+        <select id="lProd" onchange="renderSecList()"></select>
+        <select id="lChan" onchange="renderSecList()"></select>
+        <select id="lPer" onchange="renderSecList()"></select>
+        <input class="f" type="text" id="lName" placeholder="이름 · 계정" oninput="renderSecList()">
+        <button class="f ghost" onclick="resetFilter('l')">조건 초기화</button>
+      </div>
+      <div id="secListBody"></div>
+    </div>
+  </div>
+
+  <!-- ── 채팅 ───────────────────────────── -->
+  <div id="p4" class="page">
+    <div id="chatTop"><button class="chip gray" onclick="chatReset()">↺ 초기화</button></div>
+    <div id="chatScroll"><div id="chatBody"></div></div>
+    <div id="chatFoot">
+      <div id="chatChips" class="chips"></div>
+      <div id="chatBar">
+        <input class="f" type="text" id="qInput" placeholder="무엇이든 물어보세요"
+               onkeydown="if(event.key==='Enter')ask()">
+        <button class="f" id="askBtn" onclick="ask()">전송</button>
+      </div>
+      <div class="sub2" style="margin-top:8px">
+        정해진 형태의 질문은 즉시 답합니다. 이해하지 못한 질문만 AI가 처리합니다.</div>
+    </div>
   </div>
 
   <!-- ── 접근로그 ───────────────────────── -->
-  <div id="p4" class="page">
+  <div id="p5" class="page">
     <div class="seg" id="segLog">
       <button class="on" data-k="access" onclick="logView('access')">접속</button>
       <button          data-k="work"   onclick="logView('work')">기록</button>
+      <button          data-k="chat"   onclick="logView('chat')">채팅</button>
     </div>
     <div id="accessBody"></div>
     <button class="f ghost" onclick="loadAccess()">새로고침</button>
@@ -436,13 +495,17 @@ function logout(){
   document.getElementById('app').style.display='none';
   document.getElementById('gate').style.display='flex';
   document.getElementById('pw').value='';
-  document.getElementById('t4').style.display='none';
+  document.getElementById('t5').style.display='none';
   document.getElementById('roleBadge').textContent='';
   ['v1notice','v1upchk','v1post','v2dash','v2noupload','v2deleted','allBody',
-   'v3dash','secRegBody','v3list','accessBody'].forEach(function(id){
+   'v3dash','secRegBody','secListBody','accessBody','chatChips'].forEach(function(id){
     document.getElementById(id).innerHTML='';
   });
-  ['aName','sName'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['aName','sName','lName','qInput'].forEach(function(id){
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('chatBody').innerHTML='';
+  document.body.classList.remove('chatmode');
   tab('p1'); gm('');
 }
 
@@ -455,10 +518,11 @@ function start(r){
   document.getElementById('roleBadge').textContent=perm.label;
   stamp('갱신 '+r.updated, false);
   watermark(true);
-  document.getElementById('t4').style.display = perm.access ? 'block' : 'none';
+  document.getElementById('t5').style.display = perm.access ? 'block' : 'none';
   accessLoaded=false;
   fillFilters();
   renderAll();
+  chatReset();
   tab('p1');
 }
 
@@ -474,18 +538,37 @@ function fillFilters(){
     cats.map(function(c){ return '<option value="'+esc(c)+'">'+esc(catLabel(c))+'</option>'; }).join('');
   const prodOpt='<option value="">상품 전체</option>'+
     prods.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
-  ['a','s'].forEach(function(k){
+  ['a','s','l'].forEach(function(k){
     const c=document.getElementById(k+'Cat'), p=document.getElementById(k+'Prod');
+    if(!c||!p) return;
     const cv=c.value, pv=p.value;
     c.innerHTML=catOpt; p.innerHTML=prodOpt;
     c.value=cv; p.value=pv;
   });
+
+  /* 2차활용 전체 전용 — 활용 채널 / 활용 기간 */
+  const chan=document.getElementById('lChan'), per=document.getElementById('lPer');
+  if(chan && per){
+    const cvv=chan.value, pvv=per.value;
+    chan.innerHTML='<option value="">활용 채널 전체</option>'+
+      (D.secondTypes||[]).map(function(t){
+        return '<option value="'+esc(t)+'">'+esc(t)+'</option>'; }).join('');
+    per.innerHTML='<option value="">활용 기간 전체</option>'+
+      (D.secondPeriods||[]).map(function(x){
+        return '<option value="'+esc(x.t)+'">'+esc(x.t)+'</option>'; }).join('');
+    chan.value=cvv; per.value=pvv;
+  }
 }
 
 function resetFilter(k){
   document.getElementById(k+'Cat').value='';
   document.getElementById(k+'Prod').value='';
   document.getElementById(k+'Name').value='';
+  if(k==='l'){
+    document.getElementById('lChan').value='';
+    document.getElementById('lPer').value='';
+    renderSecList(); return;
+  }
   if(k==='a') renderAllList(); else renderSecReg();
 }
 
@@ -509,12 +592,13 @@ function renderAll(){
 }
 
 function tab(p){
-  for(let i=1;i<=4;i++){
+  for(let i=1;i<=5;i++){
     const on=('p'+i)===p;
     document.getElementById('p'+i).className='page'+(on?' on':'');
     document.getElementById('t'+i).className=on?'on':'';
   }
-  if(p==='p4' && !accessLoaded) loadAccess();
+  if(p==='p5' && !accessLoaded) loadAccess();
+  if(p==='p4') setTimeout(fitChat,50);
 }
 
 function segSwitch(segId, key, pairs){
@@ -851,19 +935,36 @@ function renderSecReg(){
 /* ── 2차활용 · 현황 ───────────────────── */
 /* 앱에서 등록한 건 + 시트에 예전 방식으로 표시된 건(브랜더진 W열)을 함께 봅니다. */
 function renderSecList(){
-  const list=D.items.filter(function(x){ return x.s2type || x.legacy2; })
-    .slice().sort(function(a,b){
-      const av=a.s2type?0:1, bv=b.s2type?0:1;
-      if(av!==bv) return av-bv;
-      if(a.s2forever&&b.s2forever) return 0;
-      if(a.s2forever) return 1;
-      if(b.s2forever) return -1;
-      return String(a.s2e).localeCompare(String(b.s2e));
-    });
+  /* 2차 활용이 등록됐거나 금액이 잡힌 건만 대상으로 합니다 */
+  let list=D.items.filter(function(x){ return x.s2type || x.legacy2; });
 
+  const cat=document.getElementById('lCat').value;
+  const prod=document.getElementById('lProd').value;
+  const chan=document.getElementById('lChan').value;
+  const per=document.getElementById('lPer').value;
+  const nm=document.getElementById('lName').value.trim().toLowerCase().replace(/^@/,'');
+
+  if(cat)  list=list.filter(function(x){ return x.cat===cat; });
+  if(prod) list=list.filter(function(x){ return x.product===prod; });
+  if(chan) list=list.filter(function(x){ return x.s2type===chan; });
+  if(per)  list=list.filter(function(x){
+    return (x.s2period||(x.s2forever?'영구':''))===per; });
+  if(nm)   list=list.filter(function(x){
+    return (x.name+' '+(x.handleShown||x.handle||'')).toLowerCase()
+      .replace(/@/g,'').indexOf(nm)>=0; });
+
+  list=list.slice().sort(function(a,b){
+    const av=a.s2type?0:1, bv=b.s2type?0:1;
+    if(av!==bv) return av-bv;
+    if(a.s2forever&&b.s2forever) return 0;
+    if(a.s2forever) return 1;
+    if(b.s2forever) return -1;
+    return String(a.s2e).localeCompare(String(b.s2e));
+  });
+
+  const body=document.getElementById('secListBody');
   if(!list.length){
-    document.getElementById('v3list').innerHTML =
-      '<div class="box-note">2차 활용 건이 없습니다. [등록] 탭에서 추가하세요.</div>';
+    body.innerHTML='<div class="box-note">조건에 맞는 2차 활용 건이 없습니다.</div>';
     return;
   }
 
@@ -873,16 +974,17 @@ function renderSecList(){
       .forEach(function(x){ byType[x.s2type]=(byType[x.s2type]||0)+1; });
   const sum=Object.keys(byType).map(function(k){ return esc(k)+' '+byType[k]+'건'; }).join(' · ') || '—';
   const soon=list.filter(function(x){ return x.flags.indexOf('secondEnd')>=0; }).length;
+  const money=list.reduce(function(v,x){ return v+(x.amount||0); },0);
+  const fee=list.reduce(function(v,x){ return v+(x.brandFee||0); },0);
 
-  document.getElementById('v3list').innerHTML =
-    '<div class="box-ok"><b>2차 활용 '+list.length+'건</b><br>'+
+  body.innerHTML=
+    '<div class="box-ok"><b>2차 활용 '+list.length+'건</b> · 비용 '+n(money)+'원'+
+    (fee?' + 수수료 '+n(fee)+'원':'')+'<br>'+
     '<span class="sub2" style="color:#1B5E20">'+sum+'</span></div>'+
     (soon ? '<div class="box-danger"><b style="color:#C0392B">🟣 종료 임박 '+soon+'건</b><br>'+
       '만료 전에 연장 협의 또는 소재 내리기를 확인하세요.</div>' : '')+
     (legacy.length ? '<div class="box-note">⚠️ 금액만 있고 <b>기간이 등록되지 않은 '+legacy.length+'건</b>이 있습니다.<br>'+
-      '시트(예: 04_브랜더진 W열)에 금액은 있지만 종류·구매일·기간이 없어 '+
-      '<b>언제 만료되는지 알 수 없고 알림도 뜨지 않습니다.</b><br>'+
-      '항목을 눌러 [등록]에서 종류·기간을 채워주세요.</div>' : '')+
+      '항목을 눌러 [2차 활용 등록]에서 채널·기간을 채워주세요.</div>' : '')+
     list.map(function(x){ return itemHtml(x,'seclist'); }).join('');
 }
 
@@ -990,40 +1092,79 @@ function secondText(x){
 function detailHtml(x, uid, ctx){
   const perm=PERM[ROLE]||NOPERM;
 
+  /* 게시기간 — 업로드 전이면 "—", 업로드했으면 "업로드일 ~ 종료일" */
+  const period = x.uploadDate
+    ? esc(x.uploadDate)+' ~ '+esc(x.postPeriod||'—')
+    : '—';
+
+  /* 계정 — 눌러서 바로 열 수 있게 링크로 */
+  const acct = x.acctUrl
+    ? '<a href="'+esc(x.acctUrl)+'" target="_blank" rel="noopener">'+
+        esc(x.handleShown||x.handle||'열기')+'</a>'
+    : esc(x.handleShown||x.handle||'—');
+
+  /* 2차 활용 — O/X 로 접어두고 눌러야 펼쳐지게 */
+  const has = !!(x.s2type || x.legacy2);
+  const second = has
+    ? '<span class="ox yes" onclick="toggleBox(\'s2_'+uid+'\')">O</span>'
+    : '<span class="ox no">X</span>';
+
   let h='<div class="kv">'+
-    '<span>캠페인 · 업로드마감</span><b>'+esc(x.campaign||'—')+' · '+esc(x.deadline||'—')+'</b>'+
-    '<span>업로드일 · 게시기간</span><b>'+esc(x.uploadDate||'—')+' · '+esc(x.postPeriod||'—')+'</b>'+
     (x.orderNo
       ? '<span>주문번호</span><b>'+esc(x.orderNo)+'</b>'
-      : '<span>계정</span><b>'+esc(x.handleShown||x.handle||'—')+'</b>')+
+      : '<span>계정</span><b>'+acct+'</b>')+
+    '<span>캠페인 · 업로드마감</span><b>'+esc(x.campaign||'—')+' · '+esc(x.deadline||'—')+'</b>'+
+    '<span>게시기간</span><b>'+period+'</b>'+
     (x.way && x.way!=='시딩' ? '<span>진행방식</span><b>'+esc(x.way)+'</b>' : '')+
     (x.coop ? '<span>협업유형</span><b>'+esc(x.coop)+'</b>' : '')+
-    '<span>신청일시</span><b>'+esc(x.applied||'—')+'</b>'+
-    '<span>발송상태</span><b>'+esc(x.ship||'—')+(x.courier?' · '+esc(x.courier):'')+'</b>'+
-    '<span>최종확인</span><b>'+esc(x.check||'미확인')+'</b>'+
-    '<span>2차 활용</span><b>'+secondText(x)+'</b>'+
+    '<span>2차 활용</span><b>'+second+'</b>'+
     (x.url ? '<span>콘텐츠</span><b><a href="'+esc(x.url)+'" target="_blank" rel="noopener">링크 열기</a></b>' : '')+
+    '<span>최종확인</span><b>'+esc(x.check||'미확인')+'</b>'+
     '</div>';
+
+  /* 2차 활용 상세 — O 를 눌렀을 때만 보입니다 */
+  if(has){
+    h+='<div class="box2" id="s2_'+uid+'" style="display:none">'+
+       '<div class="kv" style="padding-top:0">'+
+         '<span>사용권 구매일</span><b>'+esc(x.s2s||'—')+'</b>'+
+         '<span>활용 기간</span><b>'+esc(x.s2period|| (x.s2forever?'영구':'—'))+'</b>'+
+         '<span>활용 마감일</span><b>'+(x.s2forever?'영구':esc(x.s2e||'—'))+'</b>'+
+         '<span>활용 채널</span><b>'+esc(x.s2type||'미등록')+'</b>'+
+         '<span>2차활용 비용</span><b>'+(x.amount?n(x.amount)+'원':'—')+
+           (x.brandFee?' <span class="sub2">(+수수료 '+n(x.brandFee)+'원)</span>':'')+'</b>'+
+         '<span>비고</span><b>'+esc(x.s2memo||'—')+'</b>'+
+       '</div></div>';
+  }
 
   if(!perm.write) return h;
 
-  h+='<div class="hr"></div><div class="acts">';
-  h += (ctx==='sec' || ctx==='seclist') ? secondFormHtml(x, uid) : uploadFormHtml(x, uid);
-  h+='<div class="msg" id="m_'+uid+'"></div></div>';
+  /* 2차활용 탭에서만 수정 폼을 제공합니다.
+     현황·할일 탭에서는 조회만 하고, 게시확인은 [할일 > 게시확인]에서 처리합니다. */
+  /* 할일 탭에서는 콘텐츠 URL을 나중에 채울 수 있게 남겨둡니다.
+     현황·전체에서는 조회만 하도록 폼을 두지 않습니다. */
+  if(ctx==='upc' || ctx==='pst' || ctx==='nou'){
+    return h+'<div class="hr"></div><div class="acts">'+
+      '<input class="f" type="url" id="cu_'+uid+'" placeholder="콘텐츠 URL 등록" '+
+        'inputmode="url" value="'+esc(x.url)+'">'+
+      '<button class="f ghost" onclick="doUrl(\''+x.id+'\',\''+uid+'\')">URL 저장</button>'+
+      '<div class="msg" id="m_'+uid+'"></div></div>';
+  }
+
+  if(ctx==='sec' || ctx==='seclist'){
+    h+='<div class="hr"></div><div class="acts">'+
+       '<button class="f ghost" onclick="toggleBox(\'ed_'+uid+'\')">'+
+         (has?'2차 활용 수정':'2차 활용 등록')+'</button>'+
+       '<div id="ed_'+uid+'" style="display:none">'+secondFormHtml(x, uid)+'</div>'+
+       '<div class="msg" id="m_'+uid+'"></div></div>';
+  }
   return h;
 }
 
-function uploadFormHtml(x, uid){
-  if(!x.uploadDate){
-    return '<input class="f" type="url" id="u_'+uid+'" placeholder="콘텐츠 URL (선택)" inputmode="url">'+
-      '<div class="row2"><input class="f" type="date" id="ud_'+uid+'" value="'+esc(D.today)+'">'+
-      '<button class="f" style="flex:1;margin-bottom:9px" onclick="doUpload(\''+x.id+'\',\''+uid+'\',0)">업로드 완료</button></div>'+
-      '<div class="sub2">저장하면 업로드일·게시기간(+'+D.months+'개월)·업로드여부가 한 번에 채워집니다. '+
-      'URL은 비워둬도 되고 나중에 채울 수 있습니다.</div>';
-  }
-  return '<button class="f ghost sm" onclick="doCheck(\''+x.id+'\',\''+uid+'\')">게시확인</button>'+
-    '<input class="f" type="url" id="cu_'+uid+'" placeholder="콘텐츠 URL 등록" inputmode="url" value="'+esc(x.url)+'">'+
-    '<button class="f ghost" onclick="doUrl(\''+x.id+'\',\''+uid+'\')">URL 저장</button>';
+/* 접었다 펴는 공통 동작 */
+function toggleBox(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.style.display = (el.style.display==='none') ? 'block' : 'none';
 }
 
 function secondFormHtml(x, uid){
@@ -1132,6 +1273,82 @@ function doSecondClear(id, uid){
   act({ action:'second', id:id, clear:'1' }, uid, '2차 활용 등록을 해제했습니다.');
 }
 
+/* ── 채팅 ─────────────────────────────── */
+/* 규칙으로 답한 것과 AI가 답한 것을 말풍선 색으로 구분합니다. */
+const CHAT_SAMPLES = [
+  '오브 스웨이드백 크림 2차 활용 남은 사람 있어?',
+  '브랜더진 김민경 2차활용 조건 알려줘',
+  '리뷰노트 2025-09에 업로드된 콘텐츠 알려줘',
+  '브랜더진에서 진행한 오브백 블랙 콘텐츠 전부 알려줘',
+];
+
+function chatReset(){
+  document.getElementById('chatBody').innerHTML='';
+  document.getElementById('qInput').value='';
+  say('bot','플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣어 물어보면 바로 답합니다.');
+  document.getElementById('chatChips').innerHTML =
+    CHAT_SAMPLES.map(function(t){
+      return '<button class="chip" onclick="send(this.textContent)">'+esc(t)+'</button>'; }).join('');
+}
+
+function say(who, text){
+  const b=document.getElementById('chatBody');
+  const d=document.createElement('div');
+  d.className='cmsg '+who;
+  d.textContent=text;
+  b.appendChild(d);
+  const sc=document.getElementById('chatScroll');
+  if(sc) sc.scrollTop=sc.scrollHeight;
+  return d;
+}
+function send(t){ document.getElementById('qInput').value=t; ask(); }
+
+/* 키보드가 올라오면 화면이 줄어든다. 줄어든 높이에 맞춰 채팅 영역을 다시 잡는다. */
+function fitChat(){
+  const p4=document.getElementById('p4');
+  if(!p4 || p4.className.indexOf('on')===-1){
+    document.body.classList.remove('chatmode');
+    if(p4) p4.style.height='';
+    return;
+  }
+  document.body.classList.add('chatmode');
+  const vv=window.visualViewport;
+  const vh=vv?vv.height:window.innerHeight;
+  const top=document.getElementById('header').offsetHeight+
+            document.getElementById('tabs').offsetHeight;
+  p4.style.height=Math.max(vh-top,240)+'px';
+  window.scrollTo(0,0);
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',fitChat);
+  window.visualViewport.addEventListener('scroll',fitChat);
+}
+window.addEventListener('resize',fitChat);
+
+async function ask(){
+  if(BUSY) return;
+  const inp=document.getElementById('qInput');
+  const q=inp.value.trim();
+  if(!q) return;
+  say('me',q);
+  inp.value='';
+  document.getElementById('chatChips').innerHTML='';
+  const btn=document.getElementById('askBtn');
+  BUSY=true; btn.disabled=true; btn.textContent='...';
+  const wait=say('bot','찾는 중...');
+  try{
+    const r=await api({ action:'chat', q:q });
+    wait.remove();
+    if(!r.ok){ say('bot', r.msg||'답하지 못했습니다.'); return; }
+    say(r.source==='llm' ? 'ai' : 'bot', r.reply);
+  }catch(e){
+    wait.remove();
+    say('bot', isTimeout(e) ? '응답이 없습니다. 잠시 후 다시 물어봐 주세요.' : '오류: '+e.message);
+  }finally{
+    BUSY=false; btn.disabled=false; btn.textContent='전송';
+  }
+}
+
 /* ── 접근로그 ─────────────────────────── */
 /* 접속 = 로그인 성공·실패 / 기록 = 업로드·게시확인 등 값이 바뀐 작업 */
 let LOGS=[], LOGVIEW='access';
@@ -1160,8 +1377,8 @@ function logView(k){
   const list=LOGS.filter(function(l){ return l.kind===k; });
 
   if(!list.length){
-    body.innerHTML='<div class="box-note">'+
-      (k==='access' ? '접속 기록이 없습니다.' : '작업 기록이 없습니다.')+'</div>';
+    const t = k==='access' ? '접속' : (k==='chat' ? '채팅' : '작업');
+    body.innerHTML='<div class="box-note">'+t+' 기록이 없습니다.</div>';
     return;
   }
 
@@ -1177,7 +1394,8 @@ function logView(k){
 
   body.innerHTML='<div class="tbl-wrap"><table><thead><tr>'+
     '<th>시각</th><th>결과</th><th>사용자</th>'+
-    '<th style="text-align:left">'+(k==='access'?'권한 · 상세':'작업 내용')+'</th>'+
+    '<th style="text-align:left">'+
+      (k==='access'?'상세':(k==='chat'?'질문 ▸ 답변':'작업 내용'))+'</th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="sub2">'+list.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>';
 }
