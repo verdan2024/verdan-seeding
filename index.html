@@ -95,6 +95,7 @@ button:disabled{opacity:.55;}
 .b-대가없음{background:#E8EAF6;color:#3949AB;}
 .dd{font-size:11px;font-weight:700;margin-top:4px;}
 .dd.over{color:#C0392B;} .dd.soon{color:#E65100;} .dd.ok{color:#999;}
+.dd.rent{color:#6A1B9A;}
 
 .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12px;color:#666;
     line-height:1.9;padding-top:10px;}
@@ -146,10 +147,21 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
 .qmsg{font-size:11.5px;padding:0 13px 10px;min-height:0;}
 .qmsg.err{color:#C0392B;} .qmsg.good{color:#1B5E20;}
 
-/* 2차활용 종류·기간 가로 배치 */
+/* 2차활용 입력 폼 — select 와 input 의 높이를 같게 맞춘다.
+   브라우저 기본값이 서로 달라 그냥 두면 줄이 어긋나 보인다. */
 .g2{display:flex;gap:7px;}
 .g2 select{flex:1;}
-.lb2{font-size:11px;color:#999;margin:2px 0 4px;}
+.lb2{font-size:11px;color:#999;margin:9px 0 4px;}
+.lb2:first-child{margin-top:2px;}
+select.fld, input.f.fld{
+  width:100%;height:46px;padding:0 12px;margin-bottom:0;
+  border:1px solid #E0E0E0;border-radius:10px;font-size:16px;
+  font-family:inherit;background:#fff;line-height:normal;
+  -webkit-appearance:none;appearance:none;}
+select.fld{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;background-position:right 11px center;background-size:16px;
+  padding-right:34px;}
+.acts .fld + button.f{margin-top:12px;}
 
 /* 공지 */
 .notice{background:#fff;border:1px solid #E8E8E8;border-radius:12px;padding:16px 18px;
@@ -207,7 +219,7 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
            onkeydown="if(event.key==='Enter')login()">
     <button id="loginBtn" onclick="login()">확인</button>
     <div id="gateMsg"></div>
-    <div class="hint">본인 이름을 입력하세요. 입력 기록에 함께 남습니다.<br>v2.1 · 2026-08</div>
+    <div class="hint">본인 이름을 입력하세요. 입력 기록에 함께 남습니다.<br>v3.0 · 2026-08</div>
   </div>
 </div>
 
@@ -298,7 +310,7 @@ td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
   <div class="foot">
     <button class="f ghost" style="width:auto;padding:9px 22px;font-size:12px"
             onclick="logout()">로그아웃</button>
-    <div class="sub2" style="margin-top:10px">버던_시딩 · v2.1</div>
+    <div class="sub2" style="margin-top:10px">버던_시딩 · v3.0</div>
   </div>
 </div>
 
@@ -330,7 +342,18 @@ const CAT_COLOR = {
 /* 화면에 보여줄 이름. 시트·통합DB의 실제 값은 '구글폼' 그대로 둔다.
    (통계 수식이 '구글폼'을 기준으로 잡혀 있어 데이터를 바꾸면 안 된다) */
 const CAT_LABEL = { '구글폼':'개인협찬(구글폼)' };
-function catLabel(name){ return CAT_LABEL[name] || name; }
+function catLabel(name){
+  return (D && D.catLabels && D.catLabels[name]) || CAT_LABEL[name] || name;
+}
+
+/* 표시 순서 고정: 브랜더진 → 리뷰노트 → 무신사 → 개인협찬(구글폼) */
+function catSort(list){
+  const order = (D && D.catOrder) || ['브랜더진','리뷰노트','무신사','구글폼'];
+  return list.slice().sort(function(a,b){
+    const ai=order.indexOf(a), bi=order.indexOf(b);
+    return (ai<0?99:ai)-(bi<0?99:bi);
+  });
+}
 const FALLBACK_COLORS = ['#90A4AE','#8D6E63','#5C6BC0','#66BB6A','#EC407A'];
 function catColor(name, i){
   return CAT_COLOR[name] || FALLBACK_COLORS[(i||0) % FALLBACK_COLORS.length];
@@ -514,6 +537,7 @@ function renderNotice(){
   document.getElementById('v1notice').innerHTML =
     '<div class="notice"><div class="ttl">'+esc(s.ym.replace('-','.'))+' 기준</div>'+
     '시딩 <b>'+n(s.total)+'건</b> · 업로드완료 <b>'+n(s.uploaded)+'</b> · 대기 <b>'+n(s.waiting)+'</b><br>'+
+    (s.rental ? '<span class="sub2">└ 발송 '+n(s.seeding)+'건 · 대여 '+n(s.rental)+'건</span><br>' : '')+
     '원고료 <b>'+n(s.fee)+'원</b><br>'+
     '현재 게시중 <b>'+n(s.posting)+'건</b><br>'+
     '게시기간 만료임박 '+hl(s.postEnd)+'<br>'+
@@ -627,11 +651,12 @@ function renderDash(){
   const s=D.summary, cats=s.byCat||{};
 
   /* 전체 누계 — 플랫폼별 */
-  const allCats=[];
+  let allCats=[];
   D.items.forEach(function(x){ if(x.cat && allCats.indexOf(x.cat)<0) allCats.push(x.cat); });
+  allCats=catSort(allCats);   /* 브랜더진 → 리뷰노트 → 무신사 → 개인협찬 */
   const totalPairs=allCats.map(function(c){
     return { k:c, v:D.items.filter(function(x){ return x.cat===c; }).length };
-  }).sort(function(a,b){ return b.v-a.v; });
+  });
   const grand=D.items.length;
 
   /* 최근 12개월 추이 */
@@ -645,7 +670,7 @@ function renderDash(){
   });
 
   /* 당월 표 */
-  const keys=Object.keys(cats);
+  const keys=catSort(Object.keys(cats));
   let tot=0, up=0;
   const rows = keys.length
     ? keys.map(function(k){
@@ -696,11 +721,12 @@ function renderSecDash(){
   }
 
   /* 플랫폼별 건수 */
-  const cats=[];
-  list.forEach(function(x){ if(x.cat && cats.indexOf(x.cat)<0) cats.push(x.cat); });
+  const cats=catSort((function(){
+    const o=[]; list.forEach(function(x){ if(x.cat && o.indexOf(x.cat)<0) o.push(x.cat); }); return o;
+  })());
   const catPairs=cats.map(function(c){
     return { k:c, v:list.filter(function(x){ return x.cat===c; }).length };
-  }).sort(function(a,b){ return b.v-a.v; });
+  });
 
   /* 종류별 비중 — 종류 미등록 건은 따로 묶는다 */
   const typePairs=[];
@@ -712,23 +738,27 @@ function renderSecDash(){
   if(noType) typePairs.push({ k:'미등록', v:noType });
 
   /* 금액 — 사용권 구매일이 있으면 그 날짜, 없으면 신청일시 기준 */
-  const byYear={}, byMonth={};
-  let grand=0;
+  const byYear={}, byMonth={}, feeYear={};
+  let grand=0, feeTotal=0;
   list.forEach(function(x){
     const amt=x.amount||0;
     if(!amt) return;
     grand+=amt;
+    const fee=x.brandFee||0;
+    feeTotal+=fee;
     const base=(x.s2s || x.applied || '');
     const y=base.slice(0,4), m=base.slice(0,7);
-    if(y){ byYear[y]=(byYear[y]||0)+amt; }
+    if(y){ byYear[y]=(byYear[y]||0)+amt; feeYear[y]=(feeYear[y]||0)+fee; }
     if(m){ byMonth[m]=(byMonth[m]||0)+amt; }
   });
   const thisYear=String(new Date().getFullYear());
   const months=Object.keys(byMonth).filter(function(m){ return m.slice(0,4)===thisYear; }).sort().reverse();
   const years=Object.keys(byYear).sort().reverse();
 
+  const rate=Math.round((D.brandFeeRate||0.145)*1000)/10;
+
   const moneyHtml =
-    '<div class="money"><div class="row"><span>누적 총액</span></div>'+
+    '<div class="money"><div class="row"><span>라이선스 비용 누적</span></div>'+
     '<div class="money big" style="margin-bottom:10px">'+n(grand)+'원</div>'+
     '<div class="hr"></div>'+
     '<div class="sub2" style="margin-bottom:4px">'+thisYear+'년 월별</div>'+
@@ -742,11 +772,26 @@ function renderSecDash(){
       return '<div class="row"><span>'+esc(y)+'년</span><b>'+n(byYear[y])+'원</b></div>'; }).join('')+
     '</div>';
 
+  /* 브랜더진 수수료 — 과거 방식(판매 목적 라이센스)에는 붙지 않습니다 */
+  const feeHtml =
+    '<div class="money"><div class="row"><span>브랜더진 수수료 '+rate+'%</span></div>'+
+    '<div class="money big" style="margin-bottom:10px">'+n(feeTotal)+'원</div>'+
+    '<div class="hr"></div>'+
+    years.map(function(y){
+      return '<div class="row"><span>'+esc(y)+'년</span><b>'+n(feeYear[y]||0)+'원</b></div>'; }).join('')+
+    '<div class="hr"></div>'+
+    '<div class="row"><span><b>총 지출 (비용 + 수수료)</b></span>'+
+      '<b>'+n(grand+feeTotal)+'원</b></div>'+
+    '<div class="sub2" style="margin-top:6px">'+
+      '과거 방식인 "판매 목적 라이센스" 건에는 수수료가 붙지 않습니다.</div>'+
+    '</div>';
+
   document.getElementById('v3dash').innerHTML =
     '<div class="chart"><h3>📊 플랫폼별 2차 활용</h3>'+hBars(catPairs)+'</div>'+
-    '<div class="chart"><h3>🍩 활용 종류별 비중</h3>'+donut(typePairs,'건')+'</div>'+
+    '<div class="chart"><h3>🍩 활용 채널별 비중</h3>'+donut(typePairs,'건')+'</div>'+
     '<div class="chart"><h3>💰 2차 활용 금액</h3>'+moneyHtml+'</div>'+
-    '<div class="sub2">· 금액은 통합DB 2차활용 열(04_브랜더진 W열 등)에서 합산합니다.<br>'+
+    '<div class="chart"><h3>🧾 수수료</h3>'+feeHtml+'</div>'+
+    '<div class="sub2">· 금액은 04_브랜더진 W열 등 2차활용 비용 열에서 합산합니다.<br>'+
     '· 집계 기준일은 사용권 구매일이며, 없으면 신청일시를 씁니다.</div>'+
     '<button class="f ghost" onclick="reload(true)">새로고침</button>';
 }
@@ -873,7 +918,8 @@ function itemHtml(x, ctx){
       '<div><div class="nm">'+esc(x.name)+'</div>'+
         '<div class="meta">'+esc(catLabel(x.cat))+(x.campaign?' · '+esc(x.campaign):'')+'<br>'+
         esc(x.product||'—')+(x.option?' / '+esc(x.option):'')+'</div></div>'+
-      '<div class="right"><span class="badge b-'+esc(x.state)+'">'+esc(tagText(x))+'</span>'+note+'</div>'+
+      '<div class="right"><span class="badge b-'+esc(x.state)+'">'+esc(tagText(x))+'</span>'+
+        (x.isRental ? '<div class="dd rent">대여</div>' : '')+note+'</div>'+
     '</div>'+
     quickHtml(x, uid, ctx)+
     '<div class="bd">'+detailHtml(x, uid, ctx)+'</div></div>';
@@ -928,11 +974,15 @@ function quickHtml(x, uid, ctx){
 /* 2차 활용 표기 문구 */
 function secondText(x){
   if(!x.s2type){
-    /* 시트에 금액만 있고 종류·기간이 없는 건 = 만료일을 모르는 상태 */
+    /* 시트에 금액만 있고 채널·기간이 없는 건 = 만료일을 모르는 상태 */
     return x.legacy2 ? '금액만 있음 · 기간 미등록 ('+n(x.amount)+'원)' : '미등록';
   }
-  let t=esc(x.s2type)+' · '+esc(x.s2s||'—')+' ~ '+(x.s2forever?'무기한':esc(x.s2e||'—'));
-  if(x.amount) t+=' · '+n(x.amount)+'원';
+  let t=esc(x.s2type)+' · '+esc(x.s2s||'—')+' ~ '+(x.s2forever?'영구':esc(x.s2e||'—'));
+  if(x.s2period) t+=' ('+esc(x.s2period)+')';
+  if(x.amount){
+    t+='<br>비용 '+n(x.amount)+'원';
+    if(x.brandFee) t+=' + 수수료 '+n(x.brandFee)+'원';
+  }
   if(x.s2memo) t+='<br><span class="sub2">'+esc(x.s2memo)+'</span>';
   return t;
 }
@@ -943,7 +993,11 @@ function detailHtml(x, uid, ctx){
   let h='<div class="kv">'+
     '<span>캠페인 · 업로드마감</span><b>'+esc(x.campaign||'—')+' · '+esc(x.deadline||'—')+'</b>'+
     '<span>업로드일 · 게시기간</span><b>'+esc(x.uploadDate||'—')+' · '+esc(x.postPeriod||'—')+'</b>'+
-    '<span>계정 · 주문</span><b>'+esc(x.handle||'—')+'</b>'+
+    (x.orderNo
+      ? '<span>주문번호</span><b>'+esc(x.orderNo)+'</b>'
+      : '<span>계정</span><b>'+esc(x.handleShown||x.handle||'—')+'</b>')+
+    (x.way && x.way!=='시딩' ? '<span>진행방식</span><b>'+esc(x.way)+'</b>' : '')+
+    (x.coop ? '<span>협업유형</span><b>'+esc(x.coop)+'</b>' : '')+
     '<span>신청일시</span><b>'+esc(x.applied||'—')+'</b>'+
     '<span>발송상태</span><b>'+esc(x.ship||'—')+(x.courier?' · '+esc(x.courier):'')+'</b>'+
     '<span>최종확인</span><b>'+esc(x.check||'미확인')+'</b>'+
@@ -976,28 +1030,35 @@ function secondFormHtml(x, uid){
   const types=(D.secondTypes||[]).map(function(t){
     return '<option value="'+esc(t)+'"'+(x.s2type===t?' selected':'')+'>'+esc(t)+'</option>'; }).join('');
   const periods=(D.secondPeriods||[]).map(function(p){
-    return '<option value="'+p.v+'">'+esc(p.t)+'</option>'; }).join('');
+    return '<option value="'+p.v+'"'+(x.s2period===p.t?' selected':'')+'>'+esc(p.t)+'</option>'; }).join('');
   const cost = x.s2cost ? x.s2cost : (x.amount||'');
 
-  return '<div class="g2">'+
-      '<div style="flex:1"><div class="lb2">사용권 구매일</div>'+
-        '<input class="f" type="date" id="ss_'+uid+'" value="'+esc(x.s2s||D.today)+'"></div>'+
-      '<div style="flex:1"><div class="lb2">활용 기간</div>'+
-        '<select id="sp_'+uid+'"><option value="">선택</option>'+periods+'</select></div>'+
-    '</div>'+
-    '<div class="g2">'+
-      '<div style="flex:1"><div class="lb2">활용 종류</div>'+
-        '<select id="st_'+uid+'"><option value="">선택</option>'+types+'</select></div>'+
-      '<div style="flex:1"><div class="lb2">2차활용 비용</div>'+
-        '<input class="f" type="number" id="sc_'+uid+'" placeholder="0" inputmode="numeric" '+
-        'value="'+esc(cost)+'"></div>'+
-    '</div>'+
+  /* 날짜칸과 선택칸을 한 줄에 둘씩 넣으면 모바일에서 겹쳐 보이므로
+     각 항목을 한 줄씩 배치하고, 입력칸 높이를 .fld 로 통일합니다. */
+  return '<div class="lb2">사용권 구매일 (계약일)</div>'+
+    '<input class="f fld" type="date" id="ss_'+uid+'" value="'+esc(x.s2s||D.today)+'">'+
+
+    '<div class="lb2">활용 기간</div>'+
+    '<select class="fld" id="sp_'+uid+'"><option value="">선택</option>'+periods+'</select>'+
+
+    '<div class="lb2">활용 채널</div>'+
+    '<select class="fld" id="st_'+uid+'"><option value="">선택</option>'+types+'</select>'+
+
+    '<div class="lb2">2차활용 비용</div>'+
+    '<input class="f fld" type="number" id="sc_'+uid+'" placeholder="0" inputmode="numeric" '+
+      'value="'+esc(cost)+'">'+
+
     '<div class="lb2">비고</div>'+
-    '<input class="f" type="text" id="sm_'+uid+'" placeholder="메모 (선택)" value="'+esc(x.s2memo||'')+'">'+
+    '<input class="f fld" type="text" id="sm_'+uid+'" placeholder="메모 (선택)" '+
+      'value="'+esc(x.s2memo||'')+'">'+
+
     '<button class="f" onclick="doSecond(\''+x.id+'\',\''+uid+'\')">2차 활용 등록</button>'+
     (x.s2type ? '<button class="f ghost" onclick="doSecondClear(\''+x.id+'\',\''+uid+'\')">등록 해제</button>' : '')+
     '<div class="sub2">구매일 + 선택한 기간으로 <b>활용 마감일이 자동 계산</b>됩니다.<br>'+
-    '비용을 입력하면 2차활용 대시보드 금액에 반영됩니다.</div>';
+    (x.feeExempt
+      ? '이 건은 과거 방식이라 수수료가 붙지 않습니다.'
+      : '브랜더진은 비용에 수수료 '+Math.round((D.brandFeeRate||0.145)*1000)/10+'%가 별도로 붙습니다.')+
+    '</div>';
 }
 
 /* 메시지는 펼친 폼과 카드 버튼 양쪽에 같이 씁니다 */
@@ -1060,7 +1121,7 @@ function doSecond(id, uid){
   const start=document.getElementById('ss_'+uid).value;
   const cost=document.getElementById('sc_'+uid).value;
   const memo=document.getElementById('sm_'+uid).value;
-  if(!type){ im(uid,'활용 종류를 선택하세요.',true); return; }
+  if(!type){ im(uid,'활용 채널을 선택하세요.',true); return; }
   if(months===''){ im(uid,'활용 기간을 선택하세요.',true); return; }
   if(!start){ im(uid,'사용권 구매일을 입력하세요.',true); return; }
   act({ action:'second', id:id, type:type, months:months, start:start,
