@@ -100,6 +100,10 @@ button:disabled{opacity:.55;}
 /* 2차 활용 — 배경 없이 O / X 만 두고, 옆의 [상세보기]로 펼칩니다 */
 .more{color:#1A1A2E;font-weight:800;cursor:pointer;text-decoration:underline;
       margin-left:6px;font-size:12px;}
+.qa2{margin-top:10px;font-size:12.5px;line-height:1.75;}
+.qa2 b{display:block;font-size:11px;color:#999;margin-bottom:3px;}
+.qa2 div{white-space:pre-wrap;word-break:break-word;background:#FAFAFC;
+         border:1px solid #EEE;border-radius:8px;padding:9px 11px;}
 .box2{background:#FAFAFC;border:1px solid #EEE;border-radius:10px;
       padding:10px 12px;margin-top:10px;}
 
@@ -266,7 +270,7 @@ body.chatmode{overflow:hidden;}
 
   <div id="tabs">
     <button id="t1" class="on" onclick="tab('p1')">할일</button>
-    <button id="t2" onclick="tab('p2')">현황</button>
+    <button id="t2" onclick="tab('p2')">관리</button>
     <button id="t3" onclick="tab('p3')">2차활용</button>
     <button id="t4" onclick="tab('p4')">채팅</button>
     <button id="t5" onclick="tab('p5')" style="display:none">접근로그</button>
@@ -290,11 +294,13 @@ body.chatmode{overflow:hidden;}
       <button class="on" data-k="dash"     onclick="setStat('dash')">대시보드</button>
       <button          data-k="noupload" onclick="setStat('noupload')">미업로드</button>
       <button          data-k="deleted"  onclick="setStat('deleted')">삭제확인</button>
+      <button          data-k="posted"   onclick="setStat('posted')">게시확인</button>
       <button          data-k="all"      onclick="setStat('all')">전체</button>
     </div>
     <div id="v2dash"></div>
     <div id="v2noupload" style="display:none"></div>
     <div id="v2deleted" style="display:none"></div>
+    <div id="v2posted" style="display:none"></div>
     <div id="v2all" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
@@ -500,7 +506,7 @@ function logout(){
   document.getElementById('t5').style.display='none';
   document.getElementById('roleBadge').textContent='';
   ['v1notice','v1upchk','v1post','v2dash','v2noupload','v2deleted','allBody',
-   'v3dash','secRegBody','secListBody','accessBody','chatChips'].forEach(function(id){
+   'v2posted','v3dash','secRegBody','secListBody','accessBody','chatChips'].forEach(function(id){
     document.getElementById(id).innerHTML='';
   });
   ['aName','sName','lName','qInput'].forEach(function(id){
@@ -590,7 +596,7 @@ function applyFilter(k){
 
 function renderAll(){
   renderNotice(); renderUpchk(); renderPost();
-  renderDash(); renderNoUpload(); renderDeleted(); renderAllList();
+  renderDash(); renderNoUpload(); renderDeleted(); renderPosted(); renderAllList();
   renderSecDash(); renderSecReg(); renderSecList();
 }
 
@@ -614,7 +620,8 @@ function segSwitch(segId, key, pairs){
 }
 function setToday(k){ V1=k; segSwitch('segToday',k,{notice:'v1notice',upchk:'v1upchk',post:'v1post'}); }
 function setStat(k){ V2=k; segSwitch('segStat',k,
-  {dash:'v2dash',noupload:'v2noupload',deleted:'v2deleted',all:'v2all'}); }
+  {dash:'v2dash',noupload:'v2noupload',deleted:'v2deleted',
+   posted:'v2posted',all:'v2all'}); }
 function setSecond(k){ V3=k; segSwitch('segSecond',k,{dash:'v3dash',reg:'v3reg',list:'v3list'}); }
 
 /* ── 할일 · 공지 ──────────────────────── */
@@ -901,18 +908,57 @@ function renderNoUpload(){
     listHtml(list,'nou');
 }
 
-/* ── 현황 · 삭제확인 ──────────────────── */
-/* 게시확인에서 "미확인"으로 처리된 건이 모입니다. */
+/* ── 관리 · 삭제확인 ──────────────────── */
+/* 게시확인에서 "미확인"으로 처리된 건이 모입니다.
+   같은 '삭제'라도 성격이 달라 두 묶음으로 나눕니다.
+   ① 게시기간이 아직 남았는데 내려간 건 → 재업로드 요청 대상 (문제 상황)
+   ② 게시기간이 끝난 뒤 내려간 건       → 계약대로 종료된 것 (정상) */
 function renderDeleted(){
-  const list=D.items.filter(function(x){ return x.state==='삭제'; })
+  const all=D.items.filter(function(x){ return x.state==='삭제'; })
     .slice().sort(function(a,b){ return String(b.delchk).localeCompare(String(a.delchk)); });
-  document.getElementById('v2deleted').innerHTML =
+
+  /* 삭제 확인일이 게시 종료일보다 빠르면 기간 중 삭제 */
+  const during=all.filter(function(x){
+    return x.postPeriod && x.delchk && x.delchk <= x.postPeriod; });
+  const after=all.filter(function(x){ return during.indexOf(x)<0; });
+
+  let h='';
+  if(!all.length){
+    h='<div class="box-ok">🟢 삭제로 표시된 건이 없습니다.</div>';
+  }else{
+    if(during.length){
+      h+='<div class="box-danger"><b style="color:#C0392B">🔴 게시기간 중 삭제 '+during.length+'건</b><br>'+
+         '약속한 게시기간이 남았는데 글이 내려갔습니다. 재업로드를 요청하거나 '+
+         '원고료 정산에 반영하세요.</div>'+
+         during.map(function(x){ return itemHtml(x,'del'); }).join('');
+    }
+    if(after.length){
+      h+='<div class="sec s-gry" style="margin-top:'+(during.length?'16px':'0')+'">'+
+         '<span>⚪ 게시기간 종료 후 확인 '+after.length+'건</span></div>'+
+         '<div class="box-note">계약 기간을 채우고 내려간 건입니다. 조치할 것이 없습니다.</div>'+
+         after.map(function(x){ return itemHtml(x,'del'); }).join('');
+    }
+  }
+  document.getElementById('v2deleted').innerHTML=h;
+}
+
+/* ── 관리 · 게시확인 ──────────────────── */
+/* 업로드가 끝나 게시 중인 건입니다. URL을 열어 확인한 뒤 [확인]을 누르면
+   최종확인일이 오늘로 기록됩니다. (할일 · 게시확인과 같은 동작) */
+function renderPosted(){
+  const list=D.items.filter(function(x){ return x.state==='게시중'; })
+    .slice().sort(function(a,b){
+      const ac=a.check||'', bc=b.check||'';
+      if(ac!==bc) return ac.localeCompare(bc);   /* 오래 확인 안 한 것부터 */
+      return (a.dPost||0)-(b.dPost||0);
+    });
+
+  document.getElementById('v2posted').innerHTML =
     (list.length
-      ? '<div class="box-danger"><b style="color:#C0392B">게시기간 중 내려간 '+list.length+'건</b><br>'+
-        '인플루언서에게 재업로드를 요청하거나 원고료 정산에 반영하세요.<br>'+
-        '다시 올라온 것을 확인했다면 <b>복구</b>를 누르면 됩니다.</div>'
-      : '<div class="box-ok">🟢 삭제로 표시된 건이 없습니다.</div>')+
-    list.map(function(x){ return itemHtml(x,'del'); }).join('');
+      ? '<div class="box-note">게시 중인 '+list.length+'건입니다. '+
+        'URL을 열어 확인한 뒤 <b>확인</b>을 누르면 오늘 날짜로 기록됩니다.</div>'
+      : '<div class="box-ok">🟢 게시 중인 건이 없습니다.</div>')+
+    list.map(function(x){ return itemHtml(x,'pchk'); }).join('');
 }
 
 /* ── 현황 · 전체 ──────────────────────── */
@@ -1063,8 +1109,20 @@ function quickHtml(x, uid, ctx){
       '<button class="pri" onclick="event.stopPropagation();doCheck(\''+x.id+'\',\''+uid+'\')">확인</button>'+
       '<button class="no" onclick="event.stopPropagation();doDel(\''+x.id+'\',\''+uid+'\')">미확인</button>';
   }else if(ctx==='nou'){
-    b = acct +
+    /* 미업로드 건은 계정을 열어 올라왔는지 확인합니다 */
+    const chk = x.acctUrl
+      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.acctUrl)+'\',\'_blank\')">URL 확인</button>'
+      : '';
+    b = chk +
       '<button class="pri" onclick="event.stopPropagation();doUpload(\''+x.id+'\',\''+uid+'\',1)">확인</button>';
+  }else if(ctx==='pchk'){
+    const open = x.url
+      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.url)+'\',\'_blank\')">URL 확인</button>'
+      : (x.acctUrl
+        ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.acctUrl)+'\',\'_blank\')">URL 확인</button>'
+        : '');
+    b = open +
+      '<button class="pri" onclick="event.stopPropagation();doCheck(\''+x.id+'\',\''+uid+'\')">확인</button>';
   }else if(ctx==='del'){
     const open = x.url
       ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.url)+'\',\'_blank\')">URL 확인</button>'
@@ -1147,7 +1205,7 @@ function detailHtml(x, uid, ctx){
      현황·할일 탭에서는 조회만 하고, 게시확인은 [할일 > 게시확인]에서 처리합니다. */
   /* 할일 탭에서는 콘텐츠 URL을 나중에 채울 수 있게 남겨둡니다.
      현황·전체에서는 조회만 하도록 폼을 두지 않습니다. */
-  if(ctx==='upc' || ctx==='pst' || ctx==='nou'){
+  if(ctx==='upc' || ctx==='pst' || ctx==='nou' || ctx==='pchk'){
     return h+'<div class="hr"></div><div class="acts">'+
       '<input class="f" type="url" id="cu_'+uid+'" placeholder="콘텐츠 URL 등록" '+
         'inputmode="url" value="'+esc(x.url)+'">'+
@@ -1418,20 +1476,50 @@ function logView(k){
     return;
   }
 
+  /* 채팅은 한 줄에 담기엔 너무 길어 [상세보기]로 접어둡니다. */
+  if(k==='chat'){
+    body.innerHTML=list.map(function(l,i){
+      const parts=String(l.memo||'').split(' ▸ ');
+      const q=parts[0]||'';
+      let a=parts.slice(1).join(' ▸ ');
+      let tag='';
+      const m=a.match(/\s\[(rule|llm|none|error)[^\]]*\]\s*$/);
+      if(m){ tag=m[1]; a=a.slice(0,m.index); }
+      const id='lg'+i;
+      return '<div class="it">'+
+        '<div class="hd" style="padding:11px 13px" onclick="toggleBox(\''+id+'\')">'+
+          '<div><div class="nm" style="font-size:13px">'+esc(q.slice(0,40))+
+            (q.length>40?'…':'')+'</div>'+
+          '<div class="meta">'+esc(l.t)+' · '+esc(l.user)+
+            (l.role?' ('+esc(l.role)+')':'')+'</div></div>'+
+          '<div class="right">'+
+            (tag==='llm'?'<span class="badge b-대가없음">AI</span>':
+             tag?'<span class="badge b-종료">'+esc(tag.toUpperCase())+'</span>':'')+
+            '<div class="more" style="margin:4px 0 0">상세보기</div></div>'+
+        '</div>'+
+        '<div id="'+id+'" style="display:none;padding:0 13px 13px">'+
+          '<div class="qa2"><b>질문</b><div>'+esc(q)+'</div></div>'+
+          '<div class="qa2"><b>답변</b><div>'+esc(a||'—')+'</div></div>'+
+        '</div></div>';
+    }).join('')+
+    '<div class="sub2">'+list.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>';
+    return;
+  }
+
   const rows=list.map(function(l){
     let cls='';
     if(l.result==='실패') cls='danger';
     else if(l.result==='입력'||l.result==='확인'||l.result==='접속') cls='ok';
     return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
       '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
-      '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
+      '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+
+        (l.role?'<br><span class="sub2">'+esc(l.role)+'</span>':'')+'</td>'+
       '<td style="font-size:12px">'+esc(l.memo)+'</td></tr>';
   }).join('');
 
   body.innerHTML='<div class="tbl-wrap"><table><thead><tr>'+
     '<th>시각</th><th>결과</th><th>사용자</th>'+
-    '<th style="text-align:left">'+
-      (k==='access'?'상세':(k==='chat'?'질문 ▸ 답변':'작업 내용'))+'</th>'+
+    '<th style="text-align:left">'+(k==='access'?'상세':'작업 내용')+'</th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="sub2">'+list.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>';
 }
