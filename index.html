@@ -43,6 +43,16 @@
    ⑨ 관리 · 2차활용의 긴 목록을 접이식으로
       (조치가 필요한 알림은 접힘 밖에 그대로 둡니다)
 
+   v5.0 → v5.1  (실기기 확인 반영 · 프로모션 v3.4 와 같은 규칙)
+   ① 접근로그 — 결과를 아랫줄로 내리고, 채팅은 [상세보기]로 펼칩니다
+   ② 삭제확인 [게시기간 중 삭제]도 접이식으로. 두 묶음 다 닫힌 채로 시작합니다
+   ③ "재업로드를 요청하세요" 안내를 접이식 안으로 옮겼습니다
+   ④ 로그인 덩어리를 조금 더 아래로. 칸을 누르는 순간 먼저 밀어 올립니다
+   ⑤ 채팅 상단을 밝은 색으로. 제목 '버던' → '채팅', 아바타에 아이콘
+   ⑥ 화면 맨 아래 각주 전부 삭제
+   ⑦ 갱신 시각에 날짜가 함께 보입니다 (앞 5글자 자르기 → 형식 판별)
+   ⑧ 카테고리 판을 absolute 로 — 키보드가 올라와도 기준 상자가 흔들리지 않게
+
    서버 규격은 v4.1 과 같습니다. 바뀐 것은 화면뿐입니다.
    ══════════════════════════════════════════════════════ */
 
@@ -171,11 +181,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',-apple-system,Arial,sans-
 #gate.on{display:flex;}
 /* 위아래 여백을 1.4 : 1 로 나눠 정중앙보다 조금 아래에 놓습니다.
    ⚠️ padding 이나 margin 으로 내리면 키보드가 올라왔을 때 내용이 위로 잘려 나갑니다. */
-#gate::before{content:'';flex:1.4 1 0;min-height:0;}
+#gate::before{content:'';flex:1.9 1 0;min-height:0;}
 #gate::after {content:'';flex:1 1 0;min-height:0;}
 /* 키보드가 올라올 때 이 덩어리만 위로 미끄러집니다.
-   움직이는 것이 transform 하나뿐이라 레이아웃 계산이 없습니다. */
-#gateIn{flex-shrink:0;transition:transform .26s var(--ease);}
+   움직이는 것이 transform 하나뿐이라 레이아웃 계산이 없습니다.
+   ⚠️ 여기에 transition 을 걸지 마세요.
+      iOS 키보드가 올라오는 길이와 곡선은 웹으로 전달되지 않습니다.
+      비슷하게 흉내 내면 어긋난 움직임이 둘이 되어 하나일 때보다 어색합니다. */
+#gateIn{flex-shrink:0;}
 #gate .logo{width:140px;height:auto;display:block;margin-bottom:14px;}
 #gate .sub{font-size:13px;color:var(--v-mute);margin-bottom:26px;margin-left:3px;}
 #gate input{width:100%;padding:15px 16px;border:1px solid var(--v-line);border-radius:12px;
@@ -244,11 +257,16 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',-apple-system,Arial,sans-
   overscroll-behavior:none;padding-bottom:20px;}
 
 /* ── 카테고리 — 위에서 내려오는 판 ─────────────────── */
-#catWrap{position:fixed;left:0;right:0;top:0;z-index:61;pointer-events:none;}
+/* ⚠️ position:fixed 로 두면 키보드가 올라와 body 에 transform 이 걸리는 순간
+   기준 상자가 바뀌어 판이 엉뚱한 자리에 그려집니다.
+   body 가 position:fixed 이므로 absolute 로 두면 항상 앱 영역 기준입니다. */
+#catWrap{position:absolute;left:0;right:0;top:0;z-index:61;pointer-events:none;}
 #catPanel{background:var(--v-bg);border-bottom:1px solid var(--v-line);
   transform:translateY(-100%);transition:transform .3s var(--ease);
   padding:calc(14px + env(safe-area-inset-top)) 14px 0;pointer-events:auto;}
 #catWrap.on #catPanel{transform:translateY(0);}
+/* 링크가 늘어나도 판이 화면 밖으로 넘치지 않게 합니다 */
+#catPanel{max-height:82vh;overflow-y:auto;overscroll-behavior:none;}
 #catGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
 #catGrid a{background:var(--v-card);border:1px solid var(--v-line);border-radius:12px;
   padding:15px 14px;text-decoration:none;display:block;}
@@ -259,7 +277,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',-apple-system,Arial,sans-
 #catClose{display:flex;justify-content:flex-end;padding:14px 4px;}
 #catClose button{background:none;border:none;font-family:inherit;font-size:12.5px;
   font-weight:600;color:var(--v-mute);text-decoration:underline;text-underline-offset:3px;}
-#scrim{position:fixed;inset:0;background:rgba(20,22,17,.42);z-index:60;opacity:0;
+#scrim{position:absolute;inset:0;background:rgba(20,22,17,.42);z-index:60;opacity:0;
   pointer-events:none;transition:opacity .25s var(--ease);}
 #scrim.on{opacity:1;pointer-events:auto;}
 
@@ -408,20 +426,27 @@ details .inner .it:last-child{margin-bottom:12px;}
 
 .log-r{padding:12px 2px;border-top:1px solid var(--v-line);font-size:12.5px;}
 .log-r:first-child{border-top:none;}
-.log-r .l1{display:flex;gap:8px;align-items:baseline;}
+.log-r .l1{display:flex;gap:9px;align-items:baseline;}
 .log-r .l1 b{color:var(--v-txt);}
-.log-r .l1 .rs{font-size:11.5px;font-weight:700;color:var(--v-mute);}
-.log-r .l1 .rs.ok{color:var(--v-ok);} .log-r .l1 .rs.danger{color:var(--v-danger);}
 .log-r .t{font-size:11px;color:var(--v-ph);font-variant-numeric:tabular-nums;margin-left:auto;
   white-space:nowrap;}
 .log-r .l2{font-size:11.5px;color:var(--v-mute);margin-top:3px;word-break:break-all;}
-/* 채팅 기록 [더보기] — 질문과 답변을 나눠 보여줍니다 */
-.qa2{margin-top:9px;font-size:12px;line-height:1.75;}
-.qa2 b{display:block;font-size:10.5px;color:var(--v-mute);margin-bottom:3px;font-weight:700;}
-.qa2 div{white-space:pre-wrap;word-break:break-word;background:var(--v-soft);
-  border:1px solid var(--v-line);border-radius:9px;padding:9px 11px;margin-bottom:8px;
-  color:var(--v-txt);}
-.qa2 a{color:var(--v-link);text-decoration:underline;word-break:break-all;}
+/* 질문 미리보기는 두지 않습니다 — 잘린 문장은 읽히지도 않으면서 줄만 늘립니다.
+   이름 바로 옆 [상세보기]를 누르면 아래에 질문과 답변이 펼쳐집니다.
+   굵지만 연한 글씨 + 밑줄 — 눌러야 할 곳이라는 건 보이되 이름보다 앞서 읽히지는 않게. */
+.log-r .more{font-size:12px;font-weight:800;color:var(--v-mute);text-decoration:underline;
+  text-underline-offset:3px;background:none;border:none;font-family:inherit;padding:0;
+  flex-shrink:0;}
+.log-r .more.open{color:var(--v-strong);}
+.log-r .aibadge{font-size:9.5px;font-weight:800;letter-spacing:.05em;padding:1px 6px;
+  border-radius:6px;background:var(--v-ai-bg);border:1px solid var(--v-ai-line);
+  color:var(--v-ai-txt);flex-shrink:0;}
+.log-qa{margin-top:9px;}
+.log-qa .k{font-size:10.5px;color:var(--v-mute);font-weight:700;margin-bottom:3px;}
+.log-qa .v{background:var(--v-soft);border:1px solid var(--v-line);border-radius:10px;
+  padding:10px 12px;font-size:12px;line-height:1.75;white-space:pre-wrap;word-break:break-word;
+  color:var(--v-txt);margin-bottom:8px;}
+.log-qa a{color:var(--v-link);}
 
 /* ══════════════════════════════════════════════════
    여기부터 시딩 앱에만 있는 것
@@ -438,8 +463,6 @@ details .inner .it:last-child{margin-bottom:12px;}
 .b-종료{background:var(--v-gray-bg);color:var(--v-mute);}
 .b-대가없음{background:var(--v-lav-bg);color:var(--v-lav-tx);}
 .b-삭제{background:var(--v-danger-bg);color:var(--v-danger);}
-/* 접근로그 · 채팅 기록에서 AI 가 만든 답변에 붙는 배지 */
-.b-ai{background:var(--v-ai-bg);color:var(--v-ai-txt);border:1px solid var(--v-ai-line);}
 
 /* ── 목록 항목 카드 ──────────────────────────────── */
 .it{background:var(--v-card);border:1px solid var(--v-line);border-radius:var(--v-radius);
@@ -525,15 +548,20 @@ details .inner .it:last-child{margin-bottom:12px;}
 #chatWrap{position:absolute;inset:0;z-index:70;background:var(--v-bg);display:none;
   flex-direction:column;}
 #chatWrap.on{display:flex;}
-#chatHead{flex-shrink:0;background:var(--v-header);color:var(--v-onink);
-  padding:calc(env(safe-area-inset-top) + 10px) 14px 12px;display:flex;align-items:center;gap:10px;}
-#chatHead .av{width:32px;height:32px;border-radius:50%;background:var(--v-accent2);flex-shrink:0;}
-#chatHead .who{font-size:14.5px;font-weight:800;}
-#chatHead .rt{margin-left:auto;display:flex;align-items:center;gap:8px;}
-#chatHead button{background:none;border:1px solid rgba(255,255,255,.3);border-radius:9px;
-  color:var(--v-onink);font-family:inherit;font-size:11.5px;font-weight:400;padding:6px 12px;}
-#chatHead button.x{border:none;padding:4px;display:flex;}
-#chatHead button.x svg{width:21px;height:21px;}
+/* 상단은 헤더(짙은 올리브)가 아니라 카드 색입니다.
+   채팅은 본 화면 위에 덮이는 판이라, 짙은 띠를 하나 더 두면 헤더가 둘로 보입니다. */
+#chatHead{flex-shrink:0;display:flex;align-items:center;gap:11px;background:var(--v-card);
+  border-bottom:1px solid var(--v-line);
+  padding:calc(env(safe-area-inset-top) + 10px) 14px 11px;}
+#chatHead .av{width:33px;height:33px;border-radius:50%;background:var(--v-accent2);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--v-header);}
+#chatHead .av svg{width:17px;height:17px;}
+#chatHead .who{font-size:14.5px;font-weight:800;color:var(--v-strong);}
+#chatHead .rt{margin-left:auto;display:flex;align-items:center;gap:4px;}
+#chatHead button{background:none;border:none;font-family:inherit;font-size:12.5px;
+  font-weight:600;color:var(--v-mute);padding:8px 10px;border-radius:9px;}
+#chatHead button.x{padding:8px;display:flex;color:var(--v-strong);}
+#chatHead button.x svg{width:18px;height:18px;}
 #chatScroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
   overscroll-behavior:none;padding:16px 16px 4px;}
 #chatBody{display:flex;flex-direction:column;gap:10px;}
@@ -563,6 +591,8 @@ details .inner .it:last-child{margin-bottom:12px;}
 
 #chatFoot{flex-shrink:0;padding:8px 16px;padding-bottom:calc(8px + var(--navpad, 8px));
   background:var(--v-bg);}
+/* 키보드가 올라오면 홈 인디케이터 몫은 필요 없습니다 */
+body.kb #chatFoot{padding-bottom:8px;}
 /* 되묻기 · 더보기 칩은 오른쪽에 붙입니다 */
 #chatChips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-bottom:9px;}
 #chatChips:empty{display:none;}
@@ -763,8 +793,8 @@ details .inner .it:last-child{margin-bottom:12px;}
      입력줄은 #chatBar 안에 JS 가 만듭니다. -->
 <div id="chatWrap">
   <div id="chatHead">
-    <div class="av"></div>
-    <div class="who">버던</div>
+    <div class="av" id="chatAv"></div>
+    <div class="who">채팅</div>
     <div class="rt">
       <button id="chatResetBtn">초기화</button>
       <button class="x" id="chatCloseBtn" aria-label="닫기"></button>
@@ -807,7 +837,7 @@ details .inner .it:last-child{margin-bottom:12px;}
 /* Apps Script 웹앱 배포 URL. 재배포해서 URL 이 바뀌면 이 줄만 고치면 된다. */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3svD8sJrB-gWMNKvRzai1wnTh9YB-VQGacvpryTlKCzD56iq30BWBH0X752KsMDkw/exec";
 
-const APP_VER = 'v5.0';
+const APP_VER = 'v5.1';
 /* 로고 · 공통 코어 저장소에 둡니다. 3개 앱이 같은 주소를 봅니다.
    로고를 바꾸면 ?v= 숫자만 올리면 캐시가 갈립니다. */
 const LOGO = {
@@ -842,7 +872,7 @@ const LINKS = [
 /* 하단 내비 — 시딩은 채팅이 있으므로 세 칸입니다 */
 const NAVS = [
   {k:'home', lb:'홈',         icon:'home'},
-  {k:'chat', lb:'채팅',       icon:'send'},
+  {k:'chat', lb:'채팅',       icon:'chat'},
   {k:'my',   lb:'마이페이지', icon:'user'}
 ];
 
@@ -873,6 +903,7 @@ let OPEN={}, OPT_CACHE='';
 let V1='notice', V2='dash', V3='dash';
 let PENDING_Q='', CARDS=[], CARDN=0;
 let SPLASH_ON = true;
+let CHAT_ON = false;
 const IDEM = {};   /* 멱등키 — 같은 작업을 다시 눌러도 서버가 중복을 걸러낸다 */
 
 /* ── 작은 도구 ────────────────────────────────────── */
@@ -916,6 +947,17 @@ function toggleBox(id){
   e.style.display = hidden ? (e.tagName==='TR' ? 'table-row' : 'block') : 'none';
 }
 
+/* 접근로그 [상세보기] — 펼친 줄은 글자색이 진해져 어디를 열었는지 보입니다 */
+function toggleQA(id, btn){
+  const e=$(id); if(!e) return;
+  const open = (e.style.display==='none');
+  e.style.display = open ? 'block' : 'none';
+  if(btn){
+    btn.classList.toggle('open', open);
+    btn.textContent = open ? '접기' : '상세보기';
+  }
+}
+
 function store(k,v){
   try{
     if(v===undefined) return localStorage.getItem(k);
@@ -928,7 +970,7 @@ const ICON = {
   refresh:'<path d="M21 12a9 9 0 1 1-2.6-6.4"/><polyline points="21 3 21 9 15 9"/>',
   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>',
   user:'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/>',
-  send:'<path d="M21 3 10.5 13.5"/><path d="M21 3l-6.8 18-3.7-7.5L3 9.8 21 3z"/>',
+  chat:'<path d="M21 3 2.5 10.3l7.4 3.1 3.1 7.4z"/><path d="M9.9 13.4 21 3"/>',
   down:'<polyline points="6 9 12 15 18 9"/>',
   chev:'<polyline points="9 6 15 12 9 18"/>',
   up:'<path d="M12 19V5"/><polyline points="6 11 12 5 18 11"/>',
@@ -1066,6 +1108,9 @@ function liftGate(visH){
   el.style.transform = 'translateY(' + Math.round(want - el.offsetTop) + 'px)';
 }
 
+/* 직전에 잰 키보드 높이. 두 번째부터는 이 값으로 미리 움직입니다. */
+let KBH = 0;
+
 function applyViewportHeight(){
   const vv = window.visualViewport;
   const b  = document.body.style;
@@ -1076,16 +1121,20 @@ function applyViewportHeight(){
        계산되면서 내용이 툭 튀어오릅니다. 대신 덩어리만 미끄러뜨립니다. */
     b.height = fullHeight() + 'px';
     b.transform = vv.offsetTop ? 'translateY(' + vv.offsetTop + 'px)' : 'none';
+    KBH = Math.round(fullHeight() - vv.height);
     liftGate(vv.height);
+    document.body.classList.remove('kb');
   }else if(keyboardOpen()){
     /* 본 화면 · 채팅 — ①만큼 줄이고 ②만큼 도로 내려 제자리에 붙입니다.
        채팅 판(#chatWrap)은 body 상자를 따라가므로 입력줄이 키보드 위에 붙습니다. */
     b.height = vv.height + 'px';
     b.transform = vv.offsetTop ? 'translateY(' + vv.offsetTop + 'px)' : 'none';
+    document.body.classList.add('kb');
   }else{
     b.height = fullHeight() + 'px';
     b.transform = 'none';
     liftGate(null);
+    document.body.classList.remove('kb');
   }
 }
 let vpT = null;
@@ -1106,8 +1155,26 @@ if(window.visualViewport){
   });
 }
 window.addEventListener('resize', applyViewportHeight);
+/* ⚠️ 키보드가 다 올라온 뒤에야 visualViewport 가 알려주는 기기가 있습니다.
+   그때 움직이기 시작하면 언제나 반 박자 늦습니다.
+   그래서 칸을 누르는 순간 먼저 출발시키고, 실제 값이 오면 조용히 맞춥니다.
+   첫 번째만 어림값(화면의 42%)을 쓰고 그 뒤로는 직전에 잰 값을 씁니다. */
+document.addEventListener('focusin', function(e){
+  if(!e.target || !e.target.closest || !e.target.closest('#gateIn')) return;
+  if(keyboardOpen()) return;                 /* 이미 올라와 있으면 그대로 */
+  const full = fullHeight();
+  liftGate(full - (KBH || Math.round(full * 0.42)));
+});
 /* 키보드가 내려간 뒤 남은 자리를 정리합니다 */
-document.addEventListener('focusout', function(){ setTimeout(applyViewportHeight, 300); });
+document.addEventListener('focusout', function(){
+  /* 다른 칸으로 옮기는 중이면 키보드는 내려가지 않습니다 */
+  setTimeout(function(){
+    const a = document.activeElement;
+    if(a && a.closest && a.closest('#gateIn')) return;
+    liftGate(null);
+  }, 0);
+  setTimeout(applyViewportHeight, 300);
+});
 applyViewportHeight();
 
 /* ── 스플래시 → 로그인 또는 자동 로그인 ───────────── */
@@ -1121,6 +1188,7 @@ function ready(){ SPLASH_ON = false; canvas(); }
       계산된 색값(#FFFFFF 같은)을 직접 넣습니다. */
 function canvas(){
   const c = SPLASH_ON ? '#30382A'
+    : CHAT_ON ? (tok('--v-bg') || '#F7F6F1')   /* 채팅 — 입력줄 아래가 같은 색으로 */
     : ($('app').classList.contains('on')
         ? (tok('--v-card') || '#FFFFFF')   /* 본 화면 — 하단 내비와 같은 색 */
         : (tok('--v-bg')   || '#F7F6F1')); /* 로그인 화면 */
@@ -1240,10 +1308,24 @@ function applyPerm(){
   $('logWrap').style.display = can('access') ? '' : 'none';
 }
 
-/* 헤더 갱신 시각. 실패하면 붉게 남겨 오래된 숫자를 최신으로 착각하지 않게 합니다. */
+/* 헤더 갱신 시각. 실패하면 붉게 남겨 오래된 숫자를 최신으로 착각하지 않게 합니다.
+   ⚠️ 앱마다 서버가 보내는 형식이 다릅니다.
+      예전처럼 앞 5글자를 무조건 잘라내면 시각만 남아 어제 숫자인지
+      오늘 숫자인지 구분할 수 없습니다.
+      그래서 자르지 않고 형식을 알아본 뒤 'MM-dd HH:mm' 으로 맞춥니다. */
+function fmtStamp(v){
+  let s = String(v==null?'':v).trim().replace(/^갱신\s*/,'');
+  if(!s) return '';
+  s = s.replace(/^\d{4}[-./]/, '');            /* 연도가 붙어 있으면 뗀다 */
+  if(/^\d{1,2}:\d{2}/.test(s)){                /* 시각만 왔으면 오늘 날짜를 붙인다 */
+    const d = new Date(), p = function(x){ return String(x).padStart(2,'0'); };
+    s = p(d.getMonth()+1)+'-'+p(d.getDate())+' '+s;
+  }
+  return s;
+}
 function stamp(updated, stale){
   const el=$('stamp');
-  if(updated) el.textContent = String(updated).replace(/^갱신\s*/,'').slice(5);   /* MM-dd HH:mm */
+  if(updated) el.textContent = fmtStamp(updated);   /* MM-dd HH:mm */
   $('stampRow').classList.toggle('stale', !!stale);
 }
 
@@ -1358,6 +1440,7 @@ function openCat(on){
 function buildIcons(){
   $('brandBtn').querySelector('.chev').innerHTML = ic('down');
   $('rfIcon').innerHTML = ic('refresh');
+  $('chatAv').innerHTML = ic('chat');
   $('chatCloseBtn').innerHTML = ic('close');
   /* 어두운 배경 위에 올라가는 두 곳은 밝은 로고 고정 */
   $('splashLogo').src = LOGO.light;
@@ -1417,12 +1500,6 @@ async function loadLogs(force){
   }
 }
 
-function logResultClass(result){
-  if(result==='실패' || result==='오류' || result==='권한거부') return 'danger';
-  if(result==='입력' || result==='확인' || result==='접속' || result==='채팅') return 'ok';
-  return '';
-}
-
 function renderLogs(){
   if(!can('access')) return;
   const rows = LOGS.filter(function(x){ return x.kind===LOGVIEW; });
@@ -1430,25 +1507,27 @@ function renderLogs(){
     setHTML('logBody','<div class="empty">'+LOGTAB[LOGVIEW].empty+'</div>');
     return;
   }
-  setHTML('logBody', rows.map(function(r,i){
-    const head = '<div class="l1"><b>'+esc(r.user||'—')+'</b>'+
-      '<span class="rs '+logResultClass(r.result)+'">'+esc(r.result||'')+'</span>'+
-      '<span class="t">'+esc(r.t||'')+'</span></div>';
+  setHTML('logBody', rows.map(function(r, i){
+    /* 채팅은 질문·답변이 길어 [상세보기]로 접어 둡니다.
+       AI 가 만든 답변에는 AI 뱃지가 붙습니다. */
     if(LOGVIEW==='chat'){
-      const id = 'lg'+i;
-      const badge = r.ai ? ' <span class="badge b-ai">AI</span>' : '';
-      return '<div class="log-r">'+head+
-        '<div class="l2"><span class="more" onclick="toggleBox(\''+id+'\')">더보기</span>'+badge+'</div>'+
-        '<div id="'+id+'" style="display:none">'+
-          '<div class="qa2"><b>질문</b><div>'+esc(r.q||'—')+'</div>'+
-            '<b>답변</b><div>'+linkify(r.a||'—')+'</div></div>'+
+      const id='qa'+i;
+      return '<div class="log-r">'+
+        '<div class="l1"><b>'+esc(r.user||'—')+'</b>'+
+          '<button class="more" onclick="toggleQA(\''+id+'\',this)">상세보기</button>'+
+          (r.ai ? '<span class="aibadge">AI</span>' : '')+
+          '<span class="t">'+esc(r.t||'')+'</span></div>'+
+        '<div class="log-qa" id="'+id+'" style="display:none">'+
+          '<div class="k">질문</div><div class="v">'+esc(r.q||'—')+'</div>'+
+          '<div class="k">답변</div><div class="v">'+linkify(r.a||'—')+'</div>'+
         '</div></div>';
     }
+    const head = '<div class="l1"><b>'+esc(r.user||'—')+'</b>'+
+      '<span class="t">'+esc(r.t||'')+'</span></div>';
     const tail = (LOGVIEW==='access') ? (r.role||'') : (r.memo||'');
     return '<div class="log-r">'+head+
-      (tail ? '<div class="l2">'+esc(tail)+'</div>' : '')+'</div>';
-  }).join('')+
-  '<div class="sub2" style="padding:10px 2px 0">'+rows.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>');
+      '<div class="l2">'+esc(r.result||'')+(tail ? ' · '+esc(tail) : '')+'</div></div>';
+  }).join(''));
 }
 
 /* ══════════════════════════════════════════════════
@@ -1729,9 +1808,7 @@ function renderDash(){
     '<div class="chart"><h3>월별 시딩 추이 (최근 12개월)</h3>'+
       stackedBars(months, allCats, matrix)+'</div>'+
     '<div class="chart"><h3>플랫폼별 누계</h3>'+
-      (totalPairs.length ? hBars(totalPairs) : '<div class="sub2">데이터가 없습니다.</div>')+'</div>'+
-    '<div class="foot-note">· 추이·누계는 신청일시 기준입니다.<br>'+
-    '· 이번 달 플랫폼별 표는 [할일 · 공지]에서 볼 수 있습니다.</div>');
+      (totalPairs.length ? hBars(totalPairs) : '<div class="sub2">데이터가 없습니다.</div>')+'</div>');
 }
 
 /* ── 2차활용 · 대시보드 ───────────────────────────── */
@@ -1817,9 +1894,7 @@ function renderSecDash(){
     fold('2차 활용 금액 · 수수료', n(grand+feeTotal)+'원',
       '<div class="inner">'+
         '<div class="chart"><h3>2차 활용 금액</h3>'+moneyHtml+'</div>'+
-        '<div class="chart"><h3>수수료</h3>'+feeHtml+'</div></div>', false, 'd3')+
-    '<div class="foot-note">· 금액은 04_브랜더진 W열 등 2차활용 비용 열에서 합산합니다.<br>'+
-    '· 집계 기준일은 사용권 구매일이며, 없으면 신청일시를 씁니다.</div>');
+        '<div class="chart"><h3>수수료</h3>'+feeHtml+'</div></div>', false, 'd3'));
 }
 
 /* ── 관리 · 삭제확인 ────────────────────────────────
@@ -1840,8 +1915,13 @@ function renderDeleted(){
     h=box('ok','삭제로 표시된 건이 없습니다.','');
   }else{
     if(during.length){
-      h+=box('danger','게시기간 중 삭제 '+during.length+'건','재업로드를 요청하세요.')+
-         during.map(function(x){ return itemHtml(x,'del'); }).join('');
+      /* 알림은 접힘 밖에 건수만. 무엇을 해야 하는지와 목록은 안에 둡니다. */
+      h+=box('danger','게시기간 중 삭제 '+during.length+'건','')+
+         fold('게시기간 중 삭제 확인', during.length+'건',
+           '<div class="inner">'+
+           '<div class="sub2" style="margin-bottom:10px">재업로드를 요청하세요.</div>'+
+           during.map(function(x){ return itemHtml(x,'del'); }).join('')+
+           '</div>', false, 'danger');
     }
     /* 종료 후 건은 조치할 게 없으므로 접어 둡니다 */
     h+=fold('게시기간 종료 후 확인', after.length+'건',
@@ -2306,12 +2386,18 @@ function doSecondClear(id, uid){
    ══════════════════════════════════════════════════ */
 function openChat(on){
   const w=$('chatWrap');
-  w.classList.toggle('on', !!on);
   if(on){
+    CHAT_ON = true;
+    w.classList.add('on');
+    canvas(); applyViewportHeight();
     NAV='chat'; paintBottom();
     setTimeout(chatScrollEnd, 30);
   }else{
+    if(!CHAT_ON) return;
+    CHAT_ON = false;
     const ta=$('qInput'); if(ta) ta.blur();
+    w.classList.remove('on');
+    canvas(); applyViewportHeight();
     if(NAV==='chat'){ NAV = (PAGE==='p9') ? 'my' : 'home'; paintBottom(); }
   }
 }
