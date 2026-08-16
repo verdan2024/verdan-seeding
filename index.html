@@ -1,52 +1,658 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>버던_시딩</title>
+<!-- 확대·축소를 막습니다. 손가락으로 당겨 화면이 한 번 줄어들면
+     안전영역(상태바) 계산이 통째로 어긋나 헤더가 시계와 겹칩니다.
+     ⚠️ 예전에 이 값이 독립 앱 모드에서 입력칸 포커스를 막은 적이 있습니다.
+        로그인 칸이 눌리지 않으면 아래 줄로 되돌리세요.
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+     입력칸 글자는 16px 이라 자동 확대는 일어나지 않습니다. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>시딩관리</title>
 
 <link rel="apple-touch-icon" href="https://verdan2024.github.io/verdan-core/apple-touch-icon.png">
 <link rel="icon" href="https://verdan2024.github.io/verdan-core/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="버던시딩">
+<meta name="apple-mobile-web-app-title" content="시딩관리">
 <meta name="theme-color" content="#30382A">
 
-<link rel="stylesheet" href="https://verdan2024.github.io/verdan-core/verdan-core.css?v=1.1.6">
-<script src="https://verdan2024.github.io/verdan-core/verdan-core.js?v=1.1.6"></script>
-
 <style>
-/* ── 이 앱에만 있는 것 ──────────────────────────────── */
-/* 진행 상태 뱃지 — 색은 verdan-core 팔레트 안에서만 고른다 */
-.b-발송대기{background:#F2F1EF;color:#4A4744;}
-.b-업로드대기{background:#F7F1E6;color:#8A6538;}
-.b-게시중{background:#EFF2EC;color:#4C6544;}
-.b-미업로드{background:#F7F1E6;color:#8A6538;}
-.b-종료{background:#F2F1EF;color:#6D6462;}
-.b-대가없음{background:#F1EEF7;color:#5D5478;}
-.b-삭제{background:#F6EBEA;color:#8E4A45;}
+/* ══════════════════════════════════════════════════════
+   시딩관리 v5.0   (웹앱_시딩.gs v3.5)
+
+   ⚠️ 이 버전은 verdan-core 를 쓰지 않고 단독으로 동작합니다.
+      재고관리 v6.8 에서 실기기로 검증한 새 UI 구조(스플래시 · 접히는 헤더 ·
+      하단 내비 · 마이페이지 · 라이트/다크)를 시딩 데이터로 이어서 검증하기
+      위해서입니다. 검증이 끝나면 공통부를 verdan-core 1.2.0 으로 옮기고
+      이 파일은 다시 코어를 참조하는 형태로 되돌립니다.
+
+   v4.1 → v5.0
+   ① 스플래시 1초 → 로그인 (자동 로그인이면 바로 본 화면)
+   ② 헤더 = 로고+화살표 / 앱이름 · 새로고침 / ↻ 갱신시각 (스크롤하면 접힘)
+   ③ 상단 탭에서 [채팅] [접근로그] 제거 → 할일 | 관리 | 2차활용
+      채팅은 하단 내비에서 여는 전체 화면, 접근로그는 마이페이지 안
+   ④ 각 화면 맨 아래 [새로고침] 5곳 삭제 → 헤더 하나로
+   ⑤ 하위 세그먼트를 밑줄(.seg-nav) 방식으로
+   ⑥ 이모지를 단색 SVG 아이콘 · 상태 점으로 교체
+      뱃지 7종 · 구획 머리의 하드코딩 색을 상태 토큰 조합으로 교체
+   ⑦ 라이트/다크 색 토큰 두 벌
+   ⑧ confirm() → 브랜드 색 확인창(askConfirm)
+   ⑨ 관리 · 2차활용의 긴 목록을 접이식으로
+      (조치가 필요한 알림은 접힘 밖에 그대로 둡니다)
+
+   서버 규격은 v4.1 과 같습니다. 바뀐 것은 화면뿐입니다.
+   ══════════════════════════════════════════════════════ */
+
+/* ── 색 토큰 · 라이트 ───────────────────────────────
+   ⚠️ 색 코드를 직접 쓰지 마세요. 여기 값만 참조합니다. */
+:root{
+  /* 예전 --v-ink 이 헤더 · 주버튼 · 강조글자를 겸했는데,
+     다크에서 셋이 서로 다른 방향으로 가야 해서 쪼갰습니다. */
+  --v-header:#30382A;        /* 헤더 — 라이트/다크 동일 (같은 브랜드로 보이게) */
+  --v-cta:#30382A;           /* 주버튼 배경 */
+  --v-cta-txt:#FFFFFF;       /* 주버튼 글자 */
+  --v-strong:#30382A;        /* 강조 글자 */
+
+  --v-accent:#829568;
+  --v-accent2:#B2C58E;
+  --v-bg:#F7F6F1;
+  --v-card:#FFFFFF;
+  --v-soft:#FAFAF7;
+  --v-thead:#F2F1EC;
+  --v-seg:#EDEDE7;
+  --v-line:#E5E6DF;
+  --v-txt:#252721;
+  --v-mute:#696C64;
+  --v-ph:#A9AAA3;
+  --v-onink:#FFFFFF;
+  --v-link:#71869B;
+  --v-stale:#F0C9C6;
+  --v-wm:#252721;
+  --v-track:#E5E6DF;
+
+  --v-ok:#64815A;      --v-ok-bg:#EFF2EC;      --v-ok-line:#CFDAC6;
+  --v-warn:#B1844E;    --v-warn-bg:#F7F1E6;    --v-warn-line:#E3D2B4;
+  --v-danger:#B45F59;  --v-danger-bg:#F6EBEA;  --v-danger-line:#E4C6C4;
+
+  /* AI 말풍선 — 토큰이 소모된 답변임을 색으로 구분합니다 */
+  --v-ai-bg:#F1F4EA;   --v-ai-line:#B2C58E;    --v-ai-txt:#30382A;
+
+  /* 뱃지 전용 — 상태 3종으로 표현할 수 없는 두 가지만 따로 둡니다.
+     라벤더 = 대가없음(비용이 오가지 않은 건) · 회색 = 대기 · 종료 */
+  --v-lav-bg:#F1EEF7;  --v-lav-tx:#5D5478;
+  --v-gray-bg:#F2F1EF; --v-gray-tx:#5A5B54;
+
+  --v-d1:#B77C7C; --v-d2:#C48262; --v-d3:#8A7FA8; --v-d4:#71869B; --v-d5:#6D6462;
+
+  --v-radius:14px;
+  --wm-op:.05;
+  --hh:64px;              /* 헤더 높이 — JS 가 실측해 넣습니다 */
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+/* ── 색 토큰 · 다크 ─────────────────────────────────
+   색을 뒤집는 게 아니라 밝기로 층을 나눕니다.
+   bg < card < soft < seg 순서로 밝아집니다. */
+[data-theme="dark"]{
+  --v-header:#30382A;
+  --v-cta:#B2C58E;           /* 어두운 배경에서 Deep Olive 는 묻힙니다 */
+  --v-cta-txt:#23261F;
+  --v-strong:#E8EAE3;
+
+  --v-accent:#9FB283;
+  --v-accent2:#B2C58E;
+  --v-bg:#191B15;
+  --v-card:#23261F;
+  --v-soft:#2B2E26;
+  --v-thead:#2B2E26;
+  --v-seg:#32362C;
+  --v-line:#383B31;
+  --v-txt:#E8EAE3;
+  --v-mute:#9AA093;
+  --v-ph:#6E7468;
+  --v-onink:#FFFFFF;
+  --v-link:#9FB4C8;
+  --v-stale:#E4A5A0;
+  --v-wm:#E8EAE3;
+  --v-track:#32362C;
+
+  --v-ok:#8FAE83;      --v-ok-bg:#232A20;      --v-ok-line:#3A4834;
+  --v-warn:#D6A96A;    --v-warn-bg:#2E271B;    --v-warn-line:#4A3E28;
+  --v-danger:#D98A84;  --v-danger-bg:#2E211F;  --v-danger-line:#4C3230;
+
+  --v-ai-bg:#262E20;   --v-ai-line:#6E8455;    --v-ai-txt:#D9E4C6;
+
+  --v-lav-bg:#2A2733;  --v-lav-tx:#A196BE;
+  --v-gray-bg:#2B2E26; --v-gray-tx:#9AA093;
+
+  --v-d1:#C99191; --v-d2:#D89A78; --v-d3:#A196BE; --v-d4:#8AA0B6; --v-d5:#8C8380;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+/* ── 화면 뼈대 ──────────────────────────────────────
+   바깥(문서)은 스크롤되지 않게 잠그고 안쪽 판(.page)만 스크롤합니다.
+   문서 전체가 스크롤되면 iOS 에서 고무줄 반동이 생기고 주소창이
+   오르내리며 화면 높이가 계속 바뀌어 헤더·탭이 흔들립니다. */
+/* 문서 바탕(canvas) — 화면 맨 아래에 앱 바깥 영역이 남는 기기가 있습니다.
+   그 자리는 body 가 아무리 늘어나도 닿지 않고 이 색이 보입니다.
+   색은 JS(canvas)가 화면에 맞춰 직접 넣습니다. */
+html{height:100%;overflow:hidden;background:#30382A;}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',-apple-system,Arial,sans-serif;
+  /* ⚠️ 여기에 앱 배경색을 두면 안 됩니다.
+     iOS 독립 앱은 화면 아래 '앱 바깥' 자리를 body 배경색으로 칠합니다.
+     그 색은 JS(canvas)가 화면에 맞춰 넣고, 앱 배경은 #app·#gate 가 갖습니다. */
+  background:#30382A;color:var(--v-txt);
+  /* ⚠️ 높이를 계산해서 넣지 않습니다. 네 변을 0 으로 붙이면 계산 자체가 없어집니다.
+     키보드가 올라올 때만 JS 가 높이를 잠깐 대신 잡습니다. */
+  position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;
+  display:flex;flex-direction:column;overscroll-behavior:none;touch-action:manipulation;
+  -webkit-text-size-adjust:100%;
+  transition:background-color .25s var(--ease),color .25s var(--ease);}
+
+/* ⚠️ height 에는 절대 transition 을 걸지 마세요.
+   iOS 는 키보드가 올라오는 동안 크기 변화를 여러 번 알려줍니다.
+   그때마다 전환이 처음부터 다시 시작되면서 계단처럼 툭툭 끊깁니다. */
+
+/* ── 스플래시 ────────────────────────────────────── */
+#splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#30382A;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .45s var(--ease);}
+#splash.gone{opacity:0;pointer-events:none;}
+#splash .logo{width:200px;height:auto;display:block;}
+
+/* ── 로그인 ─────────────────────────────────────── */
+#gate{background:var(--v-bg);flex:1;min-height:0;overflow-y:auto;overscroll-behavior:none;display:none;
+  flex-direction:column;
+  padding:calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom));}
+#gate.on{display:flex;}
+/* 위아래 여백을 1.4 : 1 로 나눠 정중앙보다 조금 아래에 놓습니다.
+   ⚠️ padding 이나 margin 으로 내리면 키보드가 올라왔을 때 내용이 위로 잘려 나갑니다. */
+#gate::before{content:'';flex:1.4 1 0;min-height:0;}
+#gate::after {content:'';flex:1 1 0;min-height:0;}
+/* 키보드가 올라올 때 이 덩어리만 위로 미끄러집니다.
+   움직이는 것이 transform 하나뿐이라 레이아웃 계산이 없습니다. */
+#gateIn{flex-shrink:0;transition:transform .26s var(--ease);}
+#gate .logo{width:140px;height:auto;display:block;margin-bottom:14px;}
+#gate .sub{font-size:13px;color:var(--v-mute);margin-bottom:26px;margin-left:3px;}
+#gate input{width:100%;padding:15px 16px;border:1px solid var(--v-line);border-radius:12px;
+  font-size:16px;margin-bottom:9px;font-family:inherit;background:var(--v-soft);color:var(--v-txt);
+  -webkit-user-select:text;user-select:text;touch-action:manipulation;}
+#gate input::placeholder{color:var(--v-ph);}
+#gate input:focus{outline:none;border-color:var(--v-accent);background:var(--v-card);}
+#gate button{width:100%;padding:15px;border:none;border-radius:12px;background:var(--v-cta);
+  color:var(--v-cta-txt);font-size:15px;font-weight:700;font-family:inherit;margin-top:5px;}
+#gate button:disabled{opacity:.55;}
+#gateMsg{font-size:13px;color:var(--v-danger);margin-top:12px;min-height:18px;line-height:1.6;
+  text-align:center;}
+#gateMsg.wait{color:var(--v-mute);}
+#gate .hint{font-size:11px;color:var(--v-mute);margin-top:12px;line-height:1.7;text-align:center;}
+
+/* ── 앱 뼈대 ────────────────────────────────────── */
+#app{background:var(--v-bg);display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+#app.on{display:flex;}
+
+/* 헤더 + 탭을 한 덩어리로 묶습니다.
+   접히면 margin-top 을 헤더 높이만큼 음수로 줘서 헤더가 위로 잘려 나갑니다.
+   안전영역(상태바) 여백은 #chrome 이 갖습니다. */
+#chrome{flex-shrink:0;z-index:30;background:var(--v-header);
+  padding-top:calc(env(safe-area-inset-top) + 6px);}
+/* ⚠️ overflow:hidden 은 패딩 상자 기준으로 자릅니다.
+   안전영역 패딩을 #chrome 이 갖고 자르기는 이 안쪽 상자가 맡아야
+   헤더가 상태바(시계·배터리) 영역으로 올라오지 않습니다. */
+#headWrap{overflow:hidden;}
+#header{padding:6px 18px 12px;display:flex;align-items:flex-start;gap:12px;
+  color:var(--v-onink);
+  transition:margin-top .26s var(--ease), opacity .16s linear;}
+/* 미끄러져 올라가면서 함께 흐려집니다. 그냥 밀려 올라가면 뚝 끊겨 보입니다. */
+#chrome.up #header{margin-top:calc(-1 * var(--hh));opacity:0;}
+#brandBtn{display:flex;align-items:center;gap:7px;background:none;border:none;
+  color:var(--v-onink);font-family:inherit;padding:0;}
+#brandBtn .logo{width:88px;height:auto;display:block;}
+#brandBtn .chev{width:19px;height:19px;border:1px solid rgba(255,255,255,.34);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;transition:transform .25s var(--ease);}
+#brandBtn .chev svg{width:12px;height:12px;}
+#brandBtn.open .chev{transform:rotate(180deg);}
+#header .app{font-size:11.5px;opacity:.62;margin-top:8px;margin-left:3px;}
+#header .rt{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;}
+/* 얇은 외곽선 + 얇은 글씨. 채워진 버튼이 아닙니다. */
+#rfBtn{background:none;border:1px solid rgba(255,255,255,.3);border-radius:9px;
+  color:var(--v-onink);font-family:inherit;font-size:11.5px;font-weight:400;padding:6px 13px;}
+#rfBtn:active{background:rgba(255,255,255,.1);}
+/* 도는 아이콘은 버튼이 아니라 갱신시각 옆에 있습니다 */
+#stampRow{display:flex;align-items:center;gap:5px;margin-top:5px;
+  font-size:10.5px;opacity:.55;font-variant-numeric:tabular-nums;}
+#stampRow.stale{opacity:1;color:var(--v-stale);font-weight:700;}
+#stampRow svg{width:11px;height:11px;}
+#stampRow.busy svg{animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#tabs{display:flex;padding:0 8px;}
+#tabs button{flex:1;padding:12px 4px 11px;border:none;background:none;font-family:inherit;
+  font-size:13px;font-weight:600;color:rgba(255,255,255,.5);position:relative;}
+#tabs button.on{color:#fff;font-weight:800;}
+#tabs button.on::after{content:'';position:absolute;left:14%;right:14%;bottom:0;height:2.5px;
+  background:#fff;border-radius:2px;}
+
+.page{display:none;padding:16px 16px 0;}
+/* 목록 끝 여백은 20px 이면 충분합니다.
+   홈 인디케이터 몫은 #bottom 이 갖고 있으므로 여기에 또 넣으면 안 됩니다. */
+.page.on{display:block;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:none;padding-bottom:20px;}
+
+/* ── 카테고리 — 위에서 내려오는 판 ─────────────────── */
+#catWrap{position:fixed;left:0;right:0;top:0;z-index:61;pointer-events:none;}
+#catPanel{background:var(--v-bg);border-bottom:1px solid var(--v-line);
+  transform:translateY(-100%);transition:transform .3s var(--ease);
+  padding:calc(14px + env(safe-area-inset-top)) 14px 0;pointer-events:auto;}
+#catWrap.on #catPanel{transform:translateY(0);}
+#catGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+#catGrid a{background:var(--v-card);border:1px solid var(--v-line);border-radius:12px;
+  padding:15px 14px;text-decoration:none;display:block;}
+#catGrid a .t{font-size:14.5px;font-weight:700;color:var(--v-strong);
+  display:flex;align-items:center;gap:5px;}
+#catGrid a .t svg{width:13px;height:13px;opacity:.45;}
+#catGrid a .d{font-size:11px;color:var(--v-mute);margin-top:3px;}
+#catClose{display:flex;justify-content:flex-end;padding:14px 4px;}
+#catClose button{background:none;border:none;font-family:inherit;font-size:12.5px;
+  font-weight:600;color:var(--v-mute);text-decoration:underline;text-underline-offset:3px;}
+#scrim{position:fixed;inset:0;background:rgba(20,22,17,.42);z-index:60;opacity:0;
+  pointer-events:none;transition:opacity .25s var(--ease);}
+#scrim.on{opacity:1;pointer-events:auto;}
+
+/* ── 세그먼트 ────────────────────────────────────
+   .seg-nav  화면을 바꾸는 탐색용 — 밑줄 막대
+   .seg-pick 값을 고르는 컨트롤 — 버튼 (테마 전환 등) */
+.seg-nav{display:flex;gap:2px;border-bottom:1px solid var(--v-line);margin:-4px -16px 16px;
+  padding:0 16px;overflow-x:auto;scrollbar-width:none;}
+.seg-nav::-webkit-scrollbar{display:none;}
+.seg-nav button{border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;
+  color:var(--v-mute);padding:9px 12px 10px;position:relative;white-space:nowrap;}
+.seg-nav button.on{color:var(--v-strong);font-weight:800;}
+.seg-nav button.on::after{content:'';position:absolute;left:8px;right:8px;bottom:-1px;height:2.5px;
+  background:var(--v-strong);border-radius:2px;}
+
+.seg-pick{display:flex;gap:4px;background:var(--v-seg);border-radius:11px;padding:4px;}
+.seg-pick button{flex:1;padding:9px 4px;border:none;border-radius:8px;background:none;
+  font-family:inherit;font-size:12px;font-weight:700;color:var(--v-mute);white-space:nowrap;}
+.seg-pick button.on{background:var(--v-card);color:var(--v-strong);
+  box-shadow:0 1px 3px rgba(0,0,0,.08);}
+
+/* ── 카드 · 입력 ──────────────────────────────────
+   -webkit-user-select:text 가 없으면 독립 앱 모드에서 칸이 '선택만 되고
+   편집은 안 되는' 상태로 빠져 키보드가 올라오지 않습니다. */
+.card{background:var(--v-card);border:1px solid var(--v-line);border-radius:var(--v-radius);
+  padding:16px;margin-bottom:12px;}
+.card h3{font-size:12px;color:var(--v-mute);font-weight:700;margin-bottom:12px;}
+select,input.f,button.f,textarea.f{width:100%;padding:13px 14px;border:1px solid var(--v-line);
+  border-radius:12px;font-size:16px;margin-bottom:9px;font-family:inherit;
+  background:var(--v-soft);color:var(--v-txt);touch-action:manipulation;}
+select{-webkit-appearance:none;appearance:none;padding-right:36px;
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:16px;}
+select.ph{color:var(--v-ph);}
+input.f,textarea.f{-webkit-user-select:text;user-select:text;}
+textarea.f{resize:vertical;line-height:1.6;font-size:15px;}
+input.f::placeholder,textarea.f::placeholder{color:var(--v-ph);}
+input.f:focus,select:focus,textarea.f:focus{outline:none;border-color:var(--v-accent);
+  background:var(--v-card);}
+button.f{background:var(--v-cta);color:var(--v-cta-txt);border:none;font-weight:700;margin-top:3px;}
+button.f:disabled{opacity:.5;}
+button.ghost{background:transparent;color:var(--v-strong);border:1px solid var(--v-line);
+  font-weight:600;}
+/* select 와 input 은 브라우저 기본 높이가 달라 그냥 두면 줄이 어긋납니다 */
+select.fld,input.f.fld{height:46px;padding:0 14px;margin-bottom:0;}
+select.fld{padding-right:36px;}
+.lb2{font-size:11px;color:var(--v-mute);margin:11px 0 5px;}
+.lb2:first-child{margin-top:2px;}
+
+/* ── 구획 머리 — 이모지 대신 점 ───────────────────── */
+.sec{display:flex;align-items:center;gap:8px;margin:20px 0 9px;font-size:12.5px;
+  font-weight:700;color:var(--v-strong);}
+.sec .cnt{margin-left:auto;font-size:11.5px;color:var(--v-mute);font-weight:600;
+  font-variant-numeric:tabular-nums;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block;
+  background:var(--v-mute);}
+.dot.ok{background:var(--v-ok);} .dot.warn{background:var(--v-warn);}
+.dot.danger{background:var(--v-danger);} .dot.mute{background:var(--v-ph);}
+.dot.d1{background:var(--v-d1);} .dot.d2{background:var(--v-d2);}
+.dot.d3{background:var(--v-d3);} .dot.d4{background:var(--v-d4);}
+
+/* ── 안내 상자 ────────────────────────────────────── */
+.box{border-radius:12px;padding:13px 15px;margin-bottom:12px;font-size:12.5px;line-height:1.75;
+  border:1px solid;}
+.box.ok{background:var(--v-ok-bg);border-color:var(--v-ok-line);color:var(--v-ok);}
+.box.note{background:var(--v-warn-bg);border-color:var(--v-warn-line);color:var(--v-warn);}
+.box.danger{background:var(--v-danger-bg);border-color:var(--v-danger-line);color:var(--v-danger);}
+.box b{font-weight:800;}
+.box .hd{display:flex;align-items:center;gap:7px;font-weight:800;}
+/* 점 색은 상자 글자색을 따라갑니다. 상자마다 따로 지정하면 어긋납니다. */
+.box .hd .dot{background:currentColor;}
+/* 머리줄 아래 간격을 한 곳에서 정합니다 — 상자마다 달라 보이지 않게 */
+.box .bd{margin-top:9px;}
+.box .bd > div + div{margin-top:11px;}
+
+/* ⚠️ 이름을 .empty 로 씁니다.
+   .note 로 두면 주의 상자(.box.note)와 겹쳐 가운데 정렬과 큰 여백이 몰래 덧붙습니다. */
+.empty{font-size:12px;color:var(--v-mute);text-align:center;padding:22px 14px;line-height:1.7;}
+.empty.err{color:var(--v-danger);}
+
+/* ── 표 ───────────────────────────────────────────── */
+.tbl{background:var(--v-card);border:1px solid var(--v-line);border-radius:var(--v-radius);
+  overflow:hidden;margin-bottom:12px;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{padding:9px 12px;text-align:right;font-size:10.5px;font-weight:600;color:var(--v-mute);
+  background:var(--v-thead);white-space:nowrap;}
+th:first-child{text-align:left;}
+td{padding:11px 12px;border-top:1px solid var(--v-line);text-align:right;
+  font-variant-numeric:tabular-nums;}
+td:first-child{text-align:left;}
+tbody tr:first-child td{border-top:none;}
+tr.sum td{background:var(--v-thead);font-weight:800;}
+.sub2{font-size:10.5px;color:var(--v-mute);line-height:1.6;margin-top:2px;}
+.muted{color:var(--v-ph);}
+.dg,.danger{color:var(--v-danger);font-weight:700;}
+.ok{color:var(--v-ok);font-weight:700;}
+.hl{color:var(--v-danger);font-weight:700;}
+.hr{height:1px;background:var(--v-line);margin:11px 0;}
+.more{color:var(--v-strong);font-weight:800;text-decoration:underline;text-underline-offset:3px;
+  margin-left:6px;font-size:12px;}
+.foot-note{font-size:11px;color:var(--v-mute);line-height:1.85;padding:2px 2px 6px;}
+.msg{font-size:12px;margin-top:8px;min-height:16px;line-height:1.6;}
+.msg.err{color:var(--v-danger);} .msg.good{color:var(--v-ok);}
+
+details{background:var(--v-card);border:1px solid var(--v-line);border-radius:var(--v-radius);
+  margin-bottom:12px;overflow:hidden;}
+details summary{list-style:none;padding:13px 15px;font-size:12.5px;font-weight:700;
+  color:var(--v-strong);display:flex;align-items:center;gap:8px;}
+details summary::-webkit-details-marker{display:none;}
+details summary .cnt{margin-left:auto;font-size:11.5px;color:var(--v-mute);font-weight:600;
+  font-variant-numeric:tabular-nums;}
+details summary .chev{transition:transform .2s var(--ease);color:var(--v-mute);display:flex;}
+details[open] summary .chev{transform:rotate(90deg);}
+details .tbl{border:none;border-radius:0;border-top:1px solid var(--v-line);margin:0;}
+/* 펼쳤을 때 안쪽에 카드 목록이 들어가는 경우 */
+details .inner{padding:12px 12px 2px;border-top:1px solid var(--v-line);background:var(--v-bg);}
+details .inner .it:last-child{margin-bottom:12px;}
+
+/* ── 하단 내비 ────────────────────────────────────── */
+/* 아래 여백은 JS(fitBottom)가 기기에 맞춰 넣습니다.
+   앱 바깥으로 남는 자리가 이미 홈 인디케이터를 덮는 기기가 있어,
+   env() 를 그대로 쓰면 같은 여백이 두 번 들어갑니다. */
+#bottom{flex-shrink:0;display:flex;background:var(--v-card);border-top:1px solid var(--v-line);
+  padding-bottom:var(--navpad, 8px);z-index:40;}
+#bottom button{flex:1;border:none;background:none;font-family:inherit;padding:6px 0 4px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--v-ph);}
+#bottom button.on{color:var(--v-strong);}
+#bottom svg{width:21px;height:21px;}
+#bottom .lb{font-size:10px;font-weight:600;}
+
+/* ── 마이페이지 ───────────────────────────────────── */
+.mp-top{display:flex;align-items:center;gap:13px;padding:6px 2px 22px;}
+.mp-top .av{width:46px;height:46px;border-radius:50%;background:var(--v-accent2);flex-shrink:0;}
+.mp-top .who{font-size:17px;font-weight:800;color:var(--v-strong);}
+.mp-top .rt{margin-left:auto;}
+.mp-top .role{font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:9px;
+  background:var(--v-ok-bg);color:var(--v-ok);border:1px solid var(--v-ok-line);}
+.mp-blk{border-top:1px solid var(--v-line);padding:18px 2px 4px;}
+.mp-blk .ttl{font-size:11.5px;font-weight:700;color:var(--v-mute);margin-bottom:11px;}
+/* 라벨과 컨트롤을 한 줄에 두는 블록 (테마 전환) */
+.mp-blk.mp-row{display:flex;align-items:center;gap:12px;padding:14px 2px;}
+.mp-blk.mp-row .ttl{margin-bottom:0;}
+.mp-blk.mp-row .seg-pick{margin-left:auto;width:200px;flex-shrink:0;}
+.ver{text-align:center;font-size:11px;color:var(--v-ph);padding:26px 0 16px;line-height:1.7;}
+#outBtn{margin-bottom:4px;}
+
+.log-r{padding:12px 2px;border-top:1px solid var(--v-line);font-size:12.5px;}
+.log-r:first-child{border-top:none;}
+.log-r .l1{display:flex;gap:8px;align-items:baseline;}
+.log-r .l1 b{color:var(--v-txt);}
+.log-r .l1 .rs{font-size:11.5px;font-weight:700;color:var(--v-mute);}
+.log-r .l1 .rs.ok{color:var(--v-ok);} .log-r .l1 .rs.danger{color:var(--v-danger);}
+.log-r .t{font-size:11px;color:var(--v-ph);font-variant-numeric:tabular-nums;margin-left:auto;
+  white-space:nowrap;}
+.log-r .l2{font-size:11.5px;color:var(--v-mute);margin-top:3px;word-break:break-all;}
+/* 채팅 기록 [더보기] — 질문과 답변을 나눠 보여줍니다 */
+.qa2{margin-top:9px;font-size:12px;line-height:1.75;}
+.qa2 b{display:block;font-size:10.5px;color:var(--v-mute);margin-bottom:3px;font-weight:700;}
+.qa2 div{white-space:pre-wrap;word-break:break-word;background:var(--v-soft);
+  border:1px solid var(--v-line);border-radius:9px;padding:9px 11px;margin-bottom:8px;
+  color:var(--v-txt);}
+.qa2 a{color:var(--v-link);text-decoration:underline;word-break:break-all;}
+
+/* ══════════════════════════════════════════════════
+   여기부터 시딩 앱에만 있는 것
+   ══════════════════════════════════════════════════ */
+
+/* ── 진행 상태 뱃지 7종 ────────────────────────────
+   ⚠️ 색 코드를 직접 쓰지 않습니다. 상태 토큰 조합이라 다크에서 함께 따라옵니다. */
+.badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:9px;white-space:nowrap;
+  display:inline-block;background:var(--v-gray-bg);color:var(--v-gray-tx);}
+.b-발송대기{background:var(--v-gray-bg);color:var(--v-gray-tx);}
+.b-업로드대기{background:var(--v-warn-bg);color:var(--v-warn);}
+.b-게시중{background:var(--v-ok-bg);color:var(--v-ok);}
+.b-미업로드{background:var(--v-warn-bg);color:var(--v-warn);}
+.b-종료{background:var(--v-gray-bg);color:var(--v-mute);}
+.b-대가없음{background:var(--v-lav-bg);color:var(--v-lav-tx);}
+.b-삭제{background:var(--v-danger-bg);color:var(--v-danger);}
+/* 접근로그 · 채팅 기록에서 AI 가 만든 답변에 붙는 배지 */
+.b-ai{background:var(--v-ai-bg);color:var(--v-ai-txt);border:1px solid var(--v-ai-line);}
+
+/* ── 목록 항목 카드 ──────────────────────────────── */
+.it{background:var(--v-card);border:1px solid var(--v-line);border-radius:var(--v-radius);
+  margin-bottom:9px;overflow:hidden;}
+.it .hd{padding:13px 14px;display:flex;align-items:flex-start;gap:9px;}
+.it .nm{font-weight:700;font-size:14px;color:var(--v-strong);}
+.it .meta{font-size:11px;color:var(--v-mute);margin-top:3px;line-height:1.6;}
+.it .right{margin-left:auto;text-align:right;flex-shrink:0;}
+.it .bd{display:none;padding:0 14px 14px;border-top:1px solid var(--v-line);}
+.it.open .bd{display:block;}
+.dd{font-size:11px;font-weight:700;margin-top:4px;}
+.dd.over{color:var(--v-danger);} .dd.soon{color:var(--v-warn);} .dd.ok{color:var(--v-mute);}
+.dd.rent{color:var(--v-d3);}
+/* 카드에 바로 붙는 빠른 실행 버튼 */
+.qa{display:flex;gap:6px;padding:0 14px 12px;flex-wrap:wrap;}
+.qa button{flex:1;min-width:74px;padding:10px 6px;font-size:12.5px;border-radius:10px;
+  border:1px solid var(--v-line);background:var(--v-card);color:var(--v-strong);font-weight:700;
+  font-family:inherit;}
+.qa button.pri{background:var(--v-cta);color:var(--v-cta-txt);border:none;}
+.qa button.no{color:var(--v-danger);border-color:var(--v-danger-line);}
+.qmsg{font-size:11.5px;padding:0 14px 10px;}
+.qmsg.err{color:var(--v-danger);} .qmsg.good{color:var(--v-ok);}
+.acts{margin-top:10px;}
+.acts input.f{margin-bottom:8px;}
+.acts .fld + .lb2{margin-top:12px;}
+
+/* 키-값 목록 */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px;color:var(--v-mute);
+  line-height:1.95;padding-top:11px;}
+.kv b{font-weight:700;color:var(--v-txt);}
+.kv a{color:var(--v-link);word-break:break-all;}
+.box2{background:var(--v-soft);border:1px solid var(--v-line);border-radius:11px;
+  padding:10px 12px;margin-top:10px;}
+
+/* ── 공지 블록 ───────────────────────────────────── */
+.notice{background:var(--v-card);border:1px solid var(--v-line);border-radius:var(--v-radius);
+  padding:16px 18px;margin-bottom:12px;font-size:13.5px;line-height:2.1;}
+.notice .ttl{font-size:12px;color:var(--v-mute);font-weight:700;margin-bottom:8px;}
+.notice b{font-variant-numeric:tabular-nums;color:var(--v-txt);}
+.notice .big{font-size:22px;font-weight:800;color:var(--v-strong);
+  font-variant-numeric:tabular-nums;}
+
+/* ── 그래프 (외부 라이브러리 없이 CSS로만) ────────── */
+.chart{background:var(--v-card);border:1px solid var(--v-line);border-radius:var(--v-radius);
+  padding:15px;margin-bottom:12px;}
+.chart h3{font-size:12.5px;color:var(--v-strong);margin-bottom:13px;font-weight:700;}
+.vbars{display:flex;align-items:flex-end;gap:4px;height:150px;}
+.vcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-width:0;}
+.vcol .tot{font-size:10px;color:var(--v-mute);text-align:center;font-weight:700;margin-bottom:3px;
+  font-variant-numeric:tabular-nums;}
+.vcol .stack{display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
+.vcol .seg{width:100%;display:flex;align-items:center;justify-content:center;}
+.vcol .seg span{font-size:9px;font-weight:700;color:#fff;line-height:1;
+  text-shadow:0 0 2px rgba(20,22,17,.35);}
+.vcol .lb{font-size:9px;color:var(--v-mute);text-align:center;margin-top:5px;white-space:nowrap;}
+.hbar{margin-bottom:11px;}
+.hbar .top{display:flex;font-size:12.5px;color:var(--v-txt);margin-bottom:5px;}
+.hbar .top b{margin-left:auto;font-variant-numeric:tabular-nums;}
+.hbar .track{height:9px;background:var(--v-track);border-radius:5px;overflow:hidden;}
+.hbar .fill{height:100%;border-radius:5px;}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:11px;color:var(--v-mute);}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;
+  vertical-align:middle;}
+.donut{display:flex;align-items:center;gap:18px;}
+.donut .ring{width:112px;height:112px;border-radius:50%;flex-shrink:0;position:relative;}
+.donut .hole{position:absolute;inset:26px;background:var(--v-card);border-radius:50%;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;}
+.donut .hole b{font-size:17px;color:var(--v-strong);font-variant-numeric:tabular-nums;}
+.donut .hole span{font-size:10px;color:var(--v-mute);}
+.donut .side{flex:1;font-size:12px;line-height:2;color:var(--v-txt);}
+.donut .side i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;}
+.donut .side b{float:right;font-variant-numeric:tabular-nums;}
+.money{font-size:13px;line-height:2.1;color:var(--v-txt);}
+.money .row{display:flex;}
+.money .row b{margin-left:auto;font-variant-numeric:tabular-nums;}
+.money .big{font-size:19px;font-weight:800;color:var(--v-strong);font-variant-numeric:tabular-nums;}
+
+/* ── 채팅 — 하단 내비에서 여는 전체 화면 ────────────
+   ⚠️ position:absolute 입니다. body 가 position:fixed 라 이 판은 body 상자를
+      그대로 따라갑니다. 키보드가 올라와 JS 가 body 높이를 줄이면 입력줄도
+      함께 올라와 키보드 바로 위에 붙습니다.
+      fixed 로 두면 키보드 뒤로 숨습니다. */
+#chatWrap{position:absolute;inset:0;z-index:70;background:var(--v-bg);display:none;
+  flex-direction:column;}
+#chatWrap.on{display:flex;}
+#chatHead{flex-shrink:0;background:var(--v-header);color:var(--v-onink);
+  padding:calc(env(safe-area-inset-top) + 10px) 14px 12px;display:flex;align-items:center;gap:10px;}
+#chatHead .av{width:32px;height:32px;border-radius:50%;background:var(--v-accent2);flex-shrink:0;}
+#chatHead .who{font-size:14.5px;font-weight:800;}
+#chatHead .rt{margin-left:auto;display:flex;align-items:center;gap:8px;}
+#chatHead button{background:none;border:1px solid rgba(255,255,255,.3);border-radius:9px;
+  color:var(--v-onink);font-family:inherit;font-size:11.5px;font-weight:400;padding:6px 12px;}
+#chatHead button.x{border:none;padding:4px;display:flex;}
+#chatHead button.x svg{width:21px;height:21px;}
+#chatScroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:none;padding:16px 16px 4px;}
+#chatBody{display:flex;flex-direction:column;gap:10px;}
+.cmsg{max-width:88%;padding:11px 13px;border-radius:15px;font-size:13px;line-height:1.75;
+  white-space:pre-wrap;word-break:break-word;}
+.cmsg.me{align-self:flex-end;background:var(--v-cta);color:var(--v-cta-txt);
+  border-bottom-right-radius:5px;}
+/* 흰(카드) 말풍선 = 저장된 데이터에서 바로 찾은 답. 토큰이 들지 않습니다. */
+.cmsg.bot{align-self:flex-start;background:var(--v-card);border:1px solid var(--v-line);
+  color:var(--v-txt);border-bottom-left-radius:5px;}
+/* 연두 말풍선 = AI 가 만든 답. 토큰이 소모됩니다. */
+.cmsg.ai{align-self:flex-start;background:var(--v-ai-bg);border:1px solid var(--v-ai-line);
+  color:var(--v-ai-txt);border-bottom-left-radius:5px;}
+.cmsg .aib{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.04em;
+  padding:2px 7px;border-radius:7px;border:1px solid var(--v-ai-line);color:var(--v-ai-txt);
+  margin-bottom:7px;}
+.cmsg .tok{margin-top:8px;padding-top:7px;border-top:1px solid var(--v-ai-line);
+  font-size:10.5px;color:var(--v-mute);font-variant-numeric:tabular-nums;}
+.cmsg a{color:var(--v-link);text-decoration:underline;word-break:break-all;}
+.cmsg.me a{color:var(--v-accent2);}
+.typing{display:flex;gap:5px;padding:4px 2px;}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--v-mute);
+  animation:v-blink 1.3s infinite;}
+.typing i:nth-child(2){animation-delay:.2s;}
+.typing i:nth-child(3){animation-delay:.4s;}
+@keyframes v-blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+#chatFoot{flex-shrink:0;padding:8px 16px;padding-bottom:calc(8px + var(--navpad, 8px));
+  background:var(--v-bg);}
+/* 되묻기 · 더보기 칩은 오른쪽에 붙입니다 */
+#chatChips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-bottom:9px;}
+#chatChips:empty{display:none;}
+.chip{font-size:12px;padding:8px 13px;border-radius:17px;border:1px solid var(--v-accent2);
+  background:var(--v-card);color:var(--v-strong);font-family:inherit;}
+.chip.gray{border-color:var(--v-line);color:var(--v-mute);}
+/* 입력칸만 늘어나고 버튼 크기는 고정입니다 */
+#chatBar{display:flex;gap:8px;align-items:flex-end;}
+#chatBar textarea{flex:1;min-width:0;margin:0;padding:12px 16px;border:1px solid var(--v-line);
+  border-radius:21px;background:var(--v-card);color:var(--v-txt);font-size:16px;line-height:1.5;
+  font-family:inherit;resize:none;max-height:96px;overflow-y:auto;
+  -webkit-user-select:text;user-select:text;touch-action:manipulation;}
+#chatBar textarea:focus{outline:none;border-color:var(--v-accent);}
+#chatBar .send{flex:0 0 44px;width:44px;height:44px;padding:0;margin:0;border:none;
+  border-radius:50%;background:var(--v-cta);color:var(--v-cta-txt);font-family:inherit;
+  display:flex;align-items:center;justify-content:center;}
+#chatBar .send svg{width:19px;height:19px;}
+#chatBar .send:disabled{opacity:.4;}
+
+/* ── 확인창 ───────────────────────────────────────
+   iOS 기본 confirm 은 버튼이 파란색으로 고정이라 직접 만듭니다 */
+#dlg{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;
+  background:rgba(20,22,17,.45);padding:32px;}
+#dlg.on{display:flex;}
+#dlg .box{background:var(--v-card);border-radius:16px;width:100%;max-width:300px;
+  padding:22px 20px 14px;box-shadow:0 10px 30px rgba(0,0,0,.18);border:none;margin:0;}
+#dlg .msg{font-size:14.5px;font-weight:600;color:var(--v-txt);line-height:1.6;text-align:center;
+  margin:0 0 18px;}
+#dlg .btns{display:flex;gap:8px;}
+#dlg button{flex:1;padding:12px;border:none;border-radius:11px;font-family:inherit;
+  font-size:14px;font-weight:700;background:var(--v-cta);color:var(--v-cta-txt);}
+#dlg button.no{background:transparent;color:var(--v-mute);border:1px solid var(--v-line);}
+
+/* ── 워터마크 ─────────────────────────────────────
+   캡쳐를 막을 수는 없으므로, 캡쳐된 이미지에 누가 언제 열었는지가
+   함께 찍히도록 하는 장치입니다. */
+#wm{position:fixed;inset:0;pointer-events:none;z-index:9000;overflow:hidden;display:none;}
+#wm span{position:absolute;white-space:nowrap;font-size:13px;font-weight:700;
+  color:var(--v-wm);opacity:var(--wm-op);transform:rotate(-30deg);}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;}}
 </style>
 </head>
 <body>
 
-<div id="app">
-  <div id="header"></div>
+<div id="splash">
+  <img class="logo" id="splashLogo" alt="VERDAN">
+</div>
 
-  <div id="tabs">
-    <button data-page="p1" class="on">할일</button>
-    <button data-page="p2">관리</button>
-    <button data-page="p3">2차활용</button>
-    <button data-page="p4">채팅</button>
-    <button data-page="p5" data-perm="access">접근로그</button>
+<!-- 로그인 · 입력 순서는 이름 → 비밀번호 -->
+<div id="gate">
+ <div id="gateIn">
+  <img class="logo" id="gateLogo" alt="VERDAN">
+  <div class="sub">시딩관리</div>
+  <input type="text" id="nm" placeholder="이름" autocomplete="name" maxlength="20">
+  <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password">
+  <button id="loginBtn">로그인</button>
+  <div id="gateMsg"></div>
+  <div class="hint">본인 이름을 입력하세요. 접근로그에 기록됩니다.<br>
+    <span id="verLine"></span></div>
+ </div>
+</div>
+
+<div id="app">
+  <div id="chrome">
+    <div id="headWrap">
+    <div id="header">
+      <div>
+        <button id="brandBtn"><img class="logo" id="headLogo" alt="VERDAN"><span class="chev"></span></button>
+        <div class="app">시딩관리</div>
+      </div>
+      <div class="rt">
+        <button id="rfBtn">새로고침</button>
+        <div id="stampRow"><span id="rfIcon"></span><span id="stamp">—</span></div>
+      </div>
+    </div>
+    </div>
+    <div id="tabs">
+      <button data-page="p1" class="on">할일</button>
+      <button data-page="p2">관리</button>
+      <button data-page="p3">2차활용</button>
+    </div>
   </div>
 
   <!-- ── 할일 ───────────────────────────── -->
   <div id="p1" class="page on">
-    <div class="seg" id="segToday">
-      <button class="on" data-k="notice" onclick="setToday('notice')">공지</button>
-      <button data-k="upchk" onclick="setToday('upchk')">업로드확인</button>
-      <button data-k="post"  onclick="setToday('post')">게시확인</button>
+    <div class="seg-nav" id="segToday">
+      <button class="on" data-k="notice">공지</button>
+      <button data-k="upchk">업로드확인</button>
+      <button data-k="post">게시확인</button>
     </div>
     <div id="v1notice" data-clear></div>
     <div id="v1upchk" data-clear style="display:none"></div>
@@ -55,12 +661,12 @@
 
   <!-- ── 관리 ───────────────────────────── -->
   <div id="p2" class="page">
-    <div class="seg" id="segStat">
-      <button class="on" data-k="dash" onclick="setStat('dash')">대시보드</button>
-      <button data-k="posted"  onclick="setStat('posted')">게시확인</button>
-      <button data-k="deleted" onclick="setStat('deleted')">삭제확인</button>
-      <button data-k="influ"   onclick="setStat('influ')">인플루언서</button>
-      <button data-k="all"     onclick="setStat('all')">전체</button>
+    <div class="seg-nav" id="segStat">
+      <button class="on" data-k="dash">대시보드</button>
+      <button data-k="posted">게시확인</button>
+      <button data-k="deleted">삭제확인</button>
+      <button data-k="influ">인플루언서</button>
+      <button data-k="all">전체</button>
     </div>
     <div id="v2dash" data-clear></div>
     <div id="v2posted" data-clear style="display:none"></div>
@@ -68,8 +674,7 @@
     <div id="v2influ" style="display:none">
       <div class="card">
         <h3>인플루언서 검색</h3>
-        <input class="f" type="text" id="iName" data-reset placeholder="이름 · 계정"
-               oninput="VERDAN.debounce(renderInflu)">
+        <input class="f" type="text" id="iName" data-reset placeholder="이름 · 계정">
         <div class="sub2">이름이나 계정으로 찾은 뒤 눌러 펼치면 진행 이력과 비고를 볼 수 있습니다.</div>
       </div>
       <div id="influBody" data-clear></div>
@@ -77,11 +682,10 @@
     <div id="v2all" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
-        <select id="aCat" onchange="VERDAN.debounce(renderAllList)"></select>
-        <select id="aProd" onchange="VERDAN.debounce(renderAllList)"></select>
-        <input class="f" type="text" id="aName" data-reset placeholder="이름 · 계정"
-               oninput="VERDAN.debounce(renderAllList)">
-        <button class="f ghost" onclick="resetFilter('a')">조건 초기화</button>
+        <select id="aCat"></select>
+        <select id="aProd"></select>
+        <input class="f" type="text" id="aName" data-reset placeholder="이름 · 계정">
+        <button class="f ghost" id="aReset">조건 초기화</button>
       </div>
       <div id="allBody" data-clear></div>
     </div>
@@ -89,154 +693,769 @@
 
   <!-- ── 2차 활용 ───────────────────────── -->
   <div id="p3" class="page">
-    <div class="seg" id="segSecond">
-      <button class="on" data-k="dash" onclick="setSecond('dash')">대시보드</button>
-      <button data-k="reg"  onclick="setSecond('reg')">등록</button>
-      <button data-k="list" onclick="setSecond('list')">전체</button>
+    <div class="seg-nav" id="segSecond">
+      <button class="on" data-k="dash">대시보드</button>
+      <button data-k="reg">등록</button>
+      <button data-k="list">전체</button>
     </div>
     <div id="v3dash" data-clear></div>
     <div id="v3reg" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
-        <select id="sCat" onchange="VERDAN.debounce(renderSecReg)"></select>
-        <select id="sProd" onchange="VERDAN.debounce(renderSecReg)"></select>
-        <input class="f" type="text" id="sName" data-reset placeholder="이름 · 계정"
-               oninput="VERDAN.debounce(renderSecReg)">
-        <button class="f ghost" onclick="resetFilter('s')">조건 초기화</button>
+        <select id="sCat"></select>
+        <select id="sProd"></select>
+        <input class="f" type="text" id="sName" data-reset placeholder="이름 · 계정">
+        <button class="f ghost" id="sReset">조건 초기화</button>
       </div>
       <div id="secRegBody" data-clear></div>
     </div>
     <div id="v3list" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
-        <select id="lCat" onchange="VERDAN.debounce(renderSecList)"></select>
-        <select id="lProd" onchange="VERDAN.debounce(renderSecList)"></select>
-        <select id="lChan" onchange="VERDAN.debounce(renderSecList)"></select>
-        <select id="lPer" onchange="VERDAN.debounce(renderSecList)"></select>
-        <input class="f" type="text" id="lName" data-reset placeholder="이름 · 계정"
-               oninput="VERDAN.debounce(renderSecList)">
-        <button class="f ghost" onclick="resetFilter('l')">조건 초기화</button>
+        <select id="lCat"></select>
+        <select id="lProd"></select>
+        <select id="lChan"></select>
+        <select id="lPer"></select>
+        <input class="f" type="text" id="lName" data-reset placeholder="이름 · 계정">
+        <button class="f ghost" id="lReset">조건 초기화</button>
       </div>
       <div id="secListBody" data-clear></div>
     </div>
   </div>
 
-  <!-- ── 채팅 ─────────────────────────────
-       입력줄(#chatBar)은 코어가 채웁니다. 여기에 직접 넣지 마세요. -->
-  <div id="p4" class="page chat">
-    <div id="chatTop"><button class="chip gray" onclick="chatReset()">↺ 초기화</button></div>
-    <div id="chatScroll"><div id="chatBody" data-clear></div></div>
-    <div id="chatFoot">
-      <div id="chatChips" class="chips" data-clear></div>
-      <div id="chatBar"></div>
-      <div class="sub2" style="margin-top:8px">
-        흰색 답변은 저장된 데이터에서 바로 찾은 것입니다.<br>
-        <b style="color:var(--v-ai-txt)">연두색 답변은 AI가 처리한 것으로 토큰이 소모됩니다.</b><br>
-        AI로 넘기기 전에 항상 먼저 확인을 받습니다.</div>
+  <!-- ── 마이페이지 ─────────────────────── -->
+  <div id="p9" class="page">
+    <div class="mp-top">
+      <div class="av"></div>
+      <div>
+        <div class="who" id="mpName">—</div>
+      </div>
+      <div class="rt"><span class="role" id="mpRole">—</span></div>
+    </div>
+
+    <div class="mp-blk mp-row">
+      <div class="ttl">테마</div>
+      <div class="seg-pick" id="segTheme">
+        <button class="on" data-v="light">라이트</button>
+        <button data-v="dark">다크</button>
+      </div>
+    </div>
+
+    <!-- 접근로그 — 관리자에게만 만들어집니다 -->
+    <div class="mp-blk" id="logWrap" style="display:none">
+      <div class="ttl">접근로그</div>
+      <div class="seg-nav" id="segLog" style="margin:0 0 6px;padding:0">
+        <button class="on" data-k="access">접속</button>
+        <button data-k="work">기록</button>
+        <button data-k="chat">채팅</button>
+      </div>
+      <div id="logBody" data-clear></div>
+    </div>
+
+    <div class="ver" id="verFoot"></div>
+    <button class="f ghost" id="outBtn">로그아웃</button>
+  </div>
+
+  <div id="bottom"></div>
+</div>
+
+<!-- ── 채팅 · 전체 화면 ─────────────────────────────
+     입력줄은 #chatBar 안에 JS 가 만듭니다. -->
+<div id="chatWrap">
+  <div id="chatHead">
+    <div class="av"></div>
+    <div class="who">버던</div>
+    <div class="rt">
+      <button id="chatResetBtn">초기화</button>
+      <button class="x" id="chatCloseBtn" aria-label="닫기"></button>
     </div>
   </div>
-
-  <!-- ── 접근로그 ─────────────────────────
-       접속 / 기록 / 채팅 세 탭과 표는 코어가 그립니다. -->
-  <div id="p5" class="page">
-    <div class="seg" id="segLog"></div>
-    <div id="accessBody" data-clear></div>
-    <button class="f ghost" onclick="VERDAN.loadLogs(true)">새로고침</button>
+  <div id="chatScroll"><div id="chatBody" data-clear></div></div>
+  <div id="chatFoot">
+    <div id="chatChips" data-clear></div>
+    <div id="chatBar"></div>
   </div>
-
-  <div class="foot">버던_시딩 · v4.1 · core <span id="coreVer"></span></div>
 </div>
+
+<div id="scrim"></div>
+<div id="catWrap">
+  <div id="catPanel">
+    <div id="catGrid"></div>
+    <div id="catClose"><button>닫기</button></div>
+  </div>
+</div>
+
+<div id="dlg">
+  <div class="box">
+    <div class="msg" id="dlgMsg"></div>
+    <div class="btns">
+      <button id="dlgNo" class="no">취소</button>
+      <button id="dlgYes">확인</button>
+    </div>
+  </div>
+</div>
+
+<div id="wm" aria-hidden="true"></div>
 
 <script>
 /* ══════════════════════════════════════════════════════
-   버던_시딩 v4.1   (verdan-core 1.1.0 / 웹앱_시딩.gs v3.5)
-   공통 부분은 verdan-core.js 가 처리한다.
-   이 파일에는 시딩 라이프사이클 · 2차 활용 · 채팅 로직만 둔다.
-
-   v4.0 → v4.1 에서 코어로 넘긴 것
-   ① 채팅 입력줄 · 타이핑 표시 · 되묻기 칩 · 토큰 사용량 줄
-      → V.chatInit / V.say / V.typing / V.confirmChips / V.tokens
-      앱마다 조금씩 다르던 모양이 4개 앱에서 같아진다.
-   ② 접근로그 3분류 표와 [더보기] → V.loadLogs / V.logView
-      분류(kind)는 서버가 붙여 보내고, 시스템 기록은 코어가 걸러낸다.
-   ③ 로그인 안내 문구(hint) → 코어 고정. 앱에서 넘기지 않는다.
-
-   v4.0 에서 고친 것
-   ① logout() 이 없는 요소('v2noupload')를 건드려 중간에 멈추던 문제.
-      → 코어의 data-clear / data-reset 방식으로 바꿔 원천 차단.
-   ② onclick 안에 이름을 넣을 때 작은따옴표 처리 (jsq)
+   시딩관리 v5.0
+   서버(Apps Script · 웹앱_시딩.gs v3.5)와 주고받는 규격은 v4.1 과 같습니다.
+   바뀐 것은 화면뿐입니다.
    ══════════════════════════════════════════════════════ */
 
 /* Apps Script 웹앱 배포 URL. 재배포해서 URL 이 바뀌면 이 줄만 고치면 된다. */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3svD8sJrB-gWMNKvRzai1wnTh9YB-VQGacvpryTlKCzD56iq30BWBH0X752KsMDkw/exec";
 
-const V = VERDAN;
-const esc = V.esc, jsq = V.js, n = V.n, dayGap = V.dayGap;
+const APP_VER = 'v5.0';
+/* 로고 · 공통 코어 저장소에 둡니다. 3개 앱이 같은 주소를 봅니다.
+   로고를 바꾸면 ?v= 숫자만 올리면 캐시가 갈립니다. */
+const LOGO = {
+  light: 'https://verdan2024.github.io/verdan-core/logo-light.png?v=1',  /* 어두운 배경용 */
+  dark : 'https://verdan2024.github.io/verdan-core/logo-dark.png?v=1'    /* 밝은 배경용 */
+};
+const STORE  = { pw:'verdan_seed_pw', user:'verdan_seed_user', theme:'verdan_theme' };
+const LEGACY = [];
+/* 읽기는 빨리 포기하고 쓰기는 끝까지 기다린다. 실패 대가가 다르기 때문이다.
+   통합DB 새로고침이 붙어 있어 시딩은 재고보다 넉넉히 잡는다. */
+const TIMEOUT = { read:25000, write:35000, ai:45000 };
+const RECHECK = 60000;
+const THRESH  = 5;      /* 헤더 접힘 임계값 */
+const CARD_PAGE = 20;   /* 채팅 목록형 답변을 나눠 보여주는 단위 */
 
-let D = null;
-let OPEN = {}, OPT_CACHE = '';
-let V1='notice', V2='dash', V3='dash';
-let PENDING_Q = '', CARDS = [], CARDN = 0;
-const CARD_PAGE = 20;
-/* 접근로그 상태(LOGS · 보고 있는 탭 · 불러왔는지)는 코어가 들고 있다 */
+/* 권한표 — 서버의 ROLES 와 짝을 맞춘다 */
+const PERM = {
+  admin: { label:'관리자', write:true, access:true  },
+  staff: { label:'담당자', write:true, access:false }
+};
+const NOPERM = { label:'—', write:false, access:false };
+
+/* 카테고리 — 이 배열만 고치면 항목이 늘고 줄어듭니다 */
+const LINKS = [
+  {t:'VERDAN',    d:'홈페이지',    u:'https://verdan.co.kr'},
+  {t:'MUSINSA',   d:'무신사',      u:'https://www.musinsa.com'},
+  {t:'29CM',      d:'29CM',        u:'https://www.29cm.co.kr'},
+  {t:'INSTAGRAM', d:'인스타그램',  u:'https://www.instagram.com'},
+  {t:'MAGAZINE',  d:'버던 매거진', u:'https://verdan.co.kr'}
+];
+
+/* 하단 내비 — 시딩은 채팅이 있으므로 세 칸입니다 */
+const NAVS = [
+  {k:'home', lb:'홈',         icon:'home'},
+  {k:'chat', lb:'채팅',       icon:'send'},
+  {k:'my',   lb:'마이페이지', icon:'user'}
+];
 
 /* 플랫폼 색 — 그래프와 범례가 같은 색을 쓴다.
-   verdan-core 의 데이터 컬러 5종만 쓴다. 그린 계열은 데이터에 쓰지 않는다.
-   (건수가 가장 많은 브랜더진이 메인 데이터 색) */
-const CAT_COLOR = {
-  '브랜더진':'#B77C7C', '리뷰노트':'#C48262', '무신사':'#8A7FA8', '구글폼':'#71869B'
-};
+   ⚠️ 색 코드를 직접 쓰지 않고 데이터 토큰 이름만 둡니다.
+      테마가 바뀌면 tok() 이 그때의 값을 읽어옵니다.
+      (그린 계열은 데이터에 쓰지 않습니다. 건수가 가장 많은 브랜더진이 메인 데이터 색) */
+const CAT_TOKEN = { '브랜더진':'--v-d1', '리뷰노트':'--v-d2', '무신사':'--v-d3', '구글폼':'--v-d4' };
+const FALLBACK_TOKENS = ['--v-d5','--v-d1','--v-d2','--v-d3','--v-d4'];
 /* 화면에 보여줄 이름. 시트·통합DB의 실제 값은 '구글폼' 그대로 둔다.
    (통계 수식이 '구글폼'을 기준으로 잡혀 있어 데이터를 바꾸면 안 된다) */
 const CAT_LABEL = { '구글폼':'개인협찬(구글폼)' };
-const FALLBACK_COLORS = ['#6D6462','#B77C7C','#C48262','#8A7FA8','#71869B'];
 
-VERDAN.init({
-  scriptUrl : SCRIPT_URL,
-  appId     : 'seeding',
-  title     : '버던_시딩',
-  icon      : '📮',
-  iconUrl   : 'https://verdan2024.github.io/verdan-core/apple-touch-icon.png',
-  appVersion: 'v4.1',
-  store     : { pw:'verdan_seed_pw', user:'verdan_seed_user' },
+/* 접근로그 탭 — 서버가 각 줄에 kind 를 붙여 보냅니다 */
+const LOGTAB = {
+  access:{ empty:'접속 기록이 없습니다.' },
+  work  :{ empty:'기록이 없습니다.' },
+  chat  :{ empty:'채팅 기록이 없습니다.' }
+};
 
-  /* 통합DB 새로고침이 붙어 있어 넉넉히 잡는다 */
-  timeout   : { read:25000, write:35000, ai:45000 },
-  recheckMs : 60000,
-  wmOpacity : 0.05,
-  chatPage  : 'p4',
+/* ── 상태 ─────────────────────────────────────────
+   ⚠️ const · let 은 끌어올려지지 않습니다. 아래 함수들이 참조하므로
+      반드시 이 자리(맨 위)에 있어야 합니다. */
+let PW='', USER='', ROLE='', D=null, FEAT=null;
+let PAGE='p1', LASTMAIN='p1', NAV='home', LOGVIEW='access';
+let LOGS=[], logsLoaded=false, BUSY=false, LAST=0;
+let OPEN={}, OPT_CACHE='';
+let V1='notice', V2='dash', V3='dash';
+let PENDING_Q='', CARDS=[], CARDN=0;
+let SPLASH_ON = true;
+const IDEM = {};   /* 멱등키 — 같은 작업을 다시 눌러도 서버가 중복을 걸러낸다 */
 
-  perm: {
-    admin: { label:'관리자', write:true, access:true  },
-    staff: { label:'담당자', write:true, access:false }
-  },
-  noperm: { label:'—', write:false, access:false },
+/* ── 작은 도구 ────────────────────────────────────── */
+const $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+/* onclick="fn('...')" 안에 들어가는 문자열용.
+   esc 로 작은따옴표를 바꾸는 방법은 통하지 않습니다 — 브라우저가 속성값을
+   먼저 디코딩한 뒤 JS 로 파싱하기 때문에 다시 ' 로 돌아옵니다. */
+function jsq(s){
+  return String(s==null?'':s)
+    .replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;')
+    .replace(/</g,'\\x3C').replace(/\r?\n/g,' ');
+}
+function num(v){
+  if(v===''||v===null||v===undefined) return null;
+  const x = Number(v);
+  return isNaN(x) ? null : x;
+}
+function n(v){ const x=num(v); return x===null ? '—' : x.toLocaleString('ko-KR'); }
+function setHTML(id,h){ const e=$(id); if(e) e.innerHTML=h; }
+function setVal(id,v){ const e=$(id); if(e) e.value=(v||''); }
+function setDisp(id,v){ const e=$(id); if(e) e.style.display=v; }
+function val(id){ const e=$(id); return e ? e.value : ''; }
+function dayGap(from,to){
+  const a=new Date(from+'T00:00:00'), b=new Date(to+'T00:00:00');
+  if(isNaN(a)||isNaN(b)) return 9999;
+  return Math.round((b-a)/86400000);
+}
+function linkify(t){
+  return esc(t).replace(/(https?:\/\/[^\s<]+)/g, function(u){
+    return '<a href="'+u+'" target="_blank" rel="noopener">'+u+'</a>'; });
+}
+/* 글자를 칠 때마다 목록을 다시 그리면 느립니다. 잠시 모아서 한 번만 그립니다. */
+let debT=null;
+function deb(fn, ms){ clearTimeout(debT); debT=setTimeout(fn, ms||250); }
+/* 접었다 펴는 공통 동작 (2차활용 상세 · 금액 상자 등) */
+function toggleBox(id){
+  const e=$(id); if(!e) return;
+  const hidden=(e.style.display==='none');
+  e.style.display = hidden ? (e.tagName==='TR' ? 'table-row' : 'block') : 'none';
+}
 
-  onStart : boot,
-  onData  : redraw,
-  onTab   : function(p){ if(p==='p5') V.loadLogs(false); },
-  onLogout: function(){
-    /* 코어가 DOM 을 비우기 전에 먼저 호출되므로 값 초기화는 여기서 확실히 한다 */
-    D=null; OPEN={}; OPT_CACHE='';
-    V1='notice'; V2='dash'; V3='dash';
-    PENDING_Q=''; CARDS=[]; CARDN=0;
+function store(k,v){
+  try{
+    if(v===undefined) return localStorage.getItem(k);
+    if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v);
+  }catch(e){ return null; }
+}
+
+/* ── 아이콘 (이모지 대신 단색 SVG) ────────────────── */
+const ICON = {
+  refresh:'<path d="M21 12a9 9 0 1 1-2.6-6.4"/><polyline points="21 3 21 9 15 9"/>',
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>',
+  user:'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/>',
+  send:'<path d="M21 3 10.5 13.5"/><path d="M21 3l-6.8 18-3.7-7.5L3 9.8 21 3z"/>',
+  down:'<polyline points="6 9 12 15 18 9"/>',
+  chev:'<polyline points="9 6 15 12 9 18"/>',
+  up:'<path d="M12 19V5"/><polyline points="6 11 12 5 18 11"/>',
+  close:'<path d="M6 6l12 12"/><path d="M18 6 6 18"/>',
+  ext:'<path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>'
+};
+function ic(name,size){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" '+
+    'stroke-linecap="round" stroke-linejoin="round"'+
+    (size?' style="width:'+size+'px;height:'+size+'px"':'')+'>'+ICON[name]+'</svg>';
+}
+
+/* ── 색 토큰 읽기 ─────────────────────────────────
+   그래프는 인라인 색을 쓰므로 실제 색값이 필요합니다.
+   매번 getComputedStyle 을 부르면 느려서 한 번 읽은 값은 담아 둡니다.
+   테마가 바뀌면 통째로 버립니다. */
+let TOKC = {};
+function tok(name){
+  if(TOKC[name]) return TOKC[name];
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  if(v) TOKC[name]=v;
+  return v;
+}
+
+/* ── 테마 — 로그인 정보가 아니라 개인 취향이므로 로그아웃해도 유지 ──
+   스플래시보다 먼저 적용합니다. 라이트로 떴다가 다크로 바뀌면 눈이 부십니다. */
+let THEME = store(STORE.theme) || 'light';
+applyTheme(THEME, true);
+
+function applyTheme(v, first){
+  THEME = v;
+  document.documentElement.dataset.theme = v;
+  TOKC = {};                      /* 색값 캐시를 버립니다 */
+  if(!first){
+    canvas();
+    /* 그래프는 인라인 색을 쓰므로 테마를 바꾸면 다시 그려야 색이 따라옵니다 */
+    if(D) renderAll();
   }
+  /* 스플래시와 헤더는 언제나 어두운 배경이라 밝은 로고를 씁니다.
+     로그인 화면만 배경이 테마를 따라가므로 로고도 함께 바꿉니다. */
+  const gl = $('gateLogo');
+  if(gl) gl.src = (v==='dark') ? LOGO.light : LOGO.dark;
+}
+
+/* ── 권한 ─────────────────────────────────────────
+   서버가 모르는 role 을 보내도 권한이 닫히는 쪽으로 떨어집니다. */
+function perm(){ return PERM[ROLE] || NOPERM; }
+function can(k){
+  /* 서버가 features 로 "그 기능 자체가 없다"고 하면 권한과 무관하게 닫습니다 */
+  if(FEAT && FEAT[k]===false) return false;
+  return !!perm()[k];
+}
+
+/* ── 통신 ─────────────────────────────────────────
+   Apps Script 는 CORS preflight 를 처리하지 못하므로 전부 GET 으로 보냅니다.
+   fetch 에는 기본 제한 시간이 없습니다. 없으면 서버가 답하지 않을 때
+   영원히 기다리며 앱이 통째로 먹통이 됩니다. */
+function tmo(mode){
+  if(mode==='write') return TIMEOUT.write;
+  if(mode==='ai')    return TIMEOUT.ai;
+  return TIMEOUT.read;
+}
+async function api(params, opt){
+  opt = opt || {};
+  const q = new URLSearchParams();
+  q.set('key', PW); q.set('user', USER);
+  Object.keys(params||{}).forEach(function(k){
+    if(params[k]!==undefined && params[k]!==null) q.set(k, params[k]);
+  });
+  /* idem 을 주면 같은 작업을 다시 보낼 때 같은 reqId 가 실려 나갑니다.
+     서버가 reqId 를 기억해 두면 중복 저장이 원천 차단됩니다. */
+  if(opt.mode==='write'){
+    const k = opt.idem;
+    if(k){
+      if(!IDEM[k] || Date.now()-IDEM[k].t > 600000){
+        IDEM[k] = { id:Date.now().toString(36)+Math.random().toString(36).slice(2,8), t:Date.now() };
+      }
+      q.set('reqId', IDEM[k].id);
+    }
+  }
+  const ctl = new AbortController();
+  const timer = setTimeout(function(){ ctl.abort(); }, tmo(opt.mode));
+  try{
+    const res = await fetch(SCRIPT_URL+'?'+q.toString(), { method:'GET', signal:ctl.signal });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    /* 저장이 성공했으면 그 멱등키는 더 쓰지 않습니다 (다음 저장은 새 건이므로) */
+    if(opt.mode==='write' && opt.idem && json && json.ok) delete IDEM[opt.idem];
+    return json;
+  } finally { clearTimeout(timer); }
+}
+function isTimeout(e){ return e && (e.name==='AbortError' || /aborted/i.test(String(e.message))); }
+function failMsg(e, tail){
+  /* 시간 초과는 실패가 아니라 "모름"입니다. 서버는 계속 실행 중일 수 있습니다.
+     그래서 "다시 시도하세요"가 아니라 확인부터 안내합니다. */
+  return isTimeout(e)
+    ? ('응답을 받지 못했습니다. ' + (tail || '새로고침으로 반영 여부를 먼저 확인하세요.'))
+    : ('통신에 실패했습니다. ' + (tail || '잠시 후 다시 시도하세요.'));
+}
+
+/* ── 화면 높이 · 키보드 ────────────────────────────
+   iOS 는 키보드가 올라올 때 두 가지를 합니다.
+     ① 보이는 높이를 줄인다      → visualViewport.height
+     ② 화면 전체를 위로 밀어올린다 → visualViewport.offsetTop
+   ①만큼 body 높이를 줄이고, ②만큼 도로 내려 제자리에 붙입니다.
+
+   ⚠️ offsetTop 은 손가락으로 화면을 당길 때도 변합니다. 무조건 따라가면
+      화면이 손가락을 따라다닙니다. "120px 넘게 줄었을 때 = 키보드" 일 때만 보정합니다. */
+function keyboardOpen(){
+  const vv = window.visualViewport;
+  return !!vv && (window.innerHeight - vv.height > 120);
+}
+/* iOS 는 화면 높이를 상황에 따라 다르게 알려줍니다.
+   그대로 따라가면 하단 내비가 왔다갔다 하고, 가장 큰 값으로 잡으면 화면 밖으로
+   밀려 사라집니다. 그래서 처음 잰 값에 못박고 화면을 돌릴 때만 다시 잽니다. */
+let PINH = 0, PINW = 0;
+function fullHeight(){
+  const w = window.innerWidth || 0;
+  if(!PINH || w !== PINW){
+    PINH = window.innerHeight || (window.visualViewport ? window.visualViewport.height : 0);
+    PINW = w;
+  }
+  return PINH;
+}
+/* 로그인 화면에서 키보드에 가리지 않도록 입력 덩어리를 밀어 올립니다.
+   visH 가 null 이면 원래 자리로 돌아갑니다. */
+function liftGate(visH){
+  const el = $('gateIn');
+  if(!el) return;
+  if(visH === null){ el.style.transform = 'none'; return; }
+  /* offsetTop·offsetHeight 는 transform 의 영향을 받지 않습니다.
+     getBoundingClientRect 를 쓰면 이미 밀어 둔 값이 섞여 계산이 어긋납니다. */
+  const h    = el.offsetHeight;
+  const want = Math.max(14, (visH - h) / 2);
+  el.style.transform = 'translateY(' + Math.round(want - el.offsetTop) + 'px)';
+}
+
+function applyViewportHeight(){
+  const vv = window.visualViewport;
+  const b  = document.body.style;
+  const onGate = $('gate') && $('gate').classList.contains('on');
+  b.bottom = 'auto';
+  if(keyboardOpen() && onGate){
+    /* 로그인 화면은 높이를 그대로 둡니다. 줄이는 순간 위아래 여백이 다시
+       계산되면서 내용이 툭 튀어오릅니다. 대신 덩어리만 미끄러뜨립니다. */
+    b.height = fullHeight() + 'px';
+    b.transform = vv.offsetTop ? 'translateY(' + vv.offsetTop + 'px)' : 'none';
+    liftGate(vv.height);
+  }else if(keyboardOpen()){
+    /* 본 화면 · 채팅 — ①만큼 줄이고 ②만큼 도로 내려 제자리에 붙입니다.
+       채팅 판(#chatWrap)은 body 상자를 따라가므로 입력줄이 키보드 위에 붙습니다. */
+    b.height = vv.height + 'px';
+    b.transform = vv.offsetTop ? 'translateY(' + vv.offsetTop + 'px)' : 'none';
+  }else{
+    b.height = fullHeight() + 'px';
+    b.transform = 'none';
+    liftGate(null);
+  }
+}
+let vpT = null;
+function applyViewportSoon(){
+  /* 로그인 화면은 transform 만 움직이므로 미룰 이유가 없습니다.
+     본 화면은 높이를 바꾸므로 연달아 오는 알림을 한 번으로 묶습니다. */
+  if($('gate') && $('gate').classList.contains('on')){
+    clearTimeout(vpT); applyViewportHeight(); return;
+  }
+  clearTimeout(vpT); vpT = setTimeout(function(){ applyViewportHeight(); chatScrollEnd(); }, 60);
+}
+
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', applyViewportSoon);
+  /* scroll 은 손가락으로 당길 때도 오므로 키보드가 올라와 있을 때만 반응합니다 */
+  window.visualViewport.addEventListener('scroll', function(){
+    if(keyboardOpen()) applyViewportSoon();
+  });
+}
+window.addEventListener('resize', applyViewportHeight);
+/* 키보드가 내려간 뒤 남은 자리를 정리합니다 */
+document.addEventListener('focusout', function(){ setTimeout(applyViewportHeight, 300); });
+applyViewportHeight();
+
+/* ── 스플래시 → 로그인 또는 자동 로그인 ───────────── */
+function ready(){ SPLASH_ON = false; canvas(); }
+
+/* 지금 보고 있는 화면에 맞춰 문서 바탕색을 직접 칠합니다.
+     스플래시 = 올리브 (아래까지 전부 초록)
+     본 화면  = 하단 내비와 같은 색 (내비가 끝까지 이어져 보이도록)
+     로그인   = 앱 배경색
+   ⚠️ 'var(--v-card)' 를 인라인으로 넣으면 무시되는 기기가 있어
+      계산된 색값(#FFFFFF 같은)을 직접 넣습니다. */
+function canvas(){
+  const c = SPLASH_ON ? '#30382A'
+    : ($('app').classList.contains('on')
+        ? (tok('--v-card') || '#FFFFFF')   /* 본 화면 — 하단 내비와 같은 색 */
+        : (tok('--v-bg')   || '#F7F6F1')); /* 로그인 화면 */
+  document.documentElement.style.background = c;
+  document.body.style.background = c;
+}
+
+setTimeout(function(){
+  $('splash').classList.add('gone');
+  ready();
+  setTimeout(function(){ $('splash').style.display='none'; }, 480);
+}, 1000);
+
+$('verLine').textContent = APP_VER;
+$('verFoot').textContent = '시딩관리 ' + APP_VER;
+
+async function autoLogin(){
+  try{
+    const r = await api({});
+    if(r && r.ok){ enter(r); return; }
+  }catch(e){ /* 아래에서 로그인 화면을 띄웁니다 */ }
+  PW=''; store(STORE.pw, null);
+  $('gate').classList.add('on');
+  gmsg('비밀번호가 변경되었습니다. 다시 입력해 주세요.', false);
+}
+
+/* ── 로그인 ───────────────────────────────────────── */
+function showGate(){
+  $('gate').classList.add('on');
+  $('app').classList.remove('on');
+  canvas();
+  /* ready() 는 부르지 않습니다. 스플래시가 걷힐 때만 바탕색을 바꿉니다. */
+}
+function gmsg(t, wait){
+  const el=$('gateMsg'); el.textContent=t||''; el.className = wait?'wait':'';
+}
+
+async function login(){
+  const nm = (val('nm')||'').trim();
+  const pw = (val('pw')||'').trim();
+  if(!nm){ gmsg('이름을 입력하세요.'); return; }
+  if(!pw){ gmsg('비밀번호를 입력하세요.'); return; }
+  const btn=$('loginBtn'); btn.disabled=true;
+  gmsg('접속 중입니다. 잠시만 기다려주세요.', true);
+  PW = pw; USER = nm;
+  try{
+    const r = await api({});
+    if(!r || !r.ok){
+      PW=''; gmsg((r && r.msg) || '비밀번호가 올바르지 않습니다.');
+      return;
+    }
+    store(STORE.pw, pw); store(STORE.user, nm);
+    setVal('pw','');
+    enter(r);
+  }catch(e){
+    PW=''; gmsg(failMsg(e,'[로그인]을 다시 눌러주세요.'));
+  }finally{ btn.disabled=false; }
+}
+
+function enter(r){
+  $('gate').classList.remove('on');
+  $('app').classList.add('on');
+  canvas();
+  gmsg('');
+  ROLE = r.role || '';
+  boot(r);
+}
+
+function logout(){
+  PW=''; ROLE=''; D=null; FEAT=null; LOGS=[]; logsLoaded=false;
+  OPEN={}; OPT_CACHE=''; V1='notice'; V2='dash'; V3='dash';
+  PENDING_Q=''; CARDS=[]; CARDN=0;
+  store(STORE.pw, null);
+  LEGACY.forEach(function(k){ store(k, null); });
+  /* 화면을 건드리기 전에 값부터 지웁니다 — 화면 쪽에서 오류가 나도 값은 반드시 지워지도록 */
+  document.querySelectorAll('[data-clear]').forEach(function(e){ e.innerHTML=''; });
+  document.querySelectorAll('[data-reset]').forEach(function(e){ e.value=''; });
+  openChat(false);
+  $('wm').style.display='none';
+  $('app').classList.remove('on');
+  $('gate').classList.add('on');
+  canvas();
+  NAV='home'; LASTMAIN='p1'; go('p1'); paintBottom();
+}
+
+/* 다른 탭에서 로그아웃하면 이쪽도 따라 나갑니다 */
+window.addEventListener('storage', function(e){
+  if(e.key===STORE.pw && !e.newValue && PW) logout();
 });
 
-document.getElementById('coreVer').textContent = VERDAN.version;
-
-/* 채팅 입력줄을 코어가 만들고, 보낼 때 ask() 를 부르게 연결한다 */
-V.chatInit(function(q){ ask(q); });
-
+/* ── 부팅 · 데이터 ────────────────────────────────── */
 function boot(r){
-  D = r; OPT_CACHE = '';
-  fillFilters(); renderAll(); chatReset();
-}
-function redraw(r){
-  D = r; fillFilters(); renderAll();
+  $('mpName').textContent = USER;
+  $('verFoot').textContent = '시딩관리 ' + APP_VER;
+  OPT_CACHE = '';
+  setData(r);
+  applyPerm();
+  watermark();
+  measure();
+  chatReset();
+  go('p1');
 }
 
-/* ── 표시 이름 · 순서 · 색 ────────────── */
+function setData(r){
+  D = r;
+  ROLE = r.role || ROLE;
+  FEAT = r.features || null;
+  LAST = Date.now();
+  stamp(r.updated, false);
+  $('mpRole').textContent = perm().label;
+  fillFilters();
+  renderAll();
+}
+
+function applyPerm(){
+  /* 접근로그는 권한 있는 사람에게만. 없으면 영역 자체를 만들지 않습니다. */
+  $('logWrap').style.display = can('access') ? '' : 'none';
+}
+
+/* 헤더 갱신 시각. 실패하면 붉게 남겨 오래된 숫자를 최신으로 착각하지 않게 합니다. */
+function stamp(updated, stale){
+  const el=$('stamp');
+  if(updated) el.textContent = String(updated).replace(/^갱신\s*/,'').slice(5);   /* MM-dd HH:mm */
+  $('stampRow').classList.toggle('stale', !!stale);
+}
+
+async function reload(showBusy){
+  if(BUSY || !PW) return;
+  BUSY = true;
+  if(showBusy) $('stampRow').classList.add('busy');
+  try{
+    const r = await api({});
+    if(r && r.ok){ setData(r); }
+    else { stamp(null, true); }
+  }catch(e){
+    stamp(null, true);
+  }finally{
+    BUSY = false;
+    $('stampRow').classList.remove('busy');
+  }
+}
+
+/* 앱으로 되돌아오면 다시 물어봅니다 (최소 60초 간격) */
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState!=='visible' || !PW) return;
+  if(Date.now()-LAST < RECHECK) return;
+  reload(false);
+});
+
+/* ── 헤더 접힘 · 무신사 방식 ──────────────────────── */
+let lastY=0, ticking=false;
+function measure(){
+  document.documentElement.style.setProperty('--hh', $('header').offsetHeight+'px');
+  fitBottom();
+}
+
+/* 하단 내비 아래 여백.
+   화면 아래에 앱 바깥으로 남는 자리(gap)가 이미 홈 인디케이터를 덮으므로
+   그만큼 덜어냅니다. 안 그러면 흰 영역이 120px 까지 두꺼워집니다. */
+let NAVPAD = null;
+function fitBottom(){
+  if(NAVPAD !== null) return;
+  let safe = 0;
+  try{
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;visibility:hidden;'+
+      'pointer-events:none;height:env(safe-area-inset-bottom)';
+    document.body.appendChild(probe);
+    safe = probe.offsetHeight;
+    probe.remove();
+  }catch(e){}
+  const scr = (window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
+  const gap = Math.max(0, scr - (window.innerHeight || scr));
+  NAVPAD = Math.min(Math.max(safe - gap, 0), 34);
+  document.documentElement.style.setProperty('--navpad', NAVPAD + 'px');
+}
+window.addEventListener('resize', function(){ measure(); if(PW) watermark(); });
+function onScroll(e){
+  const el = e.currentTarget;
+  if(ticking) return;
+  ticking = true;
+  requestAnimationFrame(function(){
+    const y = el.scrollTop, hh = $('header').offsetHeight, d = y - lastY;
+    if(y <= 0)                     setUp(false);
+    else if(y > hh && d > THRESH)  setUp(true);
+    else if(d < -THRESH)           setUp(false);
+    lastY = y; ticking = false;
+  });
+}
+function setUp(on){ $('chrome').classList.toggle('up', on); }
+
+/* ── 화면 전환 ────────────────────────────────────── */
+function go(id){
+  PAGE = id;
+  if(id!=='p9') LASTMAIN = id;      /* [홈]으로 돌아올 자리를 기억합니다 */
+  $('tabs').style.display = (id==='p9') ? 'none' : 'flex';
+  document.querySelectorAll('#tabs button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.page===id);
+  });
+  document.querySelectorAll('.page').forEach(function(p){
+    p.classList.toggle('on', p.id===id);
+  });
+  /* 탭을 옮기면 헤더는 펼친 상태로 초기화합니다 */
+  setUp(false); lastY = 0;
+  const cur=$(id); if(cur) cur.scrollTop = 0;
+  if(id==='p9' && can('access')) loadLogs(false);
+}
+
+function buildBottom(){
+  setHTML('bottom', NAVS.map(function(o){
+    return '<button data-k="'+o.k+'">'+ic(o.icon)+'<span class="lb">'+o.lb+'</span></button>';
+  }).join(''));
+  paintBottom();
+}
+function paintBottom(){
+  document.querySelectorAll('#bottom button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.k===NAV);
+  });
+}
+
+/* ── 카테고리 판 ──────────────────────────────────── */
+function buildCat(){
+  setHTML('catGrid', LINKS.map(function(l){
+    return '<a href="'+esc(l.u)+'" target="_blank" rel="noopener">'+
+      '<div class="t">'+esc(l.t)+ic('ext')+'</div>'+
+      '<div class="d">'+esc(l.d)+'</div></a>';
+  }).join(''));
+}
+function openCat(on){
+  $('catWrap').classList.toggle('on', on);
+  $('scrim').classList.toggle('on', on);
+  $('brandBtn').classList.toggle('open', on);
+}
+
+function buildIcons(){
+  $('brandBtn').querySelector('.chev').innerHTML = ic('down');
+  $('rfIcon').innerHTML = ic('refresh');
+  $('chatCloseBtn').innerHTML = ic('close');
+  /* 어두운 배경 위에 올라가는 두 곳은 밝은 로고 고정 */
+  $('splashLogo').src = LOGO.light;
+  $('headLogo').src   = LOGO.light;
+  $('gateLogo').src   = (THEME==='dark') ? LOGO.light : LOGO.dark;
+}
+
+/* ── 확인창 ───────────────────────────────────────
+   iOS 기본 confirm 은 버튼 색이 파랑으로 고정되어 브랜드 색과 어긋납니다. */
+let DLG_CB = null;
+function askConfirm(msg, onYes){
+  $('dlgMsg').textContent = msg;
+  DLG_CB = onYes;
+  $('dlg').classList.add('on');
+}
+function closeDlg(yes){
+  $('dlg').classList.remove('on');
+  const f = DLG_CB; DLG_CB = null;
+  if(yes && f) f();
+}
+
+/* ── 워터마크 ─────────────────────────────────────── */
+function watermark(){
+  const e=$('wm');
+  if(!PW || !USER){ e.style.display='none'; e.innerHTML=''; return; }
+  const d=new Date(), p=function(x){ return String(x).padStart(2,'0'); };
+  const txt = USER+' · '+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+
+    ' '+p(d.getHours())+':'+p(d.getMinutes());
+  let h='';
+  for(let y=-120;y<window.innerHeight+200;y+=130)
+    for(let x=-180;x<window.innerWidth+240;x+=210)
+      h += '<span style="left:'+x+'px;top:'+y+'px">'+esc(txt)+'</span>';
+  e.innerHTML=h; e.style.display='block';
+}
+
+/* ── 접근로그 (관리자) ────────────────────────────
+   분류(kind)는 서버가 붙여 보냅니다.
+     access : 로그인 성공 · 실패
+     work   : 사람이 앱에서 값을 바꾼 작업
+     chat   : 질문 · 답변 ([더보기]로 펼치면 나뉘어 보이고 AI 답변에는 배지)
+     system : 자동 처리 → 화면에서 숨김 */
+async function loadLogs(force){
+  if(!can('access')) return;
+  if(logsLoaded && !force){ renderLogs(); return; }
+  setHTML('logBody','<div class="empty">불러오는 중...</div>');
+  try{
+    const r = await api({ action:'access' });
+    if(!r || !r.ok){
+      setHTML('logBody','<div class="empty err">'+esc((r&&r.msg)||'불러오지 못했습니다.')+'</div>');
+      return;
+    }
+    LOGS = (r.logs||[]).filter(function(x){ return x.kind!=='system'; });
+    logsLoaded = true;
+    renderLogs();
+  }catch(e){
+    setHTML('logBody','<div class="empty err">'+esc(failMsg(e,'새로고침을 눌러주세요.'))+'</div>');
+  }
+}
+
+function logResultClass(result){
+  if(result==='실패' || result==='오류' || result==='권한거부') return 'danger';
+  if(result==='입력' || result==='확인' || result==='접속' || result==='채팅') return 'ok';
+  return '';
+}
+
+function renderLogs(){
+  if(!can('access')) return;
+  const rows = LOGS.filter(function(x){ return x.kind===LOGVIEW; });
+  if(!rows.length){
+    setHTML('logBody','<div class="empty">'+LOGTAB[LOGVIEW].empty+'</div>');
+    return;
+  }
+  setHTML('logBody', rows.map(function(r,i){
+    const head = '<div class="l1"><b>'+esc(r.user||'—')+'</b>'+
+      '<span class="rs '+logResultClass(r.result)+'">'+esc(r.result||'')+'</span>'+
+      '<span class="t">'+esc(r.t||'')+'</span></div>';
+    if(LOGVIEW==='chat'){
+      const id = 'lg'+i;
+      const badge = r.ai ? ' <span class="badge b-ai">AI</span>' : '';
+      return '<div class="log-r">'+head+
+        '<div class="l2"><span class="more" onclick="toggleBox(\''+id+'\')">더보기</span>'+badge+'</div>'+
+        '<div id="'+id+'" style="display:none">'+
+          '<div class="qa2"><b>질문</b><div>'+esc(r.q||'—')+'</div>'+
+            '<b>답변</b><div>'+linkify(r.a||'—')+'</div></div>'+
+        '</div></div>';
+    }
+    const tail = (LOGVIEW==='access') ? (r.role||'') : (r.memo||'');
+    return '<div class="log-r">'+head+
+      (tail ? '<div class="l2">'+esc(tail)+'</div>' : '')+'</div>';
+  }).join('')+
+  '<div class="sub2" style="padding:10px 2px 0">'+rows.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>');
+}
+
+/* ══════════════════════════════════════════════════
+   여기부터 시딩 고유 화면
+   ══════════════════════════════════════════════════ */
+
+/* ── 표시 이름 · 순서 · 색 ────────────────────────── */
 function catLabel(name){
   return (D && D.catLabels && D.catLabels[name]) || CAT_LABEL[name] || name;
 }
@@ -249,26 +1468,37 @@ function catSort(list){
   });
 }
 function catColor(name, i){
-  return CAT_COLOR[name] || FALLBACK_COLORS[(i||0) % FALLBACK_COLORS.length];
+  /* 뒤의 값은 토큰을 읽지 못했을 때만 쓰는 마지막 방어선입니다 (Iron Gray) */
+  return tok(CAT_TOKEN[name] || FALLBACK_TOKENS[(i||0) % FALLBACK_TOKENS.length]) || '#6D6462';
 }
 
-/* ── 세그먼트 전환 ────────────────────── */
-function segSwitch(segId, key, pairs){
-  document.querySelectorAll('#'+segId+' button').forEach(function(b){
-    b.className = (b.dataset.k===key) ? 'on' : '';
-  });
+/* 접이식 — 제목 · 건수 · 안쪽 내용. open 이면 처음부터 펼쳐집니다. */
+function fold(title, cnt, inner, open, dot){
+  return '<details'+(open?' open':'')+'><summary><span class="chev">'+ic('chev',13)+'</span>'+
+    (dot ? '<span class="dot '+dot+'"></span>' : '')+esc(title)+
+    '<span class="cnt">'+esc(cnt)+'</span></summary>'+inner+'</details>';
+}
+/* 상자 — 이모지 대신 점 + 글자 */
+function box(kind, title, body){
+  return '<div class="box '+kind+'"><div class="hd"><span class="dot"></span>'+esc(title)+'</div>'+
+    (body ? '<div class="bd">'+body+'</div>' : '')+'</div>';
+}
+
+/* ── 세그먼트 전환 ────────────────────────────────── */
+function segShow(pairs, key){
   Object.keys(pairs).forEach(function(k){
-    V.setDisp(pairs[k], (k===key) ? 'block' : 'none');
+    setDisp(pairs[k], (k===key) ? 'block' : 'none');
   });
 }
-function setToday(k){ V1=k; segSwitch('segToday',k,{notice:'v1notice',upchk:'v1upchk',post:'v1post'}); }
-function setStat(k){ V2=k; segSwitch('segStat',k,
-  {dash:'v2dash',posted:'v2posted',deleted:'v2deleted',influ:'v2influ',all:'v2all'}); }
-function setSecond(k){ V3=k; segSwitch('segSecond',k,{dash:'v3dash',reg:'v3reg',list:'v3list'}); }
+function setToday(k){ V1=k; segShow({notice:'v1notice',upchk:'v1upchk',post:'v1post'}, k); }
+function setStat(k){ V2=k; segShow(
+  {dash:'v2dash',posted:'v2posted',deleted:'v2deleted',influ:'v2influ',all:'v2all'}, k); }
+function setSecond(k){ V3=k; segShow({dash:'v3dash',reg:'v3reg',list:'v3list'}, k); }
 
-/* ── 드롭다운 ─────────────────────────── */
-/* 항목은 실제 데이터에 있는 값만 넣는다. 매번 새로 만들면 느려지므로 바뀔 때만 그린다. */
+/* ── 드롭다운 ─────────────────────────────────────
+   항목은 실제 데이터에 있는 값만 넣는다. 매번 새로 만들면 느리므로 바뀔 때만 그린다. */
 function fillFilters(){
+  if(!D || !D.items) return;
   const cats=[], prods=[];
   D.items.forEach(function(x){
     if(x.cat && cats.indexOf(x.cat)<0) cats.push(x.cat);
@@ -286,7 +1516,7 @@ function fillFilters(){
     prods.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
 
   ['a','s','l'].forEach(function(k){
-    const c=document.getElementById(k+'Cat'), p=document.getElementById(k+'Prod');
+    const c=$(k+'Cat'), p=$(k+'Prod');
     if(!c||!p) return;
     const cv=c.value, pv=p.value;
     c.innerHTML=catOpt; p.innerHTML=prodOpt;
@@ -294,7 +1524,7 @@ function fillFilters(){
   });
 
   /* 2차활용 전체 전용 — 활용 채널 / 활용 기간 */
-  const chan=document.getElementById('lChan'), per=document.getElementById('lPer');
+  const chan=$('lChan'), per=$('lPer');
   if(chan && per){
     const cvv=chan.value, pvv=per.value;
     chan.innerHTML='<option value="">활용 채널 전체</option>'+
@@ -308,9 +1538,9 @@ function fillFilters(){
 }
 
 function resetFilter(k){
-  V.setVal(k+'Cat',''); V.setVal(k+'Prod',''); V.setVal(k+'Name','');
+  setVal(k+'Cat',''); setVal(k+'Prod',''); setVal(k+'Name','');
   if(k==='l'){
-    V.setVal('lChan',''); V.setVal('lPer','');
+    setVal('lChan',''); setVal('lPer','');
     renderSecList(); return;
   }
   if(k==='a') renderAllList(); else renderSecReg();
@@ -318,9 +1548,8 @@ function resetFilter(k){
 
 /* 이름 + 인스타 계정 둘 다 검색 대상 */
 function applyFilter(k){
-  const cat=document.getElementById(k+'Cat').value;
-  const prod=document.getElementById(k+'Prod').value;
-  const nm=document.getElementById(k+'Name').value.trim().toLowerCase().replace(/^@/,'');
+  const cat=val(k+'Cat'), prod=val(k+'Prod');
+  const nm=(val(k+'Name')||'').trim().toLowerCase().replace(/^@/,'');
   let list=D.items;
   if(cat)  list=list.filter(function(x){ return x.cat===cat; });
   if(prod) list=list.filter(function(x){ return x.product===prod; });
@@ -330,12 +1559,13 @@ function applyFilter(k){
 }
 
 function renderAll(){
+  if(!D) return;
   renderNotice(); renderUpchk(); renderPost();
   renderDash(); renderDeleted(); renderPosted(); renderInflu(); renderAllList();
   renderSecDash(); renderSecReg(); renderSecList();
 }
 
-/* ── 이번 달 플랫폼별 표 ──────────────── */
+/* ── 이번 달 플랫폼별 표 ──────────────────────────── */
 function monthTableHtml(){
   const s=D.summary, cats=s.byCat||{};
   const keys=catSort(Object.keys(cats));
@@ -345,28 +1575,27 @@ function monthTableHtml(){
         const c=cats[k]; tot+=c.total; up+=c.uploaded;
         const no=c.total-c.uploaded;
         return '<tr><td><b>'+esc(catLabel(k))+'</b></td>'+
-          '<td class="ctr">'+n(c.total)+'</td>'+
-          '<td class="ctr ok">'+n(c.uploaded)+'</td>'+
-          '<td class="ctr '+(no>0?'danger':'')+'">'+n(no)+'</td></tr>';
+          '<td>'+n(c.total)+'</td>'+
+          '<td class="ok">'+n(c.uploaded)+'</td>'+
+          '<td class="'+(no>0?'dg':'')+'">'+n(no)+'</td></tr>';
       }).join('')
-    : '<tr><td colspan="4" class="ctr sub2">이번 달 시딩 내역이 없습니다.</td></tr>';
+    : '<tr><td colspan="4" class="sub2">이번 달 시딩 내역이 없습니다.</td></tr>';
   const foot = keys.length
-    ? '<tr style="background:#F2F1EC"><td><b>합계</b></td>'+
-      '<td class="ctr"><b>'+n(tot)+'</b></td>'+
-      '<td class="ctr ok"><b>'+n(up)+'</b></td>'+
-      '<td class="ctr '+((tot-up)>0?'danger':'')+'"><b>'+n(tot-up)+'</b></td></tr>'
+    ? '<tr class="sum"><td>합계</td><td>'+n(tot)+'</td>'+
+      '<td class="ok">'+n(up)+'</td>'+
+      '<td class="'+((tot-up)>0?'dg':'')+'">'+n(tot-up)+'</td></tr>'
     : '';
   return '<div class="chart"><h3>'+esc(s.ym.replace('-','.'))+' 기준</h3>'+
-    '<div class="tbl-wrap" style="margin-bottom:0"><table><thead><tr>'+
-    '<th style="text-align:left">플랫폼</th><th>협찬</th><th>업로드</th><th>미업로드</th>'+
+    '<div class="tbl" style="margin-bottom:0"><table><thead><tr>'+
+    '<th>플랫폼</th><th>협찬</th><th>업로드</th><th>미업로드</th>'+
     '</tr></thead><tbody>'+rows+foot+'</tbody></table></div></div>';
 }
 
-/* ── 할일 · 공지 ──────────────────────── */
+/* ── 할일 · 공지 ──────────────────────────────────── */
 function renderNotice(){
   const s=D.summary;
   const hl=function(v){ return v>0 ? '<span class="hl">'+n(v)+'건</span>' : n(v)+'건'; };
-  V.setHTML('v1notice',
+  setHTML('v1notice',
     '<div class="notice"><div class="ttl">'+esc(s.ym.replace('-','.'))+' 기준</div>'+
     '시딩 <b>'+n(s.total)+'건</b> · 업로드완료 <b>'+n(s.uploaded)+'</b> · 대기 <b>'+n(s.waiting)+'</b><br>'+
     (s.rental ? '<span class="sub2">└ 발송 '+n(s.seeding)+'건 · 대여 '+n(s.rental)+'건</span><br>' : '')+
@@ -381,37 +1610,37 @@ function renderNotice(){
     '게시기간 중 삭제확인 '+hl(D.items.filter(function(x){
        return x.state==='삭제' && x.postPeriod && x.delchk && x.delchk<=x.postPeriod;
      }).length)+'</div>'+
-    monthTableHtml()+
-    '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
+    monthTableHtml());
 }
 
-/* ── 할일 · 업로드확인 ──────────────────
+/* ── 할일 · 업로드확인 ──────────────────────────────
    마감일 당일부터 등장. [완료]를 눌러야 사라지고, [미완료]는 하루만 넘긴다. */
 function renderUpchk(){
   const list=D.items.filter(function(x){ return x.flags.indexOf('needUpload')>=0; })
     .slice().sort(function(a,b){ return (a.dDeadline||0)-(b.dDeadline||0); });
-  V.setHTML('v1upchk',
+  setHTML('v1upchk',
     (list.length
-      ? '<div class="box-note">업로드마감이 지난 '+list.length+'건입니다. 계정을 열어 확인한 뒤 '+
-        '<b>완료</b> 또는 <b>미완료</b>를 눌러주세요. 미완료는 내일 다시 뜹니다.</div>'
-      : '<div class="box-ok">🟢 오늘 확인할 업로드 건이 없습니다.</div>') +
+      ? box('note','업로드마감이 지난 '+list.length+'건',
+          '계정을 열어 확인한 뒤 <b>완료</b> 또는 <b>미완료</b>를 눌러주세요. '+
+          '미완료는 내일 다시 뜹니다.')
+      : box('ok','오늘 확인할 업로드 건이 없습니다.','')) +
     list.map(function(x){ return itemHtml(x,'upc'); }).join(''));
 }
 
-/* ── 할일 · 게시확인 ────────────────────
+/* ── 할일 · 게시확인 ────────────────────────────────
    업로드일(또는 마지막 확인일)로부터 7일마다 등장 */
 function renderPost(){
   const list=D.items.filter(function(x){ return x.flags.indexOf('needPost')>=0; })
     .slice().sort(function(a,b){ return (a.dPost||0)-(b.dPost||0); });
-  V.setHTML('v1post',
+  setHTML('v1post',
     (list.length
-      ? '<div class="box-note">게시 유지 여부를 확인할 '+list.length+'건입니다. '+
-        '<b>확인</b>을 누르면 7일 뒤에 다시 뜹니다. 글이 내려갔으면 <b>미확인</b>을 누르세요.</div>'
-      : '<div class="box-ok">🟢 오늘 확인할 게시 건이 없습니다.</div>') +
+      ? box('note','게시 유지 여부를 확인할 '+list.length+'건',
+          '<b>확인</b>을 누르면 7일 뒤에 다시 뜹니다. 글이 내려갔으면 <b>미확인</b>을 누르세요.')
+      : box('ok','오늘 확인할 게시 건이 없습니다.','')) +
     list.map(function(x){ return itemHtml(x,'pst'); }).join(''));
 }
 
-/* ── 그래프 조각 ──────────────────────── */
+/* ── 그래프 조각 ──────────────────────────────────── */
 function recentMonths(cnt){
   const out=[], d=new Date();
   for(let i=cnt-1;i>=0;i--){
@@ -475,7 +1704,7 @@ function donut(pairs, centerLabel){
     '<div class="side">'+side+'</div></div>';
 }
 
-/* ── 관리 · 대시보드 ──────────────────── */
+/* ── 관리 · 대시보드 ──────────────────────────────── */
 function renderDash(){
   let allCats=[];
   D.items.forEach(function(x){ if(x.cat && allCats.indexOf(x.cat)<0) allCats.push(x.cat); });
@@ -494,25 +1723,23 @@ function renderDash(){
     if(i>=0 && matrix[x.cat]) matrix[x.cat][i]++;
   });
 
-  V.setHTML('v2dash',
+  setHTML('v2dash',
     '<div class="notice"><div class="ttl" style="margin:0">전체 누적</div>'+
-      '<span class="money big">'+n(grand)+'건</span></div>'+
-    '<div class="chart"><h3>📈 월별 시딩 추이 (최근 12개월)</h3>'+
+      '<span class="big">'+n(grand)+'건</span></div>'+
+    '<div class="chart"><h3>월별 시딩 추이 (최근 12개월)</h3>'+
       stackedBars(months, allCats, matrix)+'</div>'+
-    '<div class="chart"><h3>📊 플랫폼별 누계</h3>'+
+    '<div class="chart"><h3>플랫폼별 누계</h3>'+
       (totalPairs.length ? hBars(totalPairs) : '<div class="sub2">데이터가 없습니다.</div>')+'</div>'+
-    '<div class="sub2">· 추이·누계는 신청일시 기준입니다.<br>'+
-    '· 이번 달 플랫폼별 표는 [할일 · 공지]에서 볼 수 있습니다.</div>'+
-    '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
+    '<div class="foot-note">· 추이·누계는 신청일시 기준입니다.<br>'+
+    '· 이번 달 플랫폼별 표는 [할일 · 공지]에서 볼 수 있습니다.</div>');
 }
 
-/* ── 2차활용 · 대시보드 ───────────────── */
+/* ── 2차활용 · 대시보드 ───────────────────────────── */
 function renderSecDash(){
   const list=D.items.filter(function(x){ return x.s2type || x.legacy2; });
 
   if(!list.length){
-    V.setHTML('v3dash','<div class="box-note">2차 활용 건이 없습니다.</div>'+
-      '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
+    setHTML('v3dash', box('note','2차 활용 건이 없습니다.',''));
     return;
   }
 
@@ -553,7 +1780,7 @@ function renderSecDash(){
 
   const moneyHtml =
     '<div class="money"><div class="row"><span>라이선스 비용 누적</span></div>'+
-    '<div class="money big" style="margin-bottom:10px">'+n(grand)+'원</div>'+
+    '<div class="big" style="margin-bottom:10px">'+n(grand)+'원</div>'+
     '<div class="hr"></div>'+
     '<div class="sub2" style="margin-bottom:4px">'+thisYear+'년 월별</div>'+
     (months.length
@@ -570,7 +1797,7 @@ function renderSecDash(){
   /* 브랜더진 수수료 — 과거 방식(판매 목적 라이센스)에는 붙지 않는다 */
   const feeHtml =
     '<div class="money"><div class="row"><span>브랜더진 수수료 '+rate+'%</span></div>'+
-    '<div class="money big" style="margin-bottom:10px">'+n(feeTotal)+'원</div>'+
+    '<div class="big" style="margin-bottom:10px">'+n(feeTotal)+'원</div>'+
     '<div class="hr"></div>'+
     years.map(function(y){
       return '<div class="row"><span>'+esc(y)+'년</span><b>'+n(feeYear[y]||0)+'원</b></div>'; }).join('')+
@@ -580,28 +1807,26 @@ function renderSecDash(){
     '<div class="sub2" style="margin-top:6px">'+
       '과거 방식인 "판매 목적 라이센스" 건에는 수수료가 붙지 않습니다.</div></div>';
 
-  V.setHTML('v3dash',
+  setHTML('v3dash',
     '<div class="notice"><div class="ttl">전체 누적</div>'+
-      '<span class="money big">'+n(list.length)+'건</span>'+
+      '<span class="big">'+n(list.length)+'건</span>'+
       '<div class="sub2" style="margin-top:4px">비용 '+n(grand)+'원'+
       (feeTotal?' + 수수료 '+n(feeTotal)+'원':'')+'</div></div>'+
-    '<div class="chart"><h3>📊 플랫폼별 2차 활용</h3>'+hBars(catPairs)+'</div>'+
-    '<div class="chart"><h3>🍩 활용 채널별 비중</h3>'+donut(typePairs,'건')+'</div>'+
-    '<div class="sec s-blu" onclick="VERDAN.toggleBox(\'moneyBox\')">'+
-      '<span>💰 2차 활용 금액 · 수수료</span><span class="cnt">펼치기 ▾</span></div>'+
-    '<div id="moneyBox" style="display:none">'+
-      '<div class="chart"><h3>💰 2차 활용 금액</h3>'+moneyHtml+'</div>'+
-      '<div class="chart"><h3>🧾 수수료</h3>'+feeHtml+'</div></div>'+
-    '<div class="sub2">· 금액은 04_브랜더진 W열 등 2차활용 비용 열에서 합산합니다.<br>'+
-    '· 집계 기준일은 사용권 구매일이며, 없으면 신청일시를 씁니다.</div>'+
-    '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
+    '<div class="chart"><h3>플랫폼별 2차 활용</h3>'+hBars(catPairs)+'</div>'+
+    '<div class="chart"><h3>활용 채널별 비중</h3>'+donut(typePairs,'건')+'</div>'+
+    fold('2차 활용 금액 · 수수료', n(grand+feeTotal)+'원',
+      '<div class="inner">'+
+        '<div class="chart"><h3>2차 활용 금액</h3>'+moneyHtml+'</div>'+
+        '<div class="chart"><h3>수수료</h3>'+feeHtml+'</div></div>', false, 'd3')+
+    '<div class="foot-note">· 금액은 04_브랜더진 W열 등 2차활용 비용 열에서 합산합니다.<br>'+
+    '· 집계 기준일은 사용권 구매일이며, 없으면 신청일시를 씁니다.</div>');
 }
 
-/* ── 관리 · 삭제확인 ────────────────────
+/* ── 관리 · 삭제확인 ────────────────────────────────
    게시확인에서 "미확인"으로 처리된 건이 모인다.
    같은 '삭제'라도 성격이 달라 두 묶음으로 나눈다.
-   ① 게시기간이 아직 남았는데 내려간 건 → 재업로드 요청 대상 (문제 상황)
-   ② 게시기간이 끝난 뒤 내려간 건       → 계약대로 종료된 것 (정상) */
+   ① 게시기간이 아직 남았는데 내려간 건 → 재업로드 요청 대상 (문제 상황 · 접지 않는다)
+   ② 게시기간이 끝난 뒤 내려간 건       → 계약대로 종료된 것 (정상 · 접어 둔다) */
 function renderDeleted(){
   const all=D.items.filter(function(x){ return x.state==='삭제'; })
     .slice().sort(function(a,b){ return String(b.delchk).localeCompare(String(a.delchk)); });
@@ -612,29 +1837,27 @@ function renderDeleted(){
 
   let h='';
   if(!all.length){
-    h='<div class="box-ok">🟢 삭제로 표시된 건이 없습니다.</div>';
+    h=box('ok','삭제로 표시된 건이 없습니다.','');
   }else{
     if(during.length){
-      h+='<div class="box-danger"><b style="color:var(--v-danger)">🔴 게시기간 중 삭제 '+during.length+'건</b> · '+
-         '재업로드를 요청하세요.</div>'+
+      h+=box('danger','게시기간 중 삭제 '+during.length+'건','재업로드를 요청하세요.')+
          during.map(function(x){ return itemHtml(x,'del'); }).join('');
     }
-    /* 종료 후 건은 조치할 게 없으므로 평소엔 건수만 보이고, 눌러야 목록이 나온다 */
-    h+='<div class="sec s-gry" style="margin-top:'+(during.length?'16px':'0')+'" '+
-       'onclick="VERDAN.toggleBox(\'delAfter\')">'+
-       '<span>⚪ 게시기간 종료 후 확인</span>'+
-       '<span class="cnt">'+after.length+'건 ▾</span></div>'+
-       '<div id="delAfter" style="display:none">'+
-       (after.length
-         ? '<div class="box-note">계약 기간을 채우고 내려간 건입니다. 조치할 것이 없습니다.</div>'+
-           after.map(function(x){ return itemHtml(x,'delok'); }).join('')
-         : '<div class="box-note">해당하는 건이 없습니다.</div>')+
-       '</div>';
+    /* 종료 후 건은 조치할 게 없으므로 접어 둡니다 */
+    h+=fold('게시기간 종료 후 확인', after.length+'건',
+      '<div class="inner">'+
+      (after.length
+        ? '<div class="sub2" style="margin-bottom:10px">계약 기간을 채우고 내려간 건입니다. '+
+          '조치할 것이 없습니다.</div>'+
+          after.map(function(x){ return itemHtml(x,'delok'); }).join('')
+        : '<div class="empty">해당하는 건이 없습니다.</div>')+
+      '</div>', false, 'mute');
   }
-  V.setHTML('v2deleted', h+'<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
+  setHTML('v2deleted', h);
 }
 
-/* ── 관리 · 게시확인 ──────────────────── */
+/* ── 관리 · 게시확인 ────────────────────────────────
+   조치가 필요한 알림은 접힘 밖에 두고, 카드 목록만 접습니다. */
 function renderPosted(){
   const days=(D.thresholds && D.thresholds.postCheck) || 7;
 
@@ -659,30 +1882,35 @@ function renderPosted(){
   const due=post.filter(function(x){
     return !x.check || dayGap(x.check, D.today) >= days; }).length;
 
-  V.setHTML('v2posted',
-    '<div class="sec s-org"><span>⬆ 미업로드</span>'+
-      '<span class="cnt">'+nou.length+'건</span></div>'+
-    (nou.length
-      ? '<div class="box-note"><b>URL</b>을 확인하고 <b>업로드</b> 또는 <b>미업로드</b>를 '+
-        '누르면 오늘 날짜가 최종확인에 기록됩니다.</div>'+
-        nou.map(function(x){ return itemHtml(x,'nou'); }).join('')
-      : '<div class="box-ok">🟢 미업로드 건이 없습니다.</div>')+
-    '<div class="sec s-blu" style="margin-top:18px"><span>📌 게시중</span>'+
-      '<span class="cnt">'+post.length+'건</span></div>'+
-    (post.length
-      ? '<div class="box-note">🔴 표시된 <b>'+due+'건</b>은 확인한 지 '+days+
-        '일이 넘었거나 아직 확인 전입니다. 확인 후에도 목록에 남습니다.</div>'+
-        post.map(function(x){ return itemHtml(x,'pchk'); }).join('')
-      : '<div class="box-ok">🟢 게시 중인 건이 없습니다.</div>')+
-    '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
+  let h='';
+  /* 조치가 필요한 것만 접힘 밖에 남깁니다 */
+  if(due) h+=box('danger','확인 필요 '+due+'건',
+    '확인한 지 '+days+'일이 넘었거나 아직 확인 전인 게시 건입니다.');
+  if(!nou.length && !post.length) h+=box('ok','미업로드·게시중 건이 없습니다.','');
+
+  h+= nou.length
+    ? fold('미업로드', nou.length+'건',
+        '<div class="inner">'+
+        '<div class="sub2" style="margin-bottom:10px"><b>URL</b>을 확인하고 '+
+        '<b>업로드</b> 또는 <b>미업로드</b>를 누르면 오늘 날짜가 최종확인에 기록됩니다.</div>'+
+        nou.map(function(x){ return itemHtml(x,'nou'); }).join('')+'</div>', false, 'warn')
+    : '';
+  h+= post.length
+    ? fold('게시중', post.length+'건',
+        '<div class="inner">'+
+        '<div class="sub2" style="margin-bottom:10px">확인 후에도 목록에 남습니다.</div>'+
+        post.map(function(x){ return itemHtml(x,'pchk'); }).join('')+'</div>', false, 'ok')
+    : '';
+
+  setHTML('v2posted', h);
 }
 
-/* ── 관리 · 인플루언서 ──────────────────
+/* ── 관리 · 인플루언서 ──────────────────────────────
    같은 사람의 여러 협업을 한 곳에 모아 보고, 사람 단위 비고를 남긴다. */
 function renderInflu(){
-  const q=document.getElementById('iName').value.trim().toLowerCase().replace(/^@/,'');
+  const q=(val('iName')||'').trim().toLowerCase().replace(/^@/,'');
   if(!q){
-    V.setHTML('influBody','<div class="box-note">이름이나 계정을 입력하면 결과가 나옵니다.</div>');
+    setHTML('influBody','<div class="empty">이름이나 계정을 입력하면 결과가 나옵니다.</div>');
     return;
   }
   const map={};
@@ -697,10 +1925,10 @@ function renderInflu(){
 
   const list=Object.keys(map).map(function(k){ return map[k]; });
   if(!list.length){
-    V.setHTML('influBody','<div class="box-note">조건에 맞는 인플루언서가 없습니다.</div>');
+    setHTML('influBody','<div class="empty">조건에 맞는 인플루언서가 없습니다.</div>');
     return;
   }
-  V.setHTML('influBody','<div class="sub2" style="margin-bottom:8px">'+list.length+'명</div>'+
+  setHTML('influBody','<div class="sub2" style="margin-bottom:8px">'+list.length+'명</div>'+
     list.map(influCard).join(''));
 }
 
@@ -740,8 +1968,8 @@ function influCard(p){
       '<div class="lb2">콘텐츠</div>'+urlHtml+
       '<div class="hr"></div>'+
       '<div class="lb2">비고'+(memo.at?' <span class="sub2">('+esc(memo.at)+' '+esc(memo.by)+')</span>':'')+'</div>'+
-      (V.can('write')
-        ? '<textarea class="f memo" id="mm_'+esc(uid)+'" rows="3" '+
+      (can('write')
+        ? '<textarea class="f" id="mm_'+esc(uid)+'" rows="3" '+
             'placeholder="조건 불이행, DM 미응답 등 다음 시딩에 참고할 내용">'+esc(memo.memo)+'</textarea>'+
           '<button class="f" onclick="doMemo(\''+jsq(p.key)+'\',\''+jsq(uid)+'\',\''+jsq(p.name)+'\')">비고 저장</button>'+
           '<div class="msg" id="m_'+esc(uid)+'"></div>'
@@ -750,41 +1978,38 @@ function influCard(p){
 }
 
 function doMemo(key, uid, name){
-  const el=document.getElementById('mm_'+uid);
+  const el=$('mm_'+uid);
   act({ action:'memo', key:key, name:name, memo:(el?el.value:'') }, uid,
       '비고를 저장했습니다.', 'memo:'+key);
 }
 
-/* ── 관리 · 전체 ──────────────────────── */
+/* ── 관리 · 전체 ──────────────────────────────────── */
 function renderAllList(){
   const r=applyFilter('a');
   if(r.empty){
-    V.setHTML('allBody','<div class="box-note">플랫폼·상품을 고르거나 이름·계정을 입력하면 결과가 나옵니다.</div>');
+    setHTML('allBody','<div class="empty">플랫폼·상품을 고르거나 이름·계정을 입력하면 결과가 나옵니다.</div>');
     return;
   }
-  V.setHTML('allBody', listHtml(r.list,'all'));
+  setHTML('allBody', listHtml(r.list,'all'));
 }
 
-/* ── 2차활용 · 등록 ───────────────────── */
+/* ── 2차활용 · 등록 ───────────────────────────────── */
 function renderSecReg(){
   const r=applyFilter('s');
   if(r.empty){
-    V.setHTML('secRegBody','<div class="box-note">플랫폼·상품을 고르거나 이름·계정을 입력해 대상을 찾아주세요.</div>');
+    setHTML('secRegBody','<div class="empty">플랫폼·상품을 고르거나 이름·계정을 입력해 대상을 찾아주세요.</div>');
     return;
   }
-  V.setHTML('secRegBody', listHtml(r.list,'sec'));
+  setHTML('secRegBody', listHtml(r.list,'sec'));
 }
 
-/* ── 2차활용 · 전체 ─────────────────────
+/* ── 2차활용 · 전체 ─────────────────────────────────
    앱에서 등록한 건 + 시트에 예전 방식으로 표시된 건(브랜더진 W열)을 함께 본다. */
 function renderSecList(){
   let list=D.items.filter(function(x){ return x.s2type || x.legacy2; });
 
-  const cat=document.getElementById('lCat').value;
-  const prod=document.getElementById('lProd').value;
-  const chan=document.getElementById('lChan').value;
-  const per=document.getElementById('lPer').value;
-  const nm=document.getElementById('lName').value.trim().toLowerCase().replace(/^@/,'');
+  const cat=val('lCat'), prod=val('lProd'), chan=val('lChan'), per=val('lPer');
+  const nm=(val('lName')||'').trim().toLowerCase().replace(/^@/,'');
 
   if(cat)  list=list.filter(function(x){ return x.cat===cat; });
   if(prod) list=list.filter(function(x){ return x.product===prod; });
@@ -804,28 +2029,30 @@ function renderSecList(){
   });
 
   if(!list.length){
-    V.setHTML('secListBody','<div class="box-note">조건에 맞는 2차 활용 건이 없습니다.</div>');
+    setHTML('secListBody','<div class="empty">조건에 맞는 2차 활용 건이 없습니다.</div>');
     return;
   }
 
   const legacy=list.filter(function(x){ return !x.s2type; });
   const soon=list.filter(function(x){ return x.flags.indexOf('secondEnd')>=0; }).length;
 
-  V.setHTML('secListBody',
-    (soon ? '<div class="box-danger"><b style="color:var(--v-danger)">🟣 종료 임박 '+soon+'건</b><br>'+
-      '만료 전에 연장 협의 또는 소재 내리기를 확인하세요.</div>' : '')+
-    (legacy.length ? '<div class="box-note">⚠️ 금액만 있고 <b>기간이 등록되지 않은 '+
-      legacy.length+'건</b>이 있습니다.<br>'+
-      '항목을 눌러 [2차 활용 등록]에서 채널·기간을 채워주세요.</div>' : '')+
-    list.map(function(x){ return itemHtml(x,'seclist'); }).join(''));
+  /* 조치가 필요한 알림은 접힘 밖, 목록은 접이식 */
+  setHTML('secListBody',
+    (soon ? box('danger','종료 임박 '+soon+'건',
+       '만료 전에 연장 협의 또는 소재 내리기를 확인하세요.') : '')+
+    (legacy.length ? box('note','기간이 등록되지 않은 '+legacy.length+'건',
+       '금액만 있고 기간이 없습니다. 항목을 눌러 [2차 활용 등록]에서 채널·기간을 채워주세요.') : '')+
+    fold('2차 활용 건', list.length+'건',
+      '<div class="inner">'+list.map(function(x){ return itemHtml(x,'seclist'); }).join('')+'</div>',
+      false, 'd3'));
 }
 
-/* ── 공통 목록 ────────────────────────── */
+/* ── 공통 목록 ────────────────────────────────────── */
 function listHtml(list, ctx){
-  if(!list.length) return '<div class="box-note">조건에 맞는 건이 없습니다.</div>';
+  if(!list.length) return '<div class="empty">조건에 맞는 건이 없습니다.</div>';
   return '<div class="sub2" style="margin-bottom:8px">'+list.length+'건</div>'+
     list.slice(0,300).map(function(x){ return itemHtml(x,ctx); }).join('')+
-    (list.length>300 ? '<div class="box-note">300건까지만 표시했습니다. 검색으로 좁혀주세요.</div>' : '');
+    (list.length>300 ? box('note','300건까지만 표시했습니다.','검색으로 좁혀주세요.') : '');
 }
 
 /* 게시중이면 D-N, 끝났으면 종료, 그 외에는 상태 글자 그대로 */
@@ -834,7 +2061,7 @@ function tagText(x){
   return x.state;
 }
 
-/* ── 항목 카드 ────────────────────────── */
+/* ── 항목 카드 ────────────────────────────────────── */
 function itemHtml(x, ctx){
   const uid = ctx+'_'+String(x.id).replace(/[^A-Za-z0-9가-힣_-]/g,'_');
   const open = OPEN[uid] ? ' open' : '';
@@ -849,7 +2076,7 @@ function itemHtml(x, ctx){
   if(ctx==='pchk'){
     const days=(D.thresholds && D.thresholds.postCheck) || 7;
     const over = !x.check || dayGap(x.check, D.today) >= days;
-    note = (over ? '<div class="dd over">🔴 확인 필요</div>' : '')+
+    note = (over ? '<div class="dd over">확인 필요</div>' : '')+
       '<div class="dd ok">최종확인 '+esc(x.check||'없음')+'</div>';
   }
 
@@ -866,14 +2093,14 @@ function itemHtml(x, ctx){
 }
 
 function toggleIt(uid){
-  const el=document.getElementById(uid);
+  const el=$(uid);
   if(!el) return;
   const now = el.className.indexOf('open')===-1;
   el.className = now ? 'it open' : 'it';
   OPEN[uid]=now;
 }
 
-/* ── 카드에 바로 붙는 버튼 ──────────────
+/* ── 카드에 바로 붙는 버튼 ──────────────────────────
    펼치지 않고 한 번에 처리할 수 있게 하기 위한 것.
    onclick 안에 들어가는 값은 전부 jsq 로 감싼다 — 이름이나 URL 에
    작은따옴표가 들어가면 버튼이 통째로 죽기 때문이다. */
@@ -883,7 +2110,7 @@ function openBtn(url, label){
     esc(label)+'</button>';
 }
 function quickHtml(x, uid, ctx){
-  if(!V.can('write')) return '';
+  if(!can('write')) return '';
   const acct = openBtn(x.acctUrl, '계정');
   const anyUrl = openBtn(x.url || x.acctUrl, 'URL');
   const id = jsq(x.id), u = jsq(uid);
@@ -931,7 +2158,7 @@ function detailHtml(x, uid, ctx){
   /* 2차 활용 — O/X 로 접어두고 눌러야 펼쳐지게 */
   const has = !!(x.s2type || x.legacy2);
   const second = has
-    ? 'O <span class="more" onclick="VERDAN.toggleBox(\'s2_'+jsq(uid)+'\')">상세보기</span>'
+    ? 'O <span class="more" onclick="toggleBox(\'s2_'+jsq(uid)+'\')">상세보기</span>'
     : 'X';
 
   let h='<div class="kv">'+
@@ -961,7 +2188,7 @@ function detailHtml(x, uid, ctx){
        '</div></div>';
   }
 
-  if(!V.can('write')) return h;
+  if(!can('write')) return h;
 
   /* 할일 탭에서는 콘텐츠 URL을 나중에 채울 수 있게 남겨둔다.
      관리·전체에서는 조회만 하도록 폼을 두지 않는다. */
@@ -975,7 +2202,7 @@ function detailHtml(x, uid, ctx){
 
   if(ctx==='sec' || ctx==='seclist'){
     h+='<div class="hr"></div><div class="acts">'+
-       '<button class="f ghost" onclick="VERDAN.toggleBox(\'ed_'+jsq(uid)+'\')">'+
+       '<button class="f ghost" onclick="toggleBox(\'ed_'+jsq(uid)+'\')">'+
          (has?'2차 활용 수정':'2차 활용 등록')+'</button>'+
        '<div id="ed_'+esc(uid)+'" style="display:none">'+secondFormHtml(x, uid)+'</div>'+
        '<div class="msg" id="m_'+esc(uid)+'"></div></div>';
@@ -1004,7 +2231,7 @@ function secondFormHtml(x, uid){
     '<div class="lb2">비고</div>'+
     '<input class="f fld" type="text" id="sm_'+esc(uid)+'" placeholder="메모 (선택)" '+
       'value="'+esc(x.s2memo||'')+'">'+
-    '<button class="f" onclick="doSecond(\''+jsq(x.id)+'\',\''+jsq(uid)+'\')">2차 활용 등록</button>'+
+    '<button class="f" style="margin-top:14px" onclick="doSecond(\''+jsq(x.id)+'\',\''+jsq(uid)+'\')">2차 활용 등록</button>'+
     (x.s2type ? '<button class="f ghost" onclick="doSecondClear(\''+jsq(x.id)+'\',\''+
       jsq(uid)+'\')">등록 해제</button>' : '')+
     '<div class="sub2">구매일 + 선택한 기간으로 <b>활용 마감일이 자동 계산</b>됩니다.<br>'+
@@ -1018,30 +2245,30 @@ function secondFormHtml(x, uid){
 /* 메시지는 펼친 폼과 카드 버튼 양쪽에 같이 쓴다 */
 function im(uid, t, err){
   ['m_','q_'].forEach(function(pre){
-    const el=document.getElementById(pre+uid);
+    const el=$(pre+uid);
     if(el){ el.textContent=t; el.className=(pre==='m_'?'msg':'qmsg')+(err?' err':' good'); }
   });
 }
 
-/* ── 쓰기 동작 ──────────────────────────
+/* ── 쓰기 동작 ──────────────────────────────────────
    idem 을 주면 같은 작업을 다시 눌러도 서버가 중복을 걸러낼 수 있다. */
 async function act(params, uid, okMsg, idem){
-  if(V.isBusy()) return;
-  V.busy(true); im(uid,'저장 중...',false);
+  if(BUSY) return;
+  BUSY = true; im(uid,'저장 중...',false);
   try{
-    const r=await V.api(params, { mode:'write', idem: idem || (params.action+':'+(params.id||'')) });
-    if(!r.ok){ im(uid, r.msg||'저장에 실패했습니다.', true); return; }
+    const r=await api(params, { mode:'write', idem: idem || (params.action+':'+(params.id||'')) });
+    if(!r || !r.ok){ im(uid, (r&&r.msg)||'저장에 실패했습니다.', true); return; }
     im(uid, okMsg, false);
-    V.setData(r);        /* D 갱신 + 화면 다시 그리기 */
+    setData(r);        /* D 갱신 + 화면 다시 그리기 */
   }catch(e){
     /* 시간 초과는 서버에 들어갔는지 알 수 없다. 중복 저장을 막기 위해 확인부터 안내한다. */
-    im(uid, V.failMsg(e, '새로고침으로 반영 여부를 먼저 확인하세요.'), true);
-  }finally{ V.busy(false); }
+    im(uid, failMsg(e, '새로고침으로 반영 여부를 먼저 확인하세요.'), true);
+  }finally{ BUSY = false; }
 }
 
 function doUpload(id, uid){ act({ action:'upload', id:id }, uid, '오늘 날짜로 업로드 처리했습니다.', 'upload:'+id); }
 function doUrl(id, uid){
-  const el=document.getElementById('cu_'+uid);
+  const el=$('cu_'+uid);
   const url=((el&&el.value)||'').trim();
   if(!url){ im(uid,'콘텐츠 URL을 입력하세요.',true); return; }
   act({ action:'url', id:id, url:url }, uid, 'URL을 저장했습니다.', 'url:'+id);
@@ -1049,13 +2276,13 @@ function doUrl(id, uid){
 function doUpchk(id, uid){ act({ action:'upchk', id:id }, uid, '미완료로 기록했습니다. 내일 다시 뜹니다.', 'upchk:'+id); }
 function doCheck(id, uid){ act({ action:'check', id:id }, uid, '게시확인 완료. 7일 뒤 다시 뜹니다.', 'check:'+id); }
 function doDel(id, uid){
-  if(!confirm('게시글이 내려간 건으로 표시할까요?\n삭제확인 탭으로 옮기고, 시트의 업로드 여부가 "삭제"로 바뀝니다.')) return;
-  act({ action:'del', id:id }, uid, '삭제확인으로 옮겼습니다.', 'del:'+id);
+  askConfirm('게시글이 내려간 건으로 표시할까요?\n삭제확인으로 옮기고 시트의 업로드 여부가 "삭제"로 바뀝니다.',
+    function(){ act({ action:'del', id:id }, uid, '삭제확인으로 옮겼습니다.', 'del:'+id); });
 }
 function doRecheck(id, uid){ act({ action:'recheck', id:id }, uid, '미처리로 확인만 기록했습니다.', 'recheck:'+id); }
 function doRestore(id, uid){ act({ action:'del', id:id, restore:'1' }, uid, '처리완료 — 업로드완료로 복구했습니다.', 'restore:'+id); }
 function doSecond(id, uid){
-  const g=function(p){ const e=document.getElementById(p+'_'+uid); return e?e.value:''; };
+  const g=function(p){ const e=$(p+'_'+uid); return e?e.value:''; };
   const type=g('st'), months=g('sp'), start=g('ss'), cost=g('sc'), memo=g('sm');
   if(!type){ im(uid,'활용 채널을 선택하세요.',true); return; }
   if(months===''){ im(uid,'활용 기간을 선택하세요.',true); return; }
@@ -1064,110 +2291,333 @@ function doSecond(id, uid){
       uid, '2차 활용을 등록했습니다.', 'second:'+id+':'+start+':'+months);
 }
 function doSecondClear(id, uid){
-  if(!confirm('이 건의 2차 활용 등록을 해제할까요?')) return;
-  act({ action:'second', id:id, clear:'1' }, uid, '2차 활용 등록을 해제했습니다.', 'secclear:'+id);
+  askConfirm('이 건의 2차 활용 등록을 해제할까요?', function(){
+    act({ action:'second', id:id, clear:'1' }, uid, '2차 활용 등록을 해제했습니다.', 'secclear:'+id);
+  });
 }
 
-/* ── 채팅 ───────────────────────────────
+/* ══════════════════════════════════════════════════
+   채팅 — 하단 내비에서 여는 전체 화면
+   --------------------------------------------------
    말풍선 색으로 답의 출처를 구분한다.
      흰색   = 저장된 데이터에서 규칙으로 찾은 답 (토큰 0)
-     연두색 = AI 가 만든 답 (토큰 소모 · 답변 아래에 사용량이 붙는다)
-   입력줄 · 타이핑 점 · 되묻기 칩 · 토큰 줄은 코어가 그린다.
-   서버는 사용자별 직전 1턴을 30분간 기억하고 있다가 AI 호출 때 함께 넘긴다. */
-const CHAT_SAMPLES = [
-  '오브 스웨이드백 크림 2차 활용 남은 사람 있어?',
-  '브랜더진 김민경 2차활용 조건 알려줘',
-  '리뷰노트 2025-09에 업로드된 콘텐츠 알려줘',
-  '브랜더진에서 진행한 오브백 블랙 콘텐츠 전부 알려줘'
-];
+     연두색 = AI 가 만든 답 (AI 배지 + 아래에 토큰 사용량)
+   서버는 사용자별 직전 1턴을 30분간 기억하고 있다가 AI 호출 때 함께 넘긴다.
+   ══════════════════════════════════════════════════ */
+function openChat(on){
+  const w=$('chatWrap');
+  w.classList.toggle('on', !!on);
+  if(on){
+    NAV='chat'; paintBottom();
+    setTimeout(chatScrollEnd, 30);
+  }else{
+    const ta=$('qInput'); if(ta) ta.blur();
+    if(NAV==='chat'){ NAV = (PAGE==='p9') ? 'my' : 'home'; paintBottom(); }
+  }
+}
+
+function buildChat(){
+  /* placeholder 는 넣지 않습니다. 예시 문구는 첫 말풍선이 대신합니다. */
+  setHTML('chatBar',
+    '<textarea id="qInput" rows="1" data-reset autocomplete="off"></textarea>'+
+    '<button class="send" id="askBtn" aria-label="보내기">'+ic('up')+'</button>');
+
+  const ta=$('qInput'), btn=$('askBtn');
+  /* 글이 길어지면 입력칸만 늘어납니다(최대 4줄). 버튼 크기는 그대로입니다. */
+  function grow(){
+    ta.style.height='auto';
+    ta.style.height=Math.min(ta.scrollHeight, 96)+'px';
+  }
+  ta.addEventListener('input', grow);
+  /* 키보드 애니메이션이 끝나는 시점이 기기마다 다릅니다. 두 번 나눠 맞춥니다. */
+  ta.addEventListener('focus', function(){
+    setTimeout(function(){ applyViewportHeight(); chatScrollEnd(); }, 300);
+    setTimeout(function(){ applyViewportHeight(); chatScrollEnd(); }, 650);
+  });
+  /* 넓은 화면에서만 Enter 로 보냅니다.
+     모바일에서 Enter 가 전송이면 줄바꿈을 할 수 없습니다. */
+  ta.addEventListener('keydown', function(e){
+    if(e.key==='Enter' && !e.shiftKey && window.innerWidth>700){ e.preventDefault(); chatSend(); }
+  });
+  btn.addEventListener('click', chatSend);
+}
+
+function chatSend(){
+  const ta=$('qInput');
+  if(!ta) return;
+  const q=(ta.value||'').trim();
+  if(!q) return;
+  ta.value=''; ta.style.height='auto';
+  ask(q);
+}
+function chatScrollEnd(){
+  const sc=$('chatScroll');
+  if(sc) sc.scrollTop=sc.scrollHeight;
+}
+function chatBusy(on){
+  const ta=$('qInput'), btn=$('askBtn');
+  if(btn) btn.disabled=!!on;
+  if(ta) ta.disabled=!!on;
+  BUSY=!!on;
+}
+
+/* who : 'me' | 'bot' | 'ai' */
+function say(who, text){
+  const b=$('chatBody');
+  if(!b) return null;
+  const d=document.createElement('div');
+  d.className='cmsg '+who;
+  d.innerHTML=(who==='ai' ? '<div class="aib">AI</div>' : '')+linkify(text);
+  b.appendChild(d);
+  chatScrollEnd();
+  return d;
+}
+/* 답변을 생각하는 동안 점 세 개가 움직입니다. 지울 때 el.remove() */
+function typing(){
+  const b=$('chatBody');
+  if(!b) return { remove:function(){} };
+  const d=document.createElement('div');
+  d.className='cmsg bot';
+  d.innerHTML='<div class="typing"><i></i><i></i><i></i></div>';
+  b.appendChild(d);
+  chatScrollEnd();
+  return d;
+}
+/* AI 답변 아래에 토큰 사용량을 붙입니다 */
+function tokens(el, usage){
+  if(!el || !usage) return;
+  const u=document.createElement('div');
+  u.className='tok';
+  u.textContent='토큰 '+n(usage.total)+'개 사용 (입력 '+n(usage.input)+' · 출력 '+n(usage.output)+')';
+  el.appendChild(u);
+  chatScrollEnd();
+}
+/* 칩 목록 — [{ label:'…', on:함수, gray:true }] */
+function chips(list){
+  const box=$('chatChips');
+  if(!box) return;
+  box.innerHTML='';
+  (list||[]).forEach(function(c){
+    const b=document.createElement('button');
+    b.className='chip'+(c.gray?' gray':'');
+    b.textContent=c.label;
+    b.onclick=c.on;
+    box.appendChild(b);
+  });
+  chatScrollEnd();
+}
+/* 규칙으로 못 푼 질문 — 되묻기 */
+function confirmChips(onYes, onNo){
+  chips([
+    { label:'네, 물어봐 주세요', on:function(){ chips([]); if(onYes) onYes(); } },
+    { label:'아니오', gray:true, on:function(){ chips([]); if(onNo) onNo(); } }
+  ]);
+}
 
 function chatReset(){
-  V.chatClear();
+  setHTML('chatBody',''); setHTML('chatChips','');
+  setVal('qInput','');
+  const ta=$('qInput'); if(ta) ta.style.height='auto';
   CARDS=[]; CARDN=0; PENDING_Q='';
 
   /* 화면만 지우면 서버는 직전 대화를 30분간 계속 들고 있다.
      초기화는 "앞의 이야기를 잊자"는 뜻이므로 서버 기억도 함께 버린다. */
-  if(V.loggedIn()){
-    V.api({ action:'chat', reset:'1' }).catch(function(){});
+  if(PW){
+    api({ action:'chat', reset:'1' }).catch(function(){});
   }
 
-  V.say('bot','플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣어 물어보면 바로 답합니다.');
-  V.chips(CHAT_SAMPLES.map(function(t){
-    return { label:t, on:function(){ V.chatAsk(t); } };
-  }));
+  say('bot','플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣어서 질문해 주세요.\n\n'+
+    '예) 브랜더진 김민경 2차활용 조건 알려줘');
 }
 
 async function ask(q, confirmed){
-  if(V.isBusy()) return;
+  if(BUSY) return;
   const text = confirmed ? PENDING_Q : String(q||'').trim();
   if(!text) return;
-  if(!confirmed) V.say('me', text);
-  V.chips([]);
+  if(!confirmed) say('me', text);
+  chips([]);
 
-  V.chatBusy(true);
-  const wait = V.typing();
+  chatBusy(true);
+  const wait = typing();
 
   try{
     const params={ action:'chat', q:text };
     if(confirmed) params.confirm='1';
-    const r=await V.api(params, { mode:'ai' });
+    const r=await api(params, { mode:'ai' });
     wait.remove();
 
-    if(!r.ok){ V.say('bot', r.msg||'답하지 못했습니다.'); return; }
+    if(!r || !r.ok){ say('bot', (r&&r.msg)||'답하지 못했습니다.'); return; }
 
     /* 규칙으로 못 푼 경우 — 바로 AI로 넘기지 않고 먼저 되묻는다.
        비용은 사용자가 동의한 뒤에만 발생해야 한다. */
     if(r.source==='confirm'){
       PENDING_Q=text;
-      V.say('bot', r.reply);
-      V.confirmChips(function(){ ask('', true); }, chatNo);
+      say('bot', r.reply);
+      confirmChips(function(){ ask('', true); }, chatNo);
       return;
     }
 
     /* 목록형 답변은 20건씩 나눠 보여준다 */
     if(r.cards && r.cards.length){
       CARDS=r.cards; CARDN=0;
-      V.say('bot', r.head || (r.cards.length+'건입니다.'));
+      say('bot', r.head || (r.cards.length+'건입니다.'));
       showCards();
       return;
     }
 
-    const d=V.say(r.source==='llm' ? 'ai' : 'bot', r.reply);
-    if(r.source==='llm') V.tokens(d, r.usage);
+    const d=say(r.source==='llm' ? 'ai' : 'bot', r.reply);
+    if(r.source==='llm') tokens(d, r.usage);
 
   }catch(e){
     wait.remove();
-    V.say('bot', V.failMsg(e,'잠시 후 다시 물어봐 주세요.'));
+    say('bot', failMsg(e,'잠시 후 다시 물어봐 주세요.'));
   }finally{
-    V.chatBusy(false);
+    chatBusy(false);
   }
 }
 
 function showCards(){
   const chunk=CARDS.slice(CARDN, CARDN+CARD_PAGE);
   if(!chunk.length) return;
-  V.say('bot', chunk.join('\n\n'));
+  say('bot', chunk.join('\n\n'));
   CARDN+=chunk.length;
   if(CARDN<CARDS.length){
-    V.chips([{ label:'더보기 ('+CARDN+' / '+CARDS.length+')', on:showCards }]);
+    chips([{ label:'더보기 ('+CARDN+' / '+CARDS.length+')', on:showCards }]);
   }else{
-    V.chips([]);
+    chips([]);
   }
 }
 
 function chatNo(){
   PENDING_Q='';
-  V.say('bot','다시 질문해주세요.\n플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣으면 더 정확합니다.');
+  say('bot','다시 질문해주세요.\n플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣으면 더 정확합니다.');
 }
 
-/* ── 접근로그 ───────────────────────────
-   접속 / 기록 / 채팅 세 탭과 표는 코어가 그린다.
-     접속 = 로그인 성공·실패
-     기록 = 사람이 앱에서 값을 바꾼 작업 (자동 트리거 기록은 서버가 걸러낸다)
-     채팅 = 질문·답변. [더보기]로 펼치면 질문과 답변이 나뉘어 보이고,
-            AI가 만든 답변에는 AI 배지가 붙는다.
-   이 앱에서 따로 할 일은 없다. 새로고침 버튼이 V.loadLogs(true) 를 부른다. */
+/* ── 이벤트 묶기 ──────────────────────────────────── */
+function segBind(id, fn){
+  const box=$(id); if(!box) return;
+  box.addEventListener('click', function(e){
+    const b = e.target.closest('button');
+    if(!b) return;
+    this.querySelectorAll('button').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    fn(b.dataset.k || b.dataset.v);
+  });
+}
 
+function bindAll(){
+  document.querySelectorAll('.page').forEach(function(p){
+    p.addEventListener('scroll', onScroll, {passive:true});
+  });
+  $('tabs').addEventListener('click', function(e){
+    const b = e.target.closest('button[data-page]');
+    if(b){ NAV='home'; go(b.dataset.page); paintBottom(); }
+  });
+  $('bottom').addEventListener('click', function(e){
+    const b = e.target.closest('button[data-k]');
+    if(!b) return;
+    if(b.dataset.k==='chat'){ openChat(true); return; }
+    openChat(false);
+    NAV = b.dataset.k;
+    go(NAV==='my' ? 'p9' : LASTMAIN);
+    paintBottom();
+  });
+  $('brandBtn').addEventListener('click', function(){
+    openCat(!$('catWrap').classList.contains('on'));
+  });
+  $('scrim').addEventListener('click', function(){ openCat(false); });
+  $('catClose').addEventListener('click', function(){ openCat(false); });
+
+  /* 새로고침 — 지금 보고 있는 화면에 맞게 동작합니다 */
+  $('rfBtn').addEventListener('click', function(){
+    if($('stampRow').classList.contains('busy')) return;
+    if(PAGE==='p9' && can('access')){
+      $('stampRow').classList.add('busy');
+      loadLogs(true).finally(function(){ $('stampRow').classList.remove('busy'); });
+    }else{
+      reload(true);
+    }
+  });
+
+  segBind('segToday',  setToday);
+  segBind('segStat',   setStat);
+  segBind('segSecond', setSecond);
+  segBind('segLog', function(k){ LOGVIEW=k; renderLogs(); });
+  segBind('segTheme', function(v){
+    applyTheme(v);
+    store(STORE.theme, v);
+  });
+  document.querySelectorAll('#segTheme button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.v===THEME);
+  });
+
+  /* 조건 검색 — 글자를 칠 때마다 그리지 않고 잠시 모읍니다 */
+  $('iName').addEventListener('input', function(){ deb(renderInflu); });
+  ['aCat','aProd'].forEach(function(id){
+    $(id).addEventListener('change', function(){ deb(renderAllList); }); });
+  $('aName').addEventListener('input', function(){ deb(renderAllList); });
+  $('aReset').addEventListener('click', function(){ resetFilter('a'); });
+
+  ['sCat','sProd'].forEach(function(id){
+    $(id).addEventListener('change', function(){ deb(renderSecReg); }); });
+  $('sName').addEventListener('input', function(){ deb(renderSecReg); });
+  $('sReset').addEventListener('click', function(){ resetFilter('s'); });
+
+  ['lCat','lProd','lChan','lPer'].forEach(function(id){
+    $(id).addEventListener('change', function(){ deb(renderSecList); }); });
+  $('lName').addEventListener('input', function(){ deb(renderSecList); });
+  $('lReset').addEventListener('click', function(){ resetFilter('l'); });
+
+  /* 로그인 */
+  $('loginBtn').addEventListener('click', login);
+  $('nm').addEventListener('keydown', function(e){ if(e.key==='Enter') $('pw').focus(); });
+  $('pw').addEventListener('keydown', function(e){ if(e.key==='Enter') login(); });
+
+  /* 채팅 */
+  $('chatCloseBtn').addEventListener('click', function(){ openChat(false); });
+  $('chatResetBtn').addEventListener('click', function(){
+    askConfirm('채팅 내용을 지우고 처음부터 다시 시작할까요?', chatReset);
+  });
+
+  $('outBtn').addEventListener('click', function(){
+    askConfirm('로그아웃할까요?', logout);
+  });
+  $('dlgYes').addEventListener('click', function(){ closeDlg(true); });
+  $('dlgNo').addEventListener('click', function(){ closeDlg(false); });
+  $('dlg').addEventListener('click', function(e){ if(e.target===this) closeDlg(false); });
+}
+
+/* ── 시작 ─────────────────────────────────────────
+   ⚠️ 이 블록은 반드시 스크립트 맨 끝에 있어야 합니다.
+      const 로 선언한 값(NAVS · LINKS 등)은 끌어올려지지 않아서,
+      위쪽에서 부르면 "Cannot access before initialization" 으로
+      파일이 통째로 죽습니다. 문법 검사로는 잡히지 않습니다. */
+(function init(){
+  try{
+    buildIcons(); buildCat(); buildBottom(); buildChat(); bindAll();
+
+    const saved = store(STORE.pw);
+    const savedUser = store(STORE.user) || '';
+    setVal('nm', savedUser);
+
+    if(saved){
+      PW = saved; USER = savedUser || '(미입력)';
+      autoLogin();
+    }else{
+      showGate();
+    }
+  }catch(e){
+    /* 무슨 일이 있어도 로그인 화면은 떠야 합니다.
+       빈 화면은 사용자가 손쓸 방법이 없습니다. */
+    showGate();
+    gmsg('화면을 여는 중 문제가 생겼습니다. ' + (e && e.message ? e.message : ''));
+  }
+})();
+
+/* 마지막 안전장치 — 3초가 지나도 아무 화면도 없으면 로그인 화면을 띄웁니다 */
+setTimeout(function(){
+  if(!$('gate').classList.contains('on') && !$('app').classList.contains('on')) showGate();
+}, 3000);
 </script>
 </body>
 </html>
