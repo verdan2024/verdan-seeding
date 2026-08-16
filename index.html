@@ -11,21 +11,21 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="버던시딩">
-<meta name="theme-color" content="#1A1A2E">
+<meta name="theme-color" content="#30382A">
 
-<link rel="stylesheet" href="https://verdan2024.github.io/verdan-core/verdan-core.css?v=1.0.0">
-<script src="https://verdan2024.github.io/verdan-core/verdan-core.js?v=1.0.0"></script>
+<link rel="stylesheet" href="https://verdan2024.github.io/verdan-core/verdan-core.css?v=1.1.0">
+<script src="https://verdan2024.github.io/verdan-core/verdan-core.js?v=1.1.0"></script>
 
 <style>
 /* ── 이 앱에만 있는 것 ──────────────────────────────── */
-/* 진행 상태 뱃지 */
-.b-발송대기{background:#F0F0F3;color:#666;}
-.b-업로드대기{background:#FFF3E0;color:#E65100;}
-.b-게시중{background:#E8F5E9;color:#1B5E20;}
-.b-미업로드{background:#FFF3E0;color:#E65100;}
-.b-종료{background:#ECEFF1;color:#546E7A;}
-.b-대가없음{background:#E8EAF6;color:#3949AB;}
-.b-삭제{background:#FDECEA;color:#C0392B;}
+/* 진행 상태 뱃지 — 색은 verdan-core 팔레트 안에서만 고른다 */
+.b-발송대기{background:#F2F1EF;color:#4A4744;}
+.b-업로드대기{background:#F7F1E6;color:#8A6538;}
+.b-게시중{background:#EFF2EC;color:#4C6544;}
+.b-미업로드{background:#F7F1E6;color:#8A6538;}
+.b-종료{background:#F2F1EF;color:#6D6462;}
+.b-대가없음{background:#F1EEF7;color:#5D5478;}
+.b-삭제{background:#F6EBEA;color:#8E4A45;}
 </style>
 </head>
 <body>
@@ -121,47 +121,48 @@
     </div>
   </div>
 
-  <!-- ── 채팅 ───────────────────────────── -->
+  <!-- ── 채팅 ─────────────────────────────
+       입력줄(#chatBar)은 코어가 채웁니다. 여기에 직접 넣지 마세요. -->
   <div id="p4" class="page chat">
     <div id="chatTop"><button class="chip gray" onclick="chatReset()">↺ 초기화</button></div>
     <div id="chatScroll"><div id="chatBody" data-clear></div></div>
     <div id="chatFoot">
       <div id="chatChips" class="chips" data-clear></div>
-      <div id="chatBar">
-        <input class="f" type="text" id="qInput" data-reset placeholder="무엇이든 물어보세요"
-               onkeydown="if(event.key==='Enter')ask()">
-        <button class="f" id="askBtn" onclick="ask()">전송</button>
-      </div>
+      <div id="chatBar"></div>
       <div class="sub2" style="margin-top:8px">
         흰색 답변은 저장된 데이터에서 바로 찾은 것입니다.<br>
-        <b style="color:#283593">파란색 답변은 AI가 처리한 것으로 토큰이 소모됩니다.</b><br>
+        <b style="color:var(--v-ai-txt)">연두색 답변은 AI가 처리한 것으로 토큰이 소모됩니다.</b><br>
         AI로 넘기기 전에 항상 먼저 확인을 받습니다.</div>
     </div>
   </div>
 
-  <!-- ── 접근로그 ───────────────────────── -->
+  <!-- ── 접근로그 ─────────────────────────
+       접속 / 기록 / 채팅 세 탭과 표는 코어가 그립니다. -->
   <div id="p5" class="page">
-    <div class="seg" id="segLog">
-      <button class="on" data-k="access" onclick="logView('access')">접속</button>
-      <button data-k="work" onclick="logView('work')">기록</button>
-      <button data-k="chat" onclick="logView('chat')">채팅</button>
-    </div>
+    <div class="seg" id="segLog"></div>
     <div id="accessBody" data-clear></div>
-    <button class="f ghost" onclick="loadAccess(true)">새로고침</button>
+    <button class="f ghost" onclick="VERDAN.loadLogs(true)">새로고침</button>
   </div>
 
-  <div class="foot">버던_시딩 · v4.0 · core <span id="coreVer"></span></div>
+  <div class="foot">버던_시딩 · v4.1 · core <span id="coreVer"></span></div>
 </div>
 
 <script>
 /* ══════════════════════════════════════════════════════
-   버던_시딩 v4.0
+   버던_시딩 v4.1   (verdan-core 1.1.0 / 웹앱_시딩.gs v3.5)
    공통 부분은 verdan-core.js 가 처리한다.
    이 파일에는 시딩 라이프사이클 · 2차 활용 · 채팅 로직만 둔다.
 
+   v4.0 → v4.1 에서 코어로 넘긴 것
+   ① 채팅 입력줄 · 타이핑 표시 · 되묻기 칩 · 토큰 사용량 줄
+      → V.chatInit / V.say / V.typing / V.confirmChips / V.tokens
+      앱마다 조금씩 다르던 모양이 4개 앱에서 같아진다.
+   ② 접근로그 3분류 표와 [더보기] → V.loadLogs / V.logView
+      분류(kind)는 서버가 붙여 보내고, 시스템 기록은 코어가 걸러낸다.
+   ③ 로그인 안내 문구(hint) → 코어 고정. 앱에서 넘기지 않는다.
+
    v4.0 에서 고친 것
    ① logout() 이 없는 요소('v2noupload')를 건드려 중간에 멈추던 문제.
-      이전 사용자의 채팅과 PENDING_Q 가 남아 정보 유출 · 토큰 오소비가 있었다.
       → 코어의 data-clear / data-reset 방식으로 바꿔 원천 차단.
    ② onclick 안에 이름을 넣을 때 작은따옴표 처리 (jsq)
    ══════════════════════════════════════════════════════ */
@@ -177,16 +178,18 @@ let OPEN = {}, OPT_CACHE = '';
 let V1='notice', V2='dash', V3='dash';
 let PENDING_Q = '', CARDS = [], CARDN = 0;
 const CARD_PAGE = 20;
-let LOGS = [], LOGVIEW = 'access', accessLoaded = false;
+/* 접근로그 상태(LOGS · 보고 있는 탭 · 불러왔는지)는 코어가 들고 있다 */
 
-/* 플랫폼 색 — 그래프와 범례가 같은 색을 쓴다 */
+/* 플랫폼 색 — 그래프와 범례가 같은 색을 쓴다.
+   verdan-core 의 데이터 컬러 5종만 쓴다. 그린 계열은 데이터에 쓰지 않는다.
+   (건수가 가장 많은 브랜더진이 메인 데이터 색) */
 const CAT_COLOR = {
-  '구글폼':'#3F51B5', '브랜더진':'#26A69A', '리뷰노트':'#EF6C00', '무신사':'#7E57C2'
+  '브랜더진':'#B77C7C', '리뷰노트':'#C48262', '무신사':'#8A7FA8', '구글폼':'#71869B'
 };
 /* 화면에 보여줄 이름. 시트·통합DB의 실제 값은 '구글폼' 그대로 둔다.
    (통계 수식이 '구글폼'을 기준으로 잡혀 있어 데이터를 바꾸면 안 된다) */
 const CAT_LABEL = { '구글폼':'개인협찬(구글폼)' };
-const FALLBACK_COLORS = ['#90A4AE','#8D6E63','#5C6BC0','#66BB6A','#EC407A'];
+const FALLBACK_COLORS = ['#6D6462','#B77C7C','#C48262','#8A7FA8','#71869B'];
 
 VERDAN.init({
   scriptUrl : SCRIPT_URL,
@@ -194,8 +197,7 @@ VERDAN.init({
   title     : '버던_시딩',
   icon      : '📮',
   iconUrl   : 'https://verdan2024.github.io/verdan-core/apple-touch-icon.png',
-  appVersion: 'v4.0',
-  hint      : '본인 이름을 입력하세요. 접근로그에 기록됩니다.',
+  appVersion: 'v4.1',
   store     : { pw:'verdan_seed_pw', user:'verdan_seed_user' },
 
   /* 통합DB 새로고침이 붙어 있어 넉넉히 잡는다 */
@@ -212,20 +214,22 @@ VERDAN.init({
 
   onStart : boot,
   onData  : redraw,
-  onTab   : function(p){ if(p==='p5' && !accessLoaded) loadAccess(); },
+  onTab   : function(p){ if(p==='p5') V.loadLogs(false); },
   onLogout: function(){
     /* 코어가 DOM 을 비우기 전에 먼저 호출되므로 값 초기화는 여기서 확실히 한다 */
     D=null; OPEN={}; OPT_CACHE='';
     V1='notice'; V2='dash'; V3='dash';
     PENDING_Q=''; CARDS=[]; CARDN=0;
-    LOGS=[]; LOGVIEW='access'; accessLoaded=false;
   }
 });
 
 document.getElementById('coreVer').textContent = VERDAN.version;
 
+/* 채팅 입력줄을 코어가 만들고, 보낼 때 ask() 를 부르게 연결한다 */
+V.chatInit(function(q){ ask(q); });
+
 function boot(r){
-  D = r; accessLoaded = false; OPT_CACHE = '';
+  D = r; OPT_CACHE = '';
   fillFilters(); renderAll(); chatReset();
 }
 function redraw(r){
@@ -347,7 +351,7 @@ function monthTableHtml(){
       }).join('')
     : '<tr><td colspan="4" class="ctr sub2">이번 달 시딩 내역이 없습니다.</td></tr>';
   const foot = keys.length
-    ? '<tr style="background:#F5F5F5"><td><b>합계</b></td>'+
+    ? '<tr style="background:#F2F1EC"><td><b>합계</b></td>'+
       '<td class="ctr"><b>'+n(tot)+'</b></td>'+
       '<td class="ctr ok"><b>'+n(up)+'</b></td>'+
       '<td class="ctr '+((tot-up)>0?'danger':'')+'"><b>'+n(tot-up)+'</b></td></tr>'
@@ -611,7 +615,7 @@ function renderDeleted(){
     h='<div class="box-ok">🟢 삭제로 표시된 건이 없습니다.</div>';
   }else{
     if(during.length){
-      h+='<div class="box-danger"><b style="color:#C0392B">🔴 게시기간 중 삭제 '+during.length+'건</b> · '+
+      h+='<div class="box-danger"><b style="color:var(--v-danger)">🔴 게시기간 중 삭제 '+during.length+'건</b> · '+
          '재업로드를 요청하세요.</div>'+
          during.map(function(x){ return itemHtml(x,'del'); }).join('');
     }
@@ -808,7 +812,7 @@ function renderSecList(){
   const soon=list.filter(function(x){ return x.flags.indexOf('secondEnd')>=0; }).length;
 
   V.setHTML('secListBody',
-    (soon ? '<div class="box-danger"><b style="color:#C0392B">🟣 종료 임박 '+soon+'건</b><br>'+
+    (soon ? '<div class="box-danger"><b style="color:var(--v-danger)">🟣 종료 임박 '+soon+'건</b><br>'+
       '만료 전에 연장 협의 또는 소재 내리기를 확인하세요.</div>' : '')+
     (legacy.length ? '<div class="box-note">⚠️ 금액만 있고 <b>기간이 등록되지 않은 '+
       legacy.length+'건</b>이 있습니다.<br>'+
@@ -1065,7 +1069,11 @@ function doSecondClear(id, uid){
 }
 
 /* ── 채팅 ───────────────────────────────
-   규칙으로 답한 것과 AI가 답한 것을 말풍선 색으로 구분한다. */
+   말풍선 색으로 답의 출처를 구분한다.
+     흰색   = 저장된 데이터에서 규칙으로 찾은 답 (토큰 0)
+     연두색 = AI 가 만든 답 (토큰 소모 · 답변 아래에 사용량이 붙는다)
+   입력줄 · 타이핑 점 · 되묻기 칩 · 토큰 줄은 코어가 그린다.
+   서버는 사용자별 직전 1턴을 30분간 기억하고 있다가 AI 호출 때 함께 넘긴다. */
 const CHAT_SAMPLES = [
   '오브 스웨이드백 크림 2차 활용 남은 사람 있어?',
   '브랜더진 김민경 2차활용 조건 알려줘',
@@ -1074,164 +1082,92 @@ const CHAT_SAMPLES = [
 ];
 
 function chatReset(){
-  V.setHTML('chatBody',''); V.setVal('qInput','');
+  V.chatClear();
   CARDS=[]; CARDN=0; PENDING_Q='';
-  say('bot','플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣어 물어보면 바로 답합니다.');
-  V.setHTML('chatChips', CHAT_SAMPLES.map(function(t){
-    return '<button class="chip" onclick="send(\''+jsq(t)+'\')">'+esc(t)+'</button>'; }).join(''));
+
+  /* 화면만 지우면 서버는 직전 대화를 30분간 계속 들고 있다.
+     초기화는 "앞의 이야기를 잊자"는 뜻이므로 서버 기억도 함께 버린다. */
+  if(V.loggedIn()){
+    V.api({ action:'chat', reset:'1' }).catch(function(){});
+  }
+
+  V.say('bot','플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣어 물어보면 바로 답합니다.');
+  V.chips(CHAT_SAMPLES.map(function(t){
+    return { label:t, on:function(){ V.chatAsk(t); } };
+  }));
 }
 
-function say(who, text){
-  const b=document.getElementById('chatBody');
-  const d=document.createElement('div');
-  d.className='cmsg '+who;
-  d.innerHTML=V.linkify(text);
-  b.appendChild(d);
-  const sc=document.getElementById('chatScroll');
-  if(sc) sc.scrollTop=sc.scrollHeight;
-  return d;
-}
-function send(t){ V.setVal('qInput', t); ask(); }
-
-async function ask(confirmed){
+async function ask(q, confirmed){
   if(V.isBusy()) return;
-  const inp=document.getElementById('qInput');
-  const q = confirmed ? PENDING_Q : inp.value.trim();
-  if(!q) return;
-  if(!confirmed){ say('me',q); inp.value=''; }
-  V.setHTML('chatChips','');
+  const text = confirmed ? PENDING_Q : String(q||'').trim();
+  if(!text) return;
+  if(!confirmed) V.say('me', text);
+  V.chips([]);
 
-  const btn=document.getElementById('askBtn');
-  V.busy(true); btn.disabled=true; btn.textContent='...';
-  const wait=say('bot','답변 중...');
+  V.chatBusy(true);
+  const wait = V.typing();
 
   try{
-    const params={ action:'chat', q:q };
+    const params={ action:'chat', q:text };
     if(confirmed) params.confirm='1';
     const r=await V.api(params, { mode:'ai' });
     wait.remove();
 
-    if(!r.ok){ say('bot', r.msg||'답하지 못했습니다.'); return; }
+    if(!r.ok){ V.say('bot', r.msg||'답하지 못했습니다.'); return; }
 
     /* 규칙으로 못 푼 경우 — 바로 AI로 넘기지 않고 먼저 되묻는다.
        비용은 사용자가 동의한 뒤에만 발생해야 한다. */
     if(r.source==='confirm'){
-      PENDING_Q=q;
-      say('bot', r.reply);
-      V.setHTML('chatChips',
-        '<button class="chip" onclick="ask(true)">네, 물어봐 주세요</button>'+
-        '<button class="chip gray" onclick="chatNo()">아니오</button>');
+      PENDING_Q=text;
+      V.say('bot', r.reply);
+      V.confirmChips(function(){ ask('', true); }, chatNo);
       return;
     }
 
     /* 목록형 답변은 20건씩 나눠 보여준다 */
     if(r.cards && r.cards.length){
       CARDS=r.cards; CARDN=0;
-      say('bot', r.head || (r.cards.length+'건입니다.'));
+      V.say('bot', r.head || (r.cards.length+'건입니다.'));
       showCards();
       return;
     }
 
-    const d=say(r.source==='llm' ? 'ai' : 'bot', r.reply);
-    if(r.source==='llm' && r.usage){
-      const u=document.createElement('div');
-      u.className='tok';
-      u.textContent='토큰 '+n(r.usage.total)+'개 사용 (입력 '+n(r.usage.input)+
-                    ' · 출력 '+n(r.usage.output)+')';
-      d.appendChild(u);
-    }
+    const d=V.say(r.source==='llm' ? 'ai' : 'bot', r.reply);
+    if(r.source==='llm') V.tokens(d, r.usage);
+
   }catch(e){
     wait.remove();
-    say('bot', V.failMsg(e,'잠시 후 다시 물어봐 주세요.'));
+    V.say('bot', V.failMsg(e,'잠시 후 다시 물어봐 주세요.'));
   }finally{
-    V.busy(false); btn.disabled=false; btn.textContent='전송';
+    V.chatBusy(false);
   }
 }
 
 function showCards(){
   const chunk=CARDS.slice(CARDN, CARDN+CARD_PAGE);
   if(!chunk.length) return;
-  say('bot', chunk.join('\n\n'));
+  V.say('bot', chunk.join('\n\n'));
   CARDN+=chunk.length;
-  V.setHTML('chatChips', CARDN<CARDS.length
-    ? '<button class="chip" onclick="showCards()">더보기 ('+CARDN+' / '+CARDS.length+')</button>'
-    : '');
-  const sc=document.getElementById('chatScroll');
-  if(sc) sc.scrollTop=sc.scrollHeight;
+  if(CARDN<CARDS.length){
+    V.chips([{ label:'더보기 ('+CARDN+' / '+CARDS.length+')', on:showCards }]);
+  }else{
+    V.chips([]);
+  }
 }
 
 function chatNo(){
-  V.setHTML('chatChips','');
   PENDING_Q='';
-  say('bot','다시 질문해주세요.\n플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣으면 더 정확합니다.');
+  V.say('bot','다시 질문해주세요.\n플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣으면 더 정확합니다.');
 }
 
 /* ── 접근로그 ───────────────────────────
-   접속 = 로그인 성공·실패 / 기록 = 값이 바뀐 작업 / 채팅 = 질문·답변 */
-async function loadAccess(force){
-  V.setHTML('accessBody','<div class="box-note">불러오는 중...</div>');
-  try{
-    LOGS = await V.fetchLogs(force);
-    accessLoaded = true;
-    logView(LOGVIEW);
-  }catch(e){
-    V.setHTML('accessBody','<div class="box-note">'+esc(V.failMsg(e,'새로고침을 눌러주세요.'))+'</div>');
-  }
-}
+   접속 / 기록 / 채팅 세 탭과 표는 코어가 그린다.
+     접속 = 로그인 성공·실패
+     기록 = 사람이 앱에서 값을 바꾼 작업 (자동 트리거 기록은 서버가 걸러낸다)
+     채팅 = 질문·답변. [더보기]로 펼치면 질문과 답변이 나뉘어 보이고,
+            AI가 만든 답변에는 AI 배지가 붙는다.
+   이 앱에서 따로 할 일은 없다. 새로고침 버튼이 V.loadLogs(true) 를 부른다. */
 
-function logView(k){
-  LOGVIEW=k;
-  document.querySelectorAll('#segLog button').forEach(function(b){
-    b.className = (b.dataset.k===k) ? 'on' : '';
-  });
-  const list=LOGS.filter(function(l){ return l.kind===k; });
-
-  if(!list.length){
-    const t = k==='access' ? '접속' : (k==='chat' ? '채팅' : '작업');
-    V.setHTML('accessBody','<div class="box-note">'+t+' 기록이 없습니다.</div>');
-    return;
-  }
-
-  const rows=list.map(function(l,i){
-    let cls='';
-    if(l.result==='실패') cls='danger';
-    else if(l.result==='입력'||l.result==='확인'||l.result==='접속') cls='ok';
-
-    /* 채팅은 질문·답변이 길어 [더보기]로 접어둔다 */
-    if(k==='chat'){
-      const parts=String(l.memo||'').split(' ▸ ');
-      const q=parts[0]||'';
-      let a=parts.slice(1).join(' ▸ ');
-      const m=a.match(/\s\[(rule|llm|none|error)[^\]]*\]\s*$/);
-      let tag='';
-      if(m){ tag=m[1]; a=a.slice(0,m.index); }
-      const id='lg'+i;
-      const detail='<span class="more" style="margin:0" onclick="VERDAN.toggleBox(\''+id+'\')">더보기</span>'+
-        (tag==='llm'?' <span class="badge b-대가없음">AI</span>':'');
-      return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
-        '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
-        '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
-        '<td style="font-size:12px">'+detail+'</td></tr>'+
-        '<tr id="'+id+'" style="display:none"><td colspan="4" style="padding:0 10px 12px">'+
-          '<div class="qa2"><b>질문</b><div>'+esc(q)+'</div></div>'+
-          '<div class="qa2"><b>답변</b><div>'+V.linkify(a||'—')+'</div></div>'+
-        '</td></tr>';
-    }
-
-    return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
-      '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
-      '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
-      '<td style="font-size:12px">'+esc(l.memo)+'</td></tr>';
-  }).join('');
-
-  V.setHTML('accessBody',
-    '<div class="tbl-wrap"><table><thead><tr>'+
-    '<th>시각</th><th>결과</th><th>사용자</th>'+
-    '<th style="text-align:left">'+
-      (k==='access'?'권한':(k==='chat'?'질문 · 답변':'작업 내용'))+'</th>'+
-    '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<div class="sub2">'+list.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>');
-}
 </script>
 </body>
 </html>
