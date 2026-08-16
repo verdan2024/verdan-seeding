@@ -53,6 +53,17 @@
    ⑦ 갱신 시각에 날짜가 함께 보입니다 (앞 5글자 자르기 → 형식 판별)
    ⑧ 카테고리 판을 absolute 로 — 키보드가 올라와도 기준 상자가 흔들리지 않게
 
+   v5.1 → v5.2  (실기기 확인 반영)
+   ① 2차활용 금액 · 수수료를 한 판 안에서 [금액][수수료]로 나눠 봅니다
+   ② 링크가 걸린 글자는 전부 'URL' 로 통일 · 밑줄
+   ③ 삭제확인 붉은 상자 삭제 (접이식 제목에 이미 건수가 있습니다)
+   ④ 할일·공지를 [이번 달 기준][오늘 처리할 것] 두 접이식으로.
+      줄글을 표로 바꿔 숫자가 눈에 들어오게. 둘 다 펼친 채로 시작합니다
+   ⑤ 인플루언서 콘텐츠를 '1. URL' 로 줄였습니다
+   ⑥ 비고 칸 한 줄 · 버튼 [저장]
+   ⑦⑧ 검색 안내 문구 삭제 · [초기화][검색] 두 버튼으로
+   ⑨ 2차활용 그래프 두 개도 접이식으로
+
    서버 규격은 v4.1 과 같습니다. 바뀐 것은 화면뿐입니다.
    ══════════════════════════════════════════════════════ */
 
@@ -321,6 +332,9 @@ button.f{background:var(--v-cta);color:var(--v-cta-txt);border:none;font-weight:
 button.f:disabled{opacity:.5;}
 button.ghost{background:transparent;color:var(--v-strong);border:1px solid var(--v-line);
   font-weight:600;}
+/* [초기화][검색] 처럼 나란히 두는 버튼 */
+.btn2{display:flex;gap:8px;}
+.btn2 button.f{flex:1;width:auto;margin-bottom:0;}
 /* select 와 input 은 브라우저 기본 높이가 달라 그냥 두면 줄이 어긋납니다 */
 select.fld,input.f.fld{height:46px;padding:0 14px;margin-bottom:0;}
 select.fld{padding-right:36px;}
@@ -394,6 +408,9 @@ details[open] summary .chev{transform:rotate(90deg);}
 details .tbl{border:none;border-radius:0;border-top:1px solid var(--v-line);margin:0;}
 /* 펼쳤을 때 안쪽에 카드 목록이 들어가는 경우 */
 details .inner{padding:12px 12px 2px;border-top:1px solid var(--v-line);background:var(--v-bg);}
+/* 안에 카드가 아니라 내용이 바로 들어가는 경우 (그래프 · 금액) —
+   카드 안에 카드를 또 그리면 테두리가 두 겹으로 보입니다. */
+details .inner.plain{background:var(--v-card);padding:14px 15px 8px;}
 details .inner .it:last-child{margin-bottom:12px;}
 
 /* ── 하단 내비 ────────────────────────────────────── */
@@ -493,7 +510,10 @@ details .inner .it:last-child{margin-bottom:12px;}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px;color:var(--v-mute);
   line-height:1.95;padding-top:11px;}
 .kv b{font-weight:700;color:var(--v-txt);}
-.kv a{color:var(--v-link);word-break:break-all;}
+.kv a{color:var(--v-link);word-break:break-all;text-decoration:underline;
+  text-underline-offset:3px;font-weight:700;}
+/* 링크가 걸린 글자는 전부 [URL] 한 가지로 통일합니다 */
+a.url{color:var(--v-link);font-weight:700;text-decoration:underline;text-underline-offset:3px;}
 .box2{background:var(--v-soft);border:1px solid var(--v-line);border-radius:11px;
   padding:10px 12px;margin-top:10px;}
 
@@ -705,7 +725,10 @@ body.kb #chatFoot{padding-bottom:8px;}
       <div class="card">
         <h3>인플루언서 검색</h3>
         <input class="f" type="text" id="iName" data-reset placeholder="이름 · 계정">
-        <div class="sub2">이름이나 계정으로 찾은 뒤 눌러 펼치면 진행 이력과 비고를 볼 수 있습니다.</div>
+        <div class="btn2">
+          <button class="f ghost" id="iReset">초기화</button>
+          <button class="f" id="iGo">검색</button>
+        </div>
       </div>
       <div id="influBody" data-clear></div>
     </div>
@@ -715,7 +738,10 @@ body.kb #chatFoot{padding-bottom:8px;}
         <select id="aCat"></select>
         <select id="aProd"></select>
         <input class="f" type="text" id="aName" data-reset placeholder="이름 · 계정">
-        <button class="f ghost" id="aReset">조건 초기화</button>
+        <div class="btn2">
+          <button class="f ghost" id="aReset">초기화</button>
+          <button class="f" id="aGo">검색</button>
+        </div>
       </div>
       <div id="allBody" data-clear></div>
     </div>
@@ -735,7 +761,10 @@ body.kb #chatFoot{padding-bottom:8px;}
         <select id="sCat"></select>
         <select id="sProd"></select>
         <input class="f" type="text" id="sName" data-reset placeholder="이름 · 계정">
-        <button class="f ghost" id="sReset">조건 초기화</button>
+        <div class="btn2">
+          <button class="f ghost" id="sReset">초기화</button>
+          <button class="f" id="sGo">검색</button>
+        </div>
       </div>
       <div id="secRegBody" data-clear></div>
     </div>
@@ -747,7 +776,10 @@ body.kb #chatFoot{padding-bottom:8px;}
         <select id="lChan"></select>
         <select id="lPer"></select>
         <input class="f" type="text" id="lName" data-reset placeholder="이름 · 계정">
-        <button class="f ghost" id="lReset">조건 초기화</button>
+        <div class="btn2">
+          <button class="f ghost" id="lReset">초기화</button>
+          <button class="f" id="lGo">검색</button>
+        </div>
       </div>
       <div id="secListBody" data-clear></div>
     </div>
@@ -837,7 +869,7 @@ body.kb #chatFoot{padding-bottom:8px;}
 /* Apps Script 웹앱 배포 URL. 재배포해서 URL 이 바뀌면 이 줄만 고치면 된다. */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3svD8sJrB-gWMNKvRzai1wnTh9YB-VQGacvpryTlKCzD56iq30BWBH0X752KsMDkw/exec";
 
-const APP_VER = 'v5.1';
+const APP_VER = 'v5.2';
 /* 로고 · 공통 코어 저장소에 둡니다. 3개 앱이 같은 주소를 봅니다.
    로고를 바꾸면 ?v= 숫자만 올리면 캐시가 갈립니다. */
 const LOGO = {
@@ -1664,32 +1696,54 @@ function monthTableHtml(){
       '<td class="ok">'+n(up)+'</td>'+
       '<td class="'+((tot-up)>0?'dg':'')+'">'+n(tot-up)+'</td></tr>'
     : '';
-  return '<div class="chart"><h3>'+esc(s.ym.replace('-','.'))+' 기준</h3>'+
-    '<div class="tbl" style="margin-bottom:0"><table><thead><tr>'+
+  return '<div class="tbl" style="margin-bottom:0"><table><thead><tr>'+
     '<th>플랫폼</th><th>협찬</th><th>업로드</th><th>미업로드</th>'+
-    '</tr></thead><tbody>'+rows+foot+'</tbody></table></div></div>';
+    '</tr></thead><tbody>'+rows+foot+'</tbody></table></div>';
 }
 
 /* ── 할일 · 공지 ──────────────────────────────────── */
+/* 줄글은 숫자가 눈에 들어오지 않습니다. 항목 · 값 두 칸 표로 둡니다.
+   hot=true 인 줄은 0 보다 크면 붉게 — 봐야 할 숫자만 눈에 걸리게 합니다. */
+function statRow(k, v, unit, hot){
+  const cls = (hot && v>0) ? ' class="dg"' : '';
+  return '<tr><td>'+esc(k)+'</td><td'+cls+'>'+n(v)+(unit||'건')+'</td></tr>';
+}
+function statTable(rows){
+  return '<div class="tbl" style="margin-bottom:0"><table><tbody>'+rows+'</tbody></table></div>';
+}
+
 function renderNotice(){
   const s=D.summary;
-  const hl=function(v){ return v>0 ? '<span class="hl">'+n(v)+'건</span>' : n(v)+'건'; };
+  const delDuring = D.items.filter(function(x){
+    return x.state==='삭제' && x.postPeriod && x.delchk && x.delchk<=x.postPeriod; }).length;
+  const todo = (s.needUpload||0) + (s.needPost||0) + delDuring;
+
+  /* 이번 달 기준 — 요약 표 + 플랫폼별 표 */
+  const monthRows =
+    statRow('시딩', s.total) +
+    statRow('업로드완료', s.uploaded) +
+    statRow('대기', s.waiting) +
+    (s.rental ? statRow('└ 발송', s.seeding) + statRow('└ 대여', s.rental) : '') +
+    statRow('원고료', s.fee, '원') +
+    statRow('현재 게시중', s.posting) +
+    statRow('게시기간 만료임박', s.postEnd, '건', true) +
+    statRow('2차활용 종료임박', s.secondEnd, '건', true) +
+    statRow('업로드마감 초과', s.overdue, '건', true);
+
+  const todoRows =
+    statRow('업로드확인', s.needUpload, '건', true) +
+    statRow('게시확인', s.needPost, '건', true) +
+    statRow('게시기간 중 삭제확인', delDuring, '건', true);
+
   setHTML('v1notice',
-    '<div class="notice"><div class="ttl">'+esc(s.ym.replace('-','.'))+' 기준</div>'+
-    '시딩 <b>'+n(s.total)+'건</b> · 업로드완료 <b>'+n(s.uploaded)+'</b> · 대기 <b>'+n(s.waiting)+'</b><br>'+
-    (s.rental ? '<span class="sub2">└ 발송 '+n(s.seeding)+'건 · 대여 '+n(s.rental)+'건</span><br>' : '')+
-    '원고료 <b>'+n(s.fee)+'원</b><br>'+
-    '현재 게시중 <b>'+n(s.posting)+'건</b><br>'+
-    '게시기간 만료임박 '+hl(s.postEnd)+'<br>'+
-    '2차활용 종료임박 '+hl(s.secondEnd)+'<br>'+
-    '업로드마감 초과 '+hl(s.overdue)+'</div>'+
-    '<div class="notice"><div class="ttl">오늘 처리할 것</div>'+
-    '업로드확인 '+hl(s.needUpload)+'<br>'+
-    '게시확인 '+hl(s.needPost)+'<br>'+
-    '게시기간 중 삭제확인 '+hl(D.items.filter(function(x){
-       return x.state==='삭제' && x.postPeriod && x.delchk && x.delchk<=x.postPeriod;
-     }).length)+'</div>'+
-    monthTableHtml());
+    fold('오늘 처리할 것', (todo>0 ? todo+'건' : '없음'),
+      '<div class="inner">'+statTable(todoRows)+'<div style="height:12px"></div></div>',
+      true, (todo>0 ? 'danger' : 'ok'))+
+    fold(s.ym.replace('-','.')+' 기준', n(s.total)+'건',
+      '<div class="inner">'+statTable(monthRows)+
+        '<div class="sec" style="margin:16px 0 8px">플랫폼별</div>'+
+        monthTableHtml()+'<div style="height:12px"></div></div>',
+      true, 'd4'));
 }
 
 /* ── 할일 · 업로드확인 ──────────────────────────────
@@ -1811,6 +1865,16 @@ function renderDash(){
       (totalPairs.length ? hBars(totalPairs) : '<div class="sub2">데이터가 없습니다.</div>')+'</div>');
 }
 
+/* 금액 · 수수료 갈아 끼우기.
+   판을 다시 그릴 때마다 새로 만들어지는 버튼이라 onclick 으로 붙입니다. */
+function pickMoney(k){
+  document.querySelectorAll('#segMoney button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.k===k);
+  });
+  setDisp('moneyCost', k==='cost' ? 'block' : 'none');
+  setDisp('moneyFee',  k==='fee'  ? 'block' : 'none');
+}
+
 /* ── 2차활용 · 대시보드 ───────────────────────────── */
 function renderSecDash(){
   const list=D.items.filter(function(x){ return x.s2type || x.legacy2; });
@@ -1889,12 +1953,20 @@ function renderSecDash(){
       '<span class="big">'+n(list.length)+'건</span>'+
       '<div class="sub2" style="margin-top:4px">비용 '+n(grand)+'원'+
       (feeTotal?' + 수수료 '+n(feeTotal)+'원':'')+'</div></div>'+
-    '<div class="chart"><h3>플랫폼별 2차 활용</h3>'+hBars(catPairs)+'</div>'+
-    '<div class="chart"><h3>활용 채널별 비중</h3>'+donut(typePairs,'건')+'</div>'+
+    fold('플랫폼별 2차 활용', list.length+'건',
+      '<div class="inner plain">'+hBars(catPairs)+'</div>', false, 'd1')+
+    fold('활용 채널별 비중', n(typePairs.reduce(function(a,b){ return a+b.v; },0))+'건',
+      '<div class="inner plain">'+donut(typePairs,'건')+'</div>', false, 'd2')+
+    /* 금액과 수수료는 성격이 달라 한 화면에 이어 붙이면 어느 숫자인지 헷갈립니다.
+       한 판 안에서 [금액][수수료]로 갈아 끼웁니다. */
     fold('2차 활용 금액 · 수수료', n(grand+feeTotal)+'원',
-      '<div class="inner">'+
-        '<div class="chart"><h3>2차 활용 금액</h3>'+moneyHtml+'</div>'+
-        '<div class="chart"><h3>수수료</h3>'+feeHtml+'</div></div>', false, 'd3'));
+      '<div class="inner plain">'+
+        '<div class="seg-pick" id="segMoney" style="margin-bottom:14px">'+
+          '<button class="on" data-k="cost" onclick="pickMoney(\'cost\')">금액</button>'+
+          '<button data-k="fee" onclick="pickMoney(\'fee\')">수수료</button></div>'+
+        '<div id="moneyCost">'+moneyHtml+'</div>'+
+        '<div id="moneyFee" style="display:none">'+feeHtml+'</div>'+
+      '</div>', false, 'd3'));
 }
 
 /* ── 관리 · 삭제확인 ────────────────────────────────
@@ -1915,9 +1987,8 @@ function renderDeleted(){
     h=box('ok','삭제로 표시된 건이 없습니다.','');
   }else{
     if(during.length){
-      /* 알림은 접힘 밖에 건수만. 무엇을 해야 하는지와 목록은 안에 둡니다. */
-      h+=box('danger','게시기간 중 삭제 '+during.length+'건','')+
-         fold('게시기간 중 삭제 확인', during.length+'건',
+      /* 접이식 제목에 이미 건수와 붉은 점이 있으므로 상자를 따로 두지 않습니다 */
+      h+=fold('게시기간 중 삭제 확인', during.length+'건',
            '<div class="inner">'+
            '<div class="sub2" style="margin-bottom:10px">재업로드를 요청하세요.</div>'+
            during.map(function(x){ return itemHtml(x,'del'); }).join('')+
@@ -1990,7 +2061,7 @@ function renderPosted(){
 function renderInflu(){
   const q=(val('iName')||'').trim().toLowerCase().replace(/^@/,'');
   if(!q){
-    setHTML('influBody','<div class="empty">이름이나 계정을 입력하면 결과가 나옵니다.</div>');
+    setHTML('influBody','');
     return;
   }
   const map={};
@@ -2022,11 +2093,14 @@ function influCard(p){
   const dates=p.rows.map(function(x){ return x.uploadDate; }).filter(Boolean).sort();
 
   const urls=p.rows.filter(function(x){ return x.url; });
+  /* 주소를 통째로 늘어놓으면 카드가 주소로만 채워집니다.
+     번호 + [URL] 링크로 줄이고, 언제 · 어디 것인지만 옆에 붙입니다. */
   const urlHtml = urls.length
-    ? urls.map(function(x){
-        return '<div style="margin-bottom:6px">'+
-          '<span class="sub2">'+esc(x.uploadDate||'—')+' · '+esc(catLabel(x.cat))+'</span><br>'+
-          '<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.url)+'</a></div>';
+    ? urls.map(function(x, i){
+        return '<div style="margin-bottom:7px;font-size:12px">'+(i+1)+'. '+
+          '<a class="url" href="'+esc(x.url)+'" target="_blank" rel="noopener">URL</a>'+
+          '<span class="sub2" style="margin-left:8px">'+esc(x.uploadDate||'—')+' · '+
+          esc(catLabel(x.cat))+'</span></div>';
       }).join('')
     : '<span class="sub2">등록된 콘텐츠가 없습니다.</span>';
 
@@ -2049,9 +2123,9 @@ function influCard(p){
       '<div class="hr"></div>'+
       '<div class="lb2">비고'+(memo.at?' <span class="sub2">('+esc(memo.at)+' '+esc(memo.by)+')</span>':'')+'</div>'+
       (can('write')
-        ? '<textarea class="f" id="mm_'+esc(uid)+'" rows="3" '+
-            'placeholder="조건 불이행, DM 미응답 등 다음 시딩에 참고할 내용">'+esc(memo.memo)+'</textarea>'+
-          '<button class="f" onclick="doMemo(\''+jsq(p.key)+'\',\''+jsq(uid)+'\',\''+jsq(p.name)+'\')">비고 저장</button>'+
+        ? '<textarea class="f" id="mm_'+esc(uid)+'" rows="1" '+
+            'placeholder="다음 시딩에 참고할 내용">'+esc(memo.memo)+'</textarea>'+
+          '<button class="f" onclick="doMemo(\''+jsq(p.key)+'\',\''+jsq(uid)+'\',\''+jsq(p.name)+'\')">저장</button>'+
           '<div class="msg" id="m_'+esc(uid)+'"></div>'
         : '<div class="sub2">'+esc(memo.memo||'—')+'</div>')+
     '</div></div>';
@@ -2067,7 +2141,7 @@ function doMemo(key, uid, name){
 function renderAllList(){
   const r=applyFilter('a');
   if(r.empty){
-    setHTML('allBody','<div class="empty">플랫폼·상품을 고르거나 이름·계정을 입력하면 결과가 나옵니다.</div>');
+    setHTML('allBody','');
     return;
   }
   setHTML('allBody', listHtml(r.list,'all'));
@@ -2077,7 +2151,7 @@ function renderAllList(){
 function renderSecReg(){
   const r=applyFilter('s');
   if(r.empty){
-    setHTML('secRegBody','<div class="empty">플랫폼·상품을 고르거나 이름·계정을 입력해 대상을 찾아주세요.</div>');
+    setHTML('secRegBody','');
     return;
   }
   setHTML('secRegBody', listHtml(r.list,'sec'));
@@ -2251,7 +2325,7 @@ function detailHtml(x, uid, ctx){
     (x.coop ? '<span>협업유형</span><b>'+esc(x.coop)+'</b>' : '')+
     '<span>2차 활용</span><b>'+second+'</b>'+
     (x.url ? '<span>콘텐츠</span><b><a href="'+esc(x.url)+
-      '" target="_blank" rel="noopener">링크 열기</a></b>' : '')+
+      '" target="_blank" rel="noopener">URL</a></b>' : '')+
     '<span>최종확인</span><b>'+esc(x.check||'미확인')+'</b>'+
     '</div>';
 
@@ -2639,19 +2713,24 @@ function bindAll(){
 
   /* 조건 검색 — 글자를 칠 때마다 그리지 않고 잠시 모읍니다 */
   $('iName').addEventListener('input', function(){ deb(renderInflu); });
+  $('iGo').addEventListener('click', renderInflu);
+  $('iReset').addEventListener('click', function(){ setVal('iName',''); renderInflu(); });
   ['aCat','aProd'].forEach(function(id){
     $(id).addEventListener('change', function(){ deb(renderAllList); }); });
   $('aName').addEventListener('input', function(){ deb(renderAllList); });
+  $('aGo').addEventListener('click', renderAllList);
   $('aReset').addEventListener('click', function(){ resetFilter('a'); });
 
   ['sCat','sProd'].forEach(function(id){
     $(id).addEventListener('change', function(){ deb(renderSecReg); }); });
   $('sName').addEventListener('input', function(){ deb(renderSecReg); });
+  $('sGo').addEventListener('click', renderSecReg);
   $('sReset').addEventListener('click', function(){ resetFilter('s'); });
 
   ['lCat','lProd','lChan','lPer'].forEach(function(id){
     $(id).addEventListener('change', function(){ deb(renderSecList); }); });
   $('lName').addEventListener('input', function(){ deb(renderSecList); });
+  $('lGo').addEventListener('click', renderSecList);
   $('lReset').addEventListener('click', function(){ resetFilter('l'); });
 
   /* 로그인 */
