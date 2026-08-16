@@ -5,328 +5,85 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>버던_시딩</title>
 
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="https://verdan2024.github.io/verdan-core/apple-touch-icon.png">
+<link rel="icon" href="https://verdan2024.github.io/verdan-core/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="버던시딩">
 <meta name="theme-color" content="#1A1A2E">
 
+<link rel="stylesheet" href="https://verdan2024.github.io/verdan-core/verdan-core.css?v=1.0.0">
+<script src="https://verdan2024.github.io/verdan-core/verdan-core.js?v=1.0.0"></script>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;background:#F5F6FA;
-     min-height:100vh;display:flex;flex-direction:column;-webkit-text-size-adjust:100%;}
-
-/* 로그인 */
-#gate{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
-     padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));}
-#gate .box{width:100%;max-width:340px;background:#fff;border-radius:16px;padding:28px 24px;
-     box-shadow:0 2px 12px rgba(0,0,0,.06);text-align:center;}
-#gate .logo{font-size:34px;margin-bottom:10px;}
-#gate h1{font-size:17px;color:#1A1A2E;margin-bottom:20px;}
-#gate input{width:100%;padding:13px 16px;border:1px solid #E0E0E0;border-radius:10px;
-     font-size:16px;margin-bottom:10px;font-family:inherit;background:#F8F8F8;
-     -webkit-user-select:text;user-select:text;touch-action:manipulation;}
-#gate input:focus{outline:none;border-color:#9FA8DA;background:#fff;}
-#gate button{width:100%;padding:13px;border:none;border-radius:10px;background:#1A1A2E;color:#fff;
-     font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
-#gateMsg{font-size:13px;color:#C0392B;margin-top:12px;min-height:18px;line-height:1.6;}
-#gate .hint{font-size:11px;color:#AAA;margin-top:10px;line-height:1.6;}
-
-/* 앱 */
-#app{display:none;flex-direction:column;min-height:100vh;}
-#header{background:#1A1A2E;color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
-     display:flex;align-items:center;gap:10px;}
-#header .icon{width:36px;height:36px;border-radius:50%;background:#3F51B5;display:flex;
-     align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-#header .title{font-weight:700;font-size:14px;}
-#header .sub{font-size:11px;opacity:.6;margin-top:2px;}
-#header .sub.stale{opacity:1;color:#FFCDD2;font-weight:700;}
-#header .role{margin-left:auto;font-size:10.5px;background:#3F51B5;padding:4px 9px;
-     border-radius:9px;white-space:nowrap;}
-#header .logoutBtn{margin-left:7px;font-size:11px;color:#fff;background:none;
-     border:1px solid rgba(255,255,255,.35);padding:5px 11px;border-radius:10px;
-     white-space:nowrap;cursor:pointer;font-family:inherit;}
-#tabs{display:flex;background:#fff;border-bottom:1px solid #EEE;}
-#tabs button{flex:1;padding:12px 6px;border:none;background:none;font-size:13px;font-weight:600;
-     color:#888;font-family:inherit;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
-#tabs button.on{color:#1A1A2E;border-bottom-color:#1A1A2E;}
-.page{padding:16px;display:none;}
-.page.on{display:block;}
-
-.card{background:#fff;border:1px solid #E8E8E8;border-radius:12px;padding:14px;margin-bottom:12px;}
-.card h3{font-size:13px;color:#1A1A2E;margin-bottom:10px;}
-select,input.f,button.f{width:100%;padding:12px;border:1px solid #E0E0E0;border-radius:10px;
-     font-size:16px;margin-bottom:9px;font-family:inherit;background:#fff;touch-action:manipulation;}
-input.f{-webkit-user-select:text;user-select:text;}
-button.f{background:#1A1A2E;color:#fff;border:none;font-weight:700;cursor:pointer;}
-button.ghost{background:#fff;color:#1A1A2E;border:1px solid #DDD;}
-button.sm{width:auto;padding:9px 14px;font-size:13px;margin:0 6px 6px 0;border-radius:9px;}
-button:disabled{opacity:.55;}
-
-.seg{display:flex;gap:5px;background:#ECEDF2;border-radius:10px;padding:4px;margin-bottom:12px;
-     overflow-x:auto;}
-.seg button{flex:1;min-width:62px;padding:9px 4px;border:none;border-radius:7px;background:none;
-     font-size:12px;font-weight:700;color:#888;font-family:inherit;cursor:pointer;white-space:nowrap;}
-.seg button.on{background:#fff;color:#1A1A2E;box-shadow:0 1px 3px rgba(0,0,0,.10);}
-
-.sec{font-size:12px;font-weight:700;padding:8px 11px;border-radius:8px;margin:14px 0 8px;
-     display:flex;align-items:center;gap:6px;cursor:pointer;}
-.sec .cnt{margin-left:auto;font-variant-numeric:tabular-nums;}
-.s-red{background:#FDECEA;color:#C0392B;}
-.s-org{background:#FFF3E0;color:#E65100;}
-.s-yel{background:#FFFDE7;color:#7D5A00;}
-.s-gry{background:#F0F0F3;color:#555;}
-.s-pur{background:#F3E5F5;color:#6A1B9A;}
-.s-blu{background:#E8EAF6;color:#1A237E;}
-
-/* 목록 항목 */
-.it{background:#fff;border:1px solid #E8E8E8;border-radius:12px;margin-bottom:8px;overflow:hidden;}
-.it .hd{padding:12px 13px;cursor:pointer;display:flex;align-items:flex-start;gap:9px;}
-.it .nm{font-weight:700;font-size:14px;color:#1A1A2E;}
-.it .meta{font-size:11px;color:#999;margin-top:3px;line-height:1.6;}
-.it .right{margin-left:auto;text-align:right;flex-shrink:0;}
-.it .bd{display:none;padding:0 13px 13px;border-top:1px solid #F2F2F2;}
-.it.open .bd{display:block;}
-.badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:9px;white-space:nowrap;
-       display:inline-block;}
+/* ── 이 앱에만 있는 것 ──────────────────────────────── */
+/* 진행 상태 뱃지 */
 .b-발송대기{background:#F0F0F3;color:#666;}
 .b-업로드대기{background:#FFF3E0;color:#E65100;}
-.b-게시중{background:#E8F5E9;color:#1B5E20;}
-.b-종료{background:#ECEFF1;color:#546E7A;}
-.b-대가없음{background:#E8EAF6;color:#3949AB;}
-.dd{font-size:11px;font-weight:700;margin-top:4px;}
-.dd.over{color:#C0392B;} .dd.soon{color:#E65100;} .dd.ok{color:#999;}
-.dd.rent{color:#6A1B9A;}
-
-/* 2차 활용 — 배경 없이 O / X 만 두고, 옆의 [상세보기]로 펼칩니다 */
-.more{color:#1A1A2E;font-weight:800;cursor:pointer;text-decoration:underline;
-      margin-left:6px;font-size:12px;}
-textarea.f.memo{width:100%;padding:11px 12px;border:1px solid #E0E0E0;border-radius:10px;
-  font-size:15px;font-family:inherit;background:#fff;resize:vertical;margin-bottom:9px;
-  line-height:1.6;-webkit-user-select:text;user-select:text;}
-.qa2{margin-top:10px;font-size:12.5px;line-height:1.75;}
-.qa2 b{display:block;font-size:11px;color:#999;margin-bottom:3px;}
-.qa2 div{white-space:pre-wrap;word-break:break-word;background:#FAFAFC;
-         border:1px solid #EEE;border-radius:8px;padding:9px 11px;}
-.box2{background:#FAFAFC;border:1px solid #EEE;border-radius:10px;
-      padding:10px 12px;margin-top:10px;}
-
-.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12px;color:#666;
-    line-height:1.9;padding-top:10px;}
-.kv b{font-weight:700;color:#333;}
-.kv a{color:#1976D2;word-break:break-all;}
-.hr{height:1px;background:#F0F0F0;margin:10px 0;}
-.acts{margin-top:10px;}
-.acts input.f{margin-bottom:7px;}
-.row2{display:flex;gap:7px;}
-.row2 input.f{flex:1;}
-
-.box-danger{background:#FDECEA;border:1px solid #FFCDD2;border-radius:10px;padding:12px 14px;
-     margin-bottom:12px;font-size:13px;line-height:1.8;}
-.box-ok{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:10px;padding:11px 14px;
-     margin-bottom:12px;font-size:13px;color:#1B5E20;line-height:1.8;}
-.box-note{background:#FFFDE7;border:1px solid #FFE082;border-radius:10px;padding:11px 14px;
-     margin-bottom:12px;font-size:12px;color:#7D5A00;line-height:1.7;}
-.sub2{font-size:11px;color:#999;line-height:1.7;}
-.msg{font-size:12px;margin-top:6px;min-height:16px;}
-.msg.err{color:#C0392B;} .msg.good{color:#1B5E20;}
-
-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;}
-th{padding:8px 6px;text-align:center;font-size:11px;font-weight:600;color:#555;
-   background:#F5F5F5;border-bottom:2px solid #E0E0E0;white-space:nowrap;}
-td{padding:8px 6px;border-bottom:1px solid #F0F0F0;}
-.tbl-wrap{overflow-x:auto;border:1px solid #E8E8E8;border-radius:12px;margin-bottom:12px;}
-.ctr{text-align:center;}
-.danger{color:#C0392B;font-weight:700;} .ok{color:#1B5E20;font-weight:600;}
-.foot{font-size:11px;color:#AAA;text-align:center;padding:14px 0 calc(14px + env(safe-area-inset-bottom));}
-
-#wm{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;display:none;}
-#wm span{position:absolute;white-space:nowrap;font-size:13px;font-weight:700;color:#1A1A2E;
-    opacity:var(--wm-op,.05);transform:rotate(-30deg);}
-
-/* 상태 태그 */
 .b-게시중{background:#E8F5E9;color:#1B5E20;}
 .b-미업로드{background:#FFF3E0;color:#E65100;}
 .b-종료{background:#ECEFF1;color:#546E7A;}
 .b-대가없음{background:#E8EAF6;color:#3949AB;}
 .b-삭제{background:#FDECEA;color:#C0392B;}
-
-/* 카드에 바로 붙는 빠른 실행 버튼 */
-.qa{display:flex;gap:6px;padding:0 13px 11px;flex-wrap:wrap;}
-.qa button{flex:1;min-width:74px;padding:10px 6px;font-size:12.5px;border-radius:9px;
-   border:1px solid #DDD;background:#fff;color:#1A1A2E;font-weight:700;
-   font-family:inherit;cursor:pointer;}
-.qa button.pri{background:#1A1A2E;color:#fff;border:none;}
-.qa button.no{color:#C0392B;border-color:#FFCDD2;}
-.qmsg{font-size:11.5px;padding:0 13px 10px;min-height:0;}
-.qmsg.err{color:#C0392B;} .qmsg.good{color:#1B5E20;}
-
-/* 2차활용 입력 폼 — select 와 input 의 높이를 같게 맞춘다.
-   브라우저 기본값이 서로 달라 그냥 두면 줄이 어긋나 보인다. */
-.g2{display:flex;gap:7px;}
-.g2 select{flex:1;}
-.lb2{font-size:11px;color:#999;margin:9px 0 4px;}
-.lb2:first-child{margin-top:2px;}
-select.fld, input.f.fld{
-  width:100%;height:46px;padding:0 12px;margin-bottom:0;
-  border:1px solid #E0E0E0;border-radius:10px;font-size:16px;
-  font-family:inherit;background:#fff;line-height:normal;
-  -webkit-appearance:none;appearance:none;}
-select.fld{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
-  background-repeat:no-repeat;background-position:right 11px center;background-size:16px;
-  padding-right:34px;}
-.acts .fld + button.f{margin-top:12px;}
-
-/* 공지 */
-.notice{background:#fff;border:1px solid #E8E8E8;border-radius:12px;padding:16px 18px;
-   margin-bottom:12px;font-size:13.5px;line-height:2.1;}
-.notice .ttl{font-size:12px;color:#999;font-weight:700;margin-bottom:8px;}
-.notice b{font-variant-numeric:tabular-nums;}
-.notice .hl{color:#C0392B;font-weight:700;}
-
-/* ── 채팅 ─────────────────────────────── */
-#p4.on{display:flex;flex-direction:column;padding:12px 16px 0;}
-body.chatmode{overflow:hidden;}
-#chatScroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px 4px;}
-#chatTop{text-align:center;padding:0 0 8px;flex-shrink:0;}
-#chatTop .chip{padding:5px 14px;font-size:11.5px;}
-#chatBody{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;}
-.cmsg{max-width:90%;padding:11px 13px;border-radius:14px;font-size:13px;line-height:1.75;
-      white-space:pre-wrap;word-break:break-word;}
-.cmsg.me{align-self:flex-end;background:#1A1A2E;color:#fff;border-bottom-right-radius:4px;}
-.cmsg.bot{align-self:flex-start;background:#fff;border:1px solid #E8E8E8;color:#222;
-          border-bottom-left-radius:4px;}
-.cmsg.ai{align-self:flex-start;background:#EEF1FB;border:1px solid #C5CAE9;color:#283593;}
-.cmsg .tok{margin-top:8px;padding-top:7px;border-top:1px solid #C5CAE9;
-           font-size:10.5px;color:#5C6BC0;}
-.cmsg a{color:#1976D2;text-decoration:underline;word-break:break-all;}
-.cmsg.me a{color:#BBDEFB;}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px;}
-.chip{font-size:12px;padding:7px 11px;border-radius:16px;border:1px solid #C5CAE9;background:#fff;
-      color:#283593;cursor:pointer;font-family:inherit;}
-.chip.gray{border-color:#DDD;color:#666;}
-#chatFoot{padding:8px 0 calc(10px + env(safe-area-inset-bottom));background:#F5F6FA;flex-shrink:0;}
-#chatBar{display:flex;gap:8px;}
-#chatBar input{flex:1;margin-bottom:0;}
-#chatBar button{width:auto;padding:12px 18px;margin-bottom:0;}
-
-/* ── 그래프 (외부 라이브러리 없이 CSS로만) ── */
-.chart{background:#fff;border:1px solid #E8E8E8;border-radius:12px;padding:14px;margin-bottom:12px;}
-.chart h3{font-size:13px;color:#1A1A2E;margin-bottom:12px;}
-.vbars{display:flex;align-items:flex-end;gap:4px;height:150px;}
-.vcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-width:0;}
-.vcol .tot{font-size:10px;color:#666;text-align:center;font-weight:700;margin-bottom:3px;
-   font-variant-numeric:tabular-nums;}
-.vcol .stack{display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
-.vcol .seg{width:100%;display:flex;align-items:center;justify-content:center;}
-.vcol .seg span{font-size:9px;font-weight:700;color:#fff;line-height:1;
-   text-shadow:0 0 2px rgba(0,0,0,.25);}
-.vcol .lb{font-size:9px;color:#AAA;text-align:center;margin-top:5px;white-space:nowrap;}
-.hbar{margin-bottom:10px;}
-.hbar .top{display:flex;font-size:12.5px;color:#333;margin-bottom:5px;}
-.hbar .top b{margin-left:auto;font-variant-numeric:tabular-nums;}
-.hbar .track{height:9px;background:#F0F0F3;border-radius:5px;overflow:hidden;}
-.hbar .fill{height:100%;border-radius:5px;}
-.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:11px;color:#666;}
-.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;
-   vertical-align:middle;}
-.donut{display:flex;align-items:center;gap:18px;}
-.donut .ring{width:112px;height:112px;border-radius:50%;flex-shrink:0;position:relative;}
-.donut .hole{position:absolute;inset:26px;background:#fff;border-radius:50%;display:flex;
-   flex-direction:column;align-items:center;justify-content:center;}
-.donut .hole b{font-size:17px;color:#1A1A2E;font-variant-numeric:tabular-nums;}
-.donut .hole span{font-size:10px;color:#999;}
-.donut .side{flex:1;font-size:12px;line-height:2;}
-.donut .side i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;}
-.donut .side b{float:right;font-variant-numeric:tabular-nums;}
-.money{font-size:13px;line-height:2.1;}
-.money .row{display:flex;}
-.money .row b{margin-left:auto;font-variant-numeric:tabular-nums;}
-.money .big{font-size:19px;font-weight:800;color:#1A1A2E;font-variant-numeric:tabular-nums;}
 </style>
-
 </head>
 <body>
 
-<!-- ── 로그인 ───────────────────────────── -->
-<div id="gate">
-  <div class="box">
-    <div class="logo">📮</div>
-    <h1>버던_시딩</h1>
-    <input type="text" id="nm" placeholder="이름" autocomplete="name" maxlength="20"
-           onkeydown="if(event.key==='Enter')document.getElementById('pw').focus()">
-    <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password"
-           onkeydown="if(event.key==='Enter')login()">
-    <button id="loginBtn" onclick="login()">확인</button>
-    <div id="gateMsg"></div>
-    <div class="hint">본인 이름을 입력하세요. 접근로그에 기록됩니다.<br>v3.0 · 2026-08</div>
-  </div>
-</div>
-
-<!-- ── 앱 ───────────────────────────────── -->
 <div id="app">
-  <div id="header">
-    <div class="icon">📮</div>
-    <div>
-      <div class="title">버던_시딩</div>
-      <div class="sub" id="updated"></div>
-    </div>
-    <span class="role" id="roleBadge"></span>
-    <button class="logoutBtn" onclick="askLogout()">로그아웃</button>
-  </div>
+  <div id="header"></div>
 
   <div id="tabs">
-    <button id="t1" class="on" onclick="tab('p1')">할일</button>
-    <button id="t2" onclick="tab('p2')">관리</button>
-    <button id="t3" onclick="tab('p3')">2차활용</button>
-    <button id="t4" onclick="tab('p4')">채팅</button>
-    <button id="t5" onclick="tab('p5')" style="display:none">접근로그</button>
+    <button data-page="p1" class="on">할일</button>
+    <button data-page="p2">관리</button>
+    <button data-page="p3">2차활용</button>
+    <button data-page="p4">채팅</button>
+    <button data-page="p5" data-perm="access">접근로그</button>
   </div>
 
-  <!-- ── 오늘 ───────────────────────────── -->
+  <!-- ── 할일 ───────────────────────────── -->
   <div id="p1" class="page on">
     <div class="seg" id="segToday">
       <button class="on" data-k="notice" onclick="setToday('notice')">공지</button>
-      <button          data-k="upchk"  onclick="setToday('upchk')">업로드확인</button>
-      <button          data-k="post"   onclick="setToday('post')">게시확인</button>
+      <button data-k="upchk" onclick="setToday('upchk')">업로드확인</button>
+      <button data-k="post"  onclick="setToday('post')">게시확인</button>
     </div>
-    <div id="v1notice"></div>
-    <div id="v1upchk" style="display:none"></div>
-    <div id="v1post" style="display:none"></div>
+    <div id="v1notice" data-clear></div>
+    <div id="v1upchk" data-clear style="display:none"></div>
+    <div id="v1post" data-clear style="display:none"></div>
   </div>
 
-  <!-- ── 현황 ───────────────────────────── -->
+  <!-- ── 관리 ───────────────────────────── -->
   <div id="p2" class="page">
     <div class="seg" id="segStat">
-      <button class="on" data-k="dash"     onclick="setStat('dash')">대시보드</button>
-      <button          data-k="posted"   onclick="setStat('posted')">게시확인</button>
-      <button          data-k="deleted"  onclick="setStat('deleted')">삭제확인</button>
-      <button          data-k="influ"    onclick="setStat('influ')">인플루언서</button>
-      <button          data-k="all"      onclick="setStat('all')">전체</button>
+      <button class="on" data-k="dash" onclick="setStat('dash')">대시보드</button>
+      <button data-k="posted"  onclick="setStat('posted')">게시확인</button>
+      <button data-k="deleted" onclick="setStat('deleted')">삭제확인</button>
+      <button data-k="influ"   onclick="setStat('influ')">인플루언서</button>
+      <button data-k="all"     onclick="setStat('all')">전체</button>
     </div>
-    <div id="v2dash"></div>
-    <div id="v2posted" style="display:none"></div>
-    <div id="v2deleted" style="display:none"></div>
+    <div id="v2dash" data-clear></div>
+    <div id="v2posted" data-clear style="display:none"></div>
+    <div id="v2deleted" data-clear style="display:none"></div>
     <div id="v2influ" style="display:none">
       <div class="card">
         <h3>인플루언서 검색</h3>
-        <input class="f" type="text" id="iName" placeholder="이름 · 계정"
-               oninput="debounce(renderInflu)">
+        <input class="f" type="text" id="iName" data-reset placeholder="이름 · 계정"
+               oninput="VERDAN.debounce(renderInflu)">
         <div class="sub2">이름이나 계정으로 찾은 뒤 눌러 펼치면 진행 이력과 비고를 볼 수 있습니다.</div>
       </div>
-      <div id="influBody"></div>
+      <div id="influBody" data-clear></div>
     </div>
     <div id="v2all" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
-        <select id="aCat" onchange="debounce(renderAllList)"></select>
-        <select id="aProd" onchange="debounce(renderAllList)"></select>
-        <input class="f" type="text" id="aName" placeholder="이름 · 계정" oninput="debounce(renderAllList)">
+        <select id="aCat" onchange="VERDAN.debounce(renderAllList)"></select>
+        <select id="aProd" onchange="VERDAN.debounce(renderAllList)"></select>
+        <input class="f" type="text" id="aName" data-reset placeholder="이름 · 계정"
+               oninput="VERDAN.debounce(renderAllList)">
         <button class="f ghost" onclick="resetFilter('a')">조건 초기화</button>
       </div>
-      <div id="allBody"></div>
+      <div id="allBody" data-clear></div>
     </div>
   </div>
 
@@ -334,42 +91,44 @@ body.chatmode{overflow:hidden;}
   <div id="p3" class="page">
     <div class="seg" id="segSecond">
       <button class="on" data-k="dash" onclick="setSecond('dash')">대시보드</button>
-      <button          data-k="reg"  onclick="setSecond('reg')">등록</button>
-      <button          data-k="list" onclick="setSecond('list')">전체</button>
+      <button data-k="reg"  onclick="setSecond('reg')">등록</button>
+      <button data-k="list" onclick="setSecond('list')">전체</button>
     </div>
-    <div id="v3dash"></div>
+    <div id="v3dash" data-clear></div>
     <div id="v3reg" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
-        <select id="sCat" onchange="debounce(renderSecReg)"></select>
-        <select id="sProd" onchange="debounce(renderSecReg)"></select>
-        <input class="f" type="text" id="sName" placeholder="이름 · 계정" oninput="debounce(renderSecReg)">
+        <select id="sCat" onchange="VERDAN.debounce(renderSecReg)"></select>
+        <select id="sProd" onchange="VERDAN.debounce(renderSecReg)"></select>
+        <input class="f" type="text" id="sName" data-reset placeholder="이름 · 계정"
+               oninput="VERDAN.debounce(renderSecReg)">
         <button class="f ghost" onclick="resetFilter('s')">조건 초기화</button>
       </div>
-      <div id="secRegBody"></div>
+      <div id="secRegBody" data-clear></div>
     </div>
     <div id="v3list" style="display:none">
       <div class="card">
         <h3>조건 검색</h3>
-        <select id="lCat" onchange="debounce(renderSecList)"></select>
-        <select id="lProd" onchange="debounce(renderSecList)"></select>
-        <select id="lChan" onchange="debounce(renderSecList)"></select>
-        <select id="lPer" onchange="debounce(renderSecList)"></select>
-        <input class="f" type="text" id="lName" placeholder="이름 · 계정" oninput="debounce(renderSecList)">
+        <select id="lCat" onchange="VERDAN.debounce(renderSecList)"></select>
+        <select id="lProd" onchange="VERDAN.debounce(renderSecList)"></select>
+        <select id="lChan" onchange="VERDAN.debounce(renderSecList)"></select>
+        <select id="lPer" onchange="VERDAN.debounce(renderSecList)"></select>
+        <input class="f" type="text" id="lName" data-reset placeholder="이름 · 계정"
+               oninput="VERDAN.debounce(renderSecList)">
         <button class="f ghost" onclick="resetFilter('l')">조건 초기화</button>
       </div>
-      <div id="secListBody"></div>
+      <div id="secListBody" data-clear></div>
     </div>
   </div>
 
   <!-- ── 채팅 ───────────────────────────── -->
-  <div id="p4" class="page">
+  <div id="p4" class="page chat">
     <div id="chatTop"><button class="chip gray" onclick="chatReset()">↺ 초기화</button></div>
-    <div id="chatScroll"><div id="chatBody"></div></div>
+    <div id="chatScroll"><div id="chatBody" data-clear></div></div>
     <div id="chatFoot">
-      <div id="chatChips" class="chips"></div>
+      <div id="chatChips" class="chips" data-clear></div>
       <div id="chatBar">
-        <input class="f" type="text" id="qInput" placeholder="무엇이든 물어보세요"
+        <input class="f" type="text" id="qInput" data-reset placeholder="무엇이든 물어보세요"
                onkeydown="if(event.key==='Enter')ask()">
         <button class="f" id="askBtn" onclick="ask()">전송</button>
       </div>
@@ -384,48 +143,99 @@ body.chatmode{overflow:hidden;}
   <div id="p5" class="page">
     <div class="seg" id="segLog">
       <button class="on" data-k="access" onclick="logView('access')">접속</button>
-      <button          data-k="work"   onclick="logView('work')">기록</button>
-      <button          data-k="chat"   onclick="logView('chat')">채팅</button>
+      <button data-k="work" onclick="logView('work')">기록</button>
+      <button data-k="chat" onclick="logView('chat')">채팅</button>
     </div>
-    <div id="accessBody"></div>
-    <button class="f ghost" onclick="loadAccess()">새로고침</button>
+    <div id="accessBody" data-clear></div>
+    <button class="f ghost" onclick="loadAccess(true)">새로고침</button>
   </div>
 
-
+  <div class="foot">버던_시딩 · v4.0 · core <span id="coreVer"></span></div>
 </div>
 
-<div id="wm" aria-hidden="true"></div>
-
-
 <script>
+/* ══════════════════════════════════════════════════════
+   버던_시딩 v4.0
+   공통 부분은 verdan-core.js 가 처리한다.
+   이 파일에는 시딩 라이프사이클 · 2차 활용 · 채팅 로직만 둔다.
+
+   v4.0 에서 고친 것
+   ① logout() 이 없는 요소('v2noupload')를 건드려 중간에 멈추던 문제.
+      이전 사용자의 채팅과 PENDING_Q 가 남아 정보 유출 · 토큰 오소비가 있었다.
+      → 코어의 data-clear / data-reset 방식으로 바꿔 원천 차단.
+   ② onclick 안에 이름을 넣을 때 작은따옴표 처리 (jsq)
+   ══════════════════════════════════════════════════════ */
 
 /* Apps Script 웹앱 배포 URL. 재배포해서 URL 이 바뀌면 이 줄만 고치면 된다. */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3svD8sJrB-gWMNKvRzai1wnTh9YB-VQGacvpryTlKCzD56iq30BWBH0X752KsMDkw/exec";
 
-const PW_STORE = 'verdan_seed_pw';
-const NM_STORE = 'verdan_seed_user';
-const TIMEOUT_MS = 25000;   /* 통합DB 새로고침이 붙어 있어 넉넉히 잡는다 */
-const RECHECK_MS = 60000;
-const WM_OPACITY = 0.05;
+const V = VERDAN;
+const esc = V.esc, jsq = V.js, n = V.n, dayGap = V.dayGap;
 
-const PERM = {
-  admin: { label:'관리자', write:true,  access:true  },
-  staff: { label:'담당자', write:true,  access:false }
-};
-const NOPERM = { label:'—', write:false, access:false };
+let D = null;
+let OPEN = {}, OPT_CACHE = '';
+let V1='notice', V2='dash', V3='dash';
+let PENDING_Q = '', CARDS = [], CARDN = 0;
+const CARD_PAGE = 20;
+let LOGS = [], LOGVIEW = 'access', accessLoaded = false;
 
-/* 플랫폼 색 — 그래프와 범례가 같은 색을 씁니다 */
+/* 플랫폼 색 — 그래프와 범례가 같은 색을 쓴다 */
 const CAT_COLOR = {
   '구글폼':'#3F51B5', '브랜더진':'#26A69A', '리뷰노트':'#EF6C00', '무신사':'#7E57C2'
 };
-
 /* 화면에 보여줄 이름. 시트·통합DB의 실제 값은 '구글폼' 그대로 둔다.
    (통계 수식이 '구글폼'을 기준으로 잡혀 있어 데이터를 바꾸면 안 된다) */
 const CAT_LABEL = { '구글폼':'개인협찬(구글폼)' };
+const FALLBACK_COLORS = ['#90A4AE','#8D6E63','#5C6BC0','#66BB6A','#EC407A'];
+
+VERDAN.init({
+  scriptUrl : SCRIPT_URL,
+  appId     : 'seeding',
+  title     : '버던_시딩',
+  icon      : '📮',
+  iconUrl   : 'https://verdan2024.github.io/verdan-core/apple-touch-icon.png',
+  appVersion: 'v4.0',
+  hint      : '본인 이름을 입력하세요. 접근로그에 기록됩니다.',
+  store     : { pw:'verdan_seed_pw', user:'verdan_seed_user' },
+
+  /* 통합DB 새로고침이 붙어 있어 넉넉히 잡는다 */
+  timeout   : { read:25000, write:35000, ai:45000 },
+  recheckMs : 60000,
+  wmOpacity : 0.05,
+  chatPage  : 'p4',
+
+  perm: {
+    admin: { label:'관리자', write:true, access:true  },
+    staff: { label:'담당자', write:true, access:false }
+  },
+  noperm: { label:'—', write:false, access:false },
+
+  onStart : boot,
+  onData  : redraw,
+  onTab   : function(p){ if(p==='p5' && !accessLoaded) loadAccess(); },
+  onLogout: function(){
+    /* 코어가 DOM 을 비우기 전에 먼저 호출되므로 값 초기화는 여기서 확실히 한다 */
+    D=null; OPEN={}; OPT_CACHE='';
+    V1='notice'; V2='dash'; V3='dash';
+    PENDING_Q=''; CARDS=[]; CARDN=0;
+    LOGS=[]; LOGVIEW='access'; accessLoaded=false;
+  }
+});
+
+document.getElementById('coreVer').textContent = VERDAN.version;
+
+function boot(r){
+  D = r; accessLoaded = false; OPT_CACHE = '';
+  fillFilters(); renderAll(); chatReset();
+}
+function redraw(r){
+  D = r; fillFilters(); renderAll();
+}
+
+/* ── 표시 이름 · 순서 · 색 ────────────── */
 function catLabel(name){
   return (D && D.catLabels && D.catLabels[name]) || CAT_LABEL[name] || name;
 }
-
 /* 표시 순서 고정: 브랜더진 → 리뷰노트 → 무신사 → 개인협찬(구글폼) */
 function catSort(list){
   const order = (D && D.catOrder) || ['브랜더진','리뷰노트','무신사','구글폼'];
@@ -434,132 +244,26 @@ function catSort(list){
     return (ai<0?99:ai)-(bi<0?99:bi);
   });
 }
-const FALLBACK_COLORS = ['#90A4AE','#8D6E63','#5C6BC0','#66BB6A','#EC407A'];
 function catColor(name, i){
   return CAT_COLOR[name] || FALLBACK_COLORS[(i||0) % FALLBACK_COLORS.length];
 }
 
-let PW='', USER='', ROLE='', D=null, BUSY=false, LAST=0, accessLoaded=false;
-let OPEN={};
-let V1='notice', V2='dash', V3='dash';
-
-/* ── 통신 ─────────────────────────────── */
-async function api(params){
-  const q = new URLSearchParams(Object.assign({ key:PW, user:USER }, params||{}));
-  const ctl = new AbortController();
-  const timer = setTimeout(function(){ ctl.abort(); }, TIMEOUT_MS);
-  try{
-    const res = await fetch(SCRIPT_URL + '?' + q.toString(), { signal: ctl.signal });
-    return await res.json();
-  } finally { clearTimeout(timer); }
-}
-function isTimeout(e){ return e && (e.name==='AbortError' || e.name==='TimeoutError'); }
-
-function busy(on){
-  BUSY = on;
-  const b=document.getElementById('loginBtn');
-  if(b){ b.disabled=on; b.textContent = on ? '확인 중...' : '확인'; }
-}
-function stamp(t, stale){
-  const el=document.getElementById('updated');
-  el.textContent=t; el.className='sub'+(stale?' stale':'');
-}
-function gm(t){ document.getElementById('gateMsg').textContent=t; }
-/* 글자를 칠 때마다 목록을 다시 그리면 느려집니다. 0.25초 모아서 한 번만 그립니다. */
-let debT=null;
-function debounce(fn){ clearTimeout(debT); debT=setTimeout(fn,250); }
-
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
-  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-function n(v){ return (v===null||v===undefined||isNaN(v))?'—':Number(v).toLocaleString('ko-KR'); }
-
-/* ── 워터마크 ─────────────────────────── */
-function watermark(on){
-  const el=document.getElementById('wm');
-  if(!on||!USER){ el.style.display='none'; el.innerHTML=''; return; }
-  const d=new Date(), p2=function(x){ return String(x).padStart(2,'0'); };
-  const txt=USER+' · '+d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+
-            ' '+p2(d.getHours())+':'+p2(d.getMinutes());
-  let h='';
-  for(let y=-120;y<window.innerHeight+200;y+=130)
-    for(let x=-180;x<window.innerWidth+240;x+=210)
-      h+='<span style="left:'+x+'px;top:'+y+'px">'+esc(txt)+'</span>';
-  el.style.setProperty('--wm-op', WM_OPACITY);
-  el.innerHTML=h; el.style.display='block';
-}
-let wmT=null;
-window.addEventListener('resize',function(){ if(!PW) return;
-  clearTimeout(wmT); wmT=setTimeout(function(){ watermark(true); },200); });
-
-/* ── 로그인 ───────────────────────────── */
-async function login(){
-  if(BUSY) return;
-  const nm=document.getElementById('nm').value.trim();
-  const pw=document.getElementById('pw').value.trim();
-  if(!nm){ gm('이름을 입력하세요.'); return; }
-  if(!pw){ gm('비밀번호를 입력하세요.'); return; }
-  gm('접속 중입니다. 잠시만 기다려주세요.'); busy(true);
-  PW=pw; USER=nm;
-  try{
-    const r=await api();
-    if(!r.ok){ PW=''; USER=''; gm(r.msg||'비밀번호가 올바르지 않습니다.'); return; }
-    try{ localStorage.setItem(PW_STORE,pw); localStorage.setItem(NM_STORE,nm); }catch(e){}
-    LAST=Date.now(); start(r);
-  }catch(e){
-    PW=''; USER='';
-    gm(isTimeout(e)?'서버 응답이 없습니다. [확인]을 다시 눌러주세요.':'연결 실패: '+e.message);
-  }finally{ busy(false); }
-}
-
-/* 헤더의 권한 뱃지를 누르면 로그아웃 */
-function askLogout(){
-  if(confirm('로그아웃할까요?')) logout();
-}
-
-function logout(){
-  try{ localStorage.removeItem(PW_STORE); }catch(e){}
-  PW=''; USER=''; ROLE=''; D=null; accessLoaded=false; LAST=0; OPEN={};
-  LOGS=[]; LOGVIEW='access';
-  V1='notice'; V2='dash'; V3='dash';
-  busy(false); watermark(false);
-  document.getElementById('app').style.display='none';
-  document.getElementById('gate').style.display='flex';
-  document.getElementById('pw').value='';
-  document.getElementById('t5').style.display='none';
-  document.getElementById('roleBadge').textContent='';
-  ['v1notice','v1upchk','v1post','v2dash','v2noupload','v2deleted','allBody',
-   'v2posted','influBody','v3dash','secRegBody','secListBody',
-   'accessBody','chatChips'].forEach(function(id){
-    document.getElementById(id).innerHTML='';
+/* ── 세그먼트 전환 ────────────────────── */
+function segSwitch(segId, key, pairs){
+  document.querySelectorAll('#'+segId+' button').forEach(function(b){
+    b.className = (b.dataset.k===key) ? 'on' : '';
   });
-  ['aName','sName','lName','iName','qInput'].forEach(function(id){
-    const el=document.getElementById(id); if(el) el.value='';
+  Object.keys(pairs).forEach(function(k){
+    V.setDisp(pairs[k], (k===key) ? 'block' : 'none');
   });
-  document.getElementById('chatBody').innerHTML='';
-  document.body.classList.remove('chatmode');
-  PENDING_Q='';
-  tab('p1'); gm('');
 }
+function setToday(k){ V1=k; segSwitch('segToday',k,{notice:'v1notice',upchk:'v1upchk',post:'v1post'}); }
+function setStat(k){ V2=k; segSwitch('segStat',k,
+  {dash:'v2dash',posted:'v2posted',deleted:'v2deleted',influ:'v2influ',all:'v2all'}); }
+function setSecond(k){ V3=k; segSwitch('segSecond',k,{dash:'v3dash',reg:'v3reg',list:'v3list'}); }
 
-/* ── 화면 구성 ────────────────────────── */
-function start(r){
-  D=r; ROLE=r.role;
-  const perm=PERM[ROLE]||NOPERM;
-  document.getElementById('gate').style.display='none';
-  document.getElementById('app').style.display='flex';
-  document.getElementById('roleBadge').textContent=perm.label;
-  stamp('갱신 '+r.updated, false);
-  watermark(true);
-  document.getElementById('t5').style.display = perm.access ? 'block' : 'none';
-  accessLoaded=false;
-  fillFilters();
-  renderAll();
-  chatReset();
-  tab('p1');
-}
-
-/* 드롭다운 항목은 실제 데이터에 있는 값만 넣는다 */
-let OPT_CACHE='';
+/* ── 드롭다운 ─────────────────────────── */
+/* 항목은 실제 데이터에 있는 값만 넣는다. 매번 새로 만들면 느려지므로 바뀔 때만 그린다. */
 function fillFilters(){
   const cats=[], prods=[];
   D.items.forEach(function(x){
@@ -568,14 +272,15 @@ function fillFilters(){
   });
   prods.sort();
 
-  /* 항목이 그대로면 다시 그리지 않습니다 (드롭다운을 매번 새로 만들면 느려집니다) */
-  const sig=cats.join('|')+'##'+prods.join('|');
+  const sig = cats.join('|')+'##'+prods.join('|');
   if(sig===OPT_CACHE) return;
-  OPT_CACHE=sig;
+  OPT_CACHE = sig;
+
   const catOpt='<option value="">플랫폼 전체</option>'+
     cats.map(function(c){ return '<option value="'+esc(c)+'">'+esc(catLabel(c))+'</option>'; }).join('');
   const prodOpt='<option value="">상품 전체</option>'+
     prods.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
+
   ['a','s','l'].forEach(function(k){
     const c=document.getElementById(k+'Cat'), p=document.getElementById(k+'Prod');
     if(!c||!p) return;
@@ -599,12 +304,9 @@ function fillFilters(){
 }
 
 function resetFilter(k){
-  document.getElementById(k+'Cat').value='';
-  document.getElementById(k+'Prod').value='';
-  document.getElementById(k+'Name').value='';
+  V.setVal(k+'Cat',''); V.setVal(k+'Prod',''); V.setVal(k+'Name','');
   if(k==='l'){
-    document.getElementById('lChan').value='';
-    document.getElementById('lPer').value='';
+    V.setVal('lChan',''); V.setVal('lPer','');
     renderSecList(); return;
   }
   if(k==='a') renderAllList(); else renderSecReg();
@@ -629,31 +331,7 @@ function renderAll(){
   renderSecDash(); renderSecReg(); renderSecList();
 }
 
-function tab(p){
-  for(let i=1;i<=5;i++){
-    const on=('p'+i)===p;
-    document.getElementById('p'+i).className='page'+(on?' on':'');
-    document.getElementById('t'+i).className=on?'on':'';
-  }
-  if(p==='p5' && !accessLoaded) loadAccess();
-  if(p==='p4') setTimeout(fitChat,50);
-}
-
-function segSwitch(segId, key, pairs){
-  document.querySelectorAll('#'+segId+' button').forEach(function(b){
-    b.className = (b.dataset.k===key) ? 'on' : '';
-  });
-  Object.keys(pairs).forEach(function(k){
-    document.getElementById(pairs[k]).style.display = (k===key) ? 'block' : 'none';
-  });
-}
-function setToday(k){ V1=k; segSwitch('segToday',k,{notice:'v1notice',upchk:'v1upchk',post:'v1post'}); }
-function setStat(k){ V2=k; segSwitch('segStat',k,
-  {dash:'v2dash',posted:'v2posted',deleted:'v2deleted',
-   influ:'v2influ',all:'v2all'}); }
-function setSecond(k){ V3=k; segSwitch('segSecond',k,{dash:'v3dash',reg:'v3reg',list:'v3list'}); }
-
-/* 이번 달 플랫폼별 표 — 공지 탭에서 씁니다 */
+/* ── 이번 달 플랫폼별 표 ──────────────── */
 function monthTableHtml(){
   const s=D.summary, cats=s.byCat||{};
   const keys=catSort(Object.keys(cats));
@@ -684,7 +362,7 @@ function monthTableHtml(){
 function renderNotice(){
   const s=D.summary;
   const hl=function(v){ return v>0 ? '<span class="hl">'+n(v)+'건</span>' : n(v)+'건'; };
-  document.getElementById('v1notice').innerHTML =
+  V.setHTML('v1notice',
     '<div class="notice"><div class="ttl">'+esc(s.ym.replace('-','.'))+' 기준</div>'+
     '시딩 <b>'+n(s.total)+'건</b> · 업로드완료 <b>'+n(s.uploaded)+'</b> · 대기 <b>'+n(s.waiting)+'</b><br>'+
     (s.rental ? '<span class="sub2">└ 발송 '+n(s.seeding)+'건 · 대여 '+n(s.rental)+'건</span><br>' : '')+
@@ -700,38 +378,36 @@ function renderNotice(){
        return x.state==='삭제' && x.postPeriod && x.delchk && x.delchk<=x.postPeriod;
      }).length)+'</div>'+
     monthTableHtml()+
-    '<button class="f ghost" onclick="reload(true)">새로고침</button>';
+    '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
 }
 
-/* ── 할일 · 업로드확인 ────────────────── */
-/* 마감일 당일부터 등장. [완료]를 눌러야 사라지고, [미완료]는 하루만 넘깁니다. */
+/* ── 할일 · 업로드확인 ──────────────────
+   마감일 당일부터 등장. [완료]를 눌러야 사라지고, [미완료]는 하루만 넘긴다. */
 function renderUpchk(){
   const list=D.items.filter(function(x){ return x.flags.indexOf('needUpload')>=0; })
     .slice().sort(function(a,b){ return (a.dDeadline||0)-(b.dDeadline||0); });
-  document.getElementById('v1upchk').innerHTML =
+  V.setHTML('v1upchk',
     (list.length
       ? '<div class="box-note">업로드마감이 지난 '+list.length+'건입니다. 계정을 열어 확인한 뒤 '+
         '<b>완료</b> 또는 <b>미완료</b>를 눌러주세요. 미완료는 내일 다시 뜹니다.</div>'
       : '<div class="box-ok">🟢 오늘 확인할 업로드 건이 없습니다.</div>') +
-    list.map(function(x){ return itemHtml(x,'upc'); }).join('');
+    list.map(function(x){ return itemHtml(x,'upc'); }).join(''));
 }
 
-/* ── 할일 · 게시확인 ──────────────────── */
-/* 업로드일(또는 마지막 확인일)로부터 7일마다 등장 */
+/* ── 할일 · 게시확인 ────────────────────
+   업로드일(또는 마지막 확인일)로부터 7일마다 등장 */
 function renderPost(){
   const list=D.items.filter(function(x){ return x.flags.indexOf('needPost')>=0; })
     .slice().sort(function(a,b){ return (a.dPost||0)-(b.dPost||0); });
-  document.getElementById('v1post').innerHTML =
+  V.setHTML('v1post',
     (list.length
       ? '<div class="box-note">게시 유지 여부를 확인할 '+list.length+'건입니다. '+
         '<b>확인</b>을 누르면 7일 뒤에 다시 뜹니다. 글이 내려갔으면 <b>미확인</b>을 누르세요.</div>'
       : '<div class="box-ok">🟢 오늘 확인할 게시 건이 없습니다.</div>') +
-    list.map(function(x){ return itemHtml(x,'pst'); }).join('');
+    list.map(function(x){ return itemHtml(x,'pst'); }).join(''));
 }
 
-
 /* ── 그래프 조각 ──────────────────────── */
-/* 최근 N개월의 'yyyy-MM' 목록 */
 function recentMonths(cnt){
   const out=[], d=new Date();
   for(let i=cnt-1;i>=0;i--){
@@ -740,7 +416,6 @@ function recentMonths(cnt){
   }
   return out;
 }
-
 /* 세로 누적 막대 — 시간 흐름을 왼쪽에서 오른쪽으로 읽게 한다 */
 function stackedBars(months, cats, matrix){
   let max=1;
@@ -767,7 +442,6 @@ function stackedBars(months, cats, matrix){
     return '<span><i style="background:'+catColor(c,ci)+'"></i>'+esc(catLabel(c))+'</span>'; }).join('');
   return '<div class="vbars">'+cols+'</div><div class="legend">'+legend+'</div>';
 }
-
 /* 가로 막대 — 항목 이름이 길어 읽기 편하다 */
 function hBars(pairs){
   let max=1;
@@ -780,7 +454,6 @@ function hBars(pairs){
       catColor(p.k,i)+'"></div></div></div>';
   }).join('');
 }
-
 /* 도넛 — 비중을 한눈에 */
 function donut(pairs, centerLabel){
   const total=pairs.reduce(function(s,p){ return s+p.v; },0);
@@ -788,8 +461,7 @@ function donut(pairs, centerLabel){
   let acc=0;
   const stops=pairs.map(function(p,i){
     const from=acc/total*360; acc+=p.v;
-    const to=acc/total*360;
-    return catColor(p.k,i)+' '+from+'deg '+to+'deg';
+    return catColor(p.k,i)+' '+from+'deg '+(acc/total*360)+'deg';
   }).join(',');
   const side=pairs.map(function(p,i){
     return '<div><i style="background:'+catColor(p.k,i)+'"></i>'+esc(catLabel(p.k))+
@@ -799,14 +471,11 @@ function donut(pairs, centerLabel){
     '<div class="side">'+side+'</div></div>';
 }
 
-/* ── 현황 · 대시보드 ──────────────────── */
+/* ── 관리 · 대시보드 ──────────────────── */
 function renderDash(){
-  const s=D.summary, cats=s.byCat||{};
-
-  /* 전체 누계 — 플랫폼별 */
   let allCats=[];
   D.items.forEach(function(x){ if(x.cat && allCats.indexOf(x.cat)<0) allCats.push(x.cat); });
-  allCats=catSort(allCats);   /* 브랜더진 → 리뷰노트 → 무신사 → 개인협찬 */
+  allCats=catSort(allCats);
   const totalPairs=allCats.map(function(c){
     return { k:c, v:D.items.filter(function(x){ return x.cat===c; }).length };
   });
@@ -817,44 +486,20 @@ function renderDash(){
   const matrix={};
   allCats.forEach(function(c){ matrix[c]=months.map(function(){ return 0; }); });
   D.items.forEach(function(x){
-    const ym=String(x.applied).slice(0,7);
-    const i=months.indexOf(ym);
+    const i=months.indexOf(String(x.applied).slice(0,7));
     if(i>=0 && matrix[x.cat]) matrix[x.cat][i]++;
   });
 
-  /* 당월 표 */
-  const keys=catSort(Object.keys(cats));
-  let tot=0, up=0;
-  const rows = keys.length
-    ? keys.map(function(k){
-        const c=cats[k]; tot+=c.total; up+=c.uploaded;
-        const no=c.total-c.uploaded;
-        return '<tr><td><b>'+esc(catLabel(k))+'</b></td>'+
-          '<td class="ctr">'+n(c.total)+'</td>'+
-          '<td class="ctr ok">'+n(c.uploaded)+'</td>'+
-          '<td class="ctr '+(no>0?'danger':'')+'">'+n(no)+'</td></tr>';
-      }).join('')
-    : '<tr><td colspan="4" class="ctr sub2">이번 달 시딩 내역이 없습니다.</td></tr>';
-  const foot = keys.length
-    ? '<tr style="background:#F5F5F5"><td><b>합계</b></td>'+
-      '<td class="ctr"><b>'+n(tot)+'</b></td>'+
-      '<td class="ctr ok"><b>'+n(up)+'</b></td>'+
-      '<td class="ctr '+((tot-up)>0?'danger':'')+'"><b>'+n(tot-up)+'</b></td></tr>'
-    : '';
-
-  document.getElementById('v2dash').innerHTML =
+  V.setHTML('v2dash',
     '<div class="notice"><div class="ttl" style="margin:0">전체 누적</div>'+
       '<span class="money big">'+n(grand)+'건</span></div>'+
-
     '<div class="chart"><h3>📈 월별 시딩 추이 (최근 12개월)</h3>'+
       stackedBars(months, allCats, matrix)+'</div>'+
-
     '<div class="chart"><h3>📊 플랫폼별 누계</h3>'+
       (totalPairs.length ? hBars(totalPairs) : '<div class="sub2">데이터가 없습니다.</div>')+'</div>'+
-
     '<div class="sub2">· 추이·누계는 신청일시 기준입니다.<br>'+
     '· 이번 달 플랫폼별 표는 [할일 · 공지]에서 볼 수 있습니다.</div>'+
-    '<button class="f ghost" onclick="reload(true)">새로고침</button>';
+    '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
 }
 
 /* ── 2차활용 · 대시보드 ───────────────── */
@@ -862,13 +507,11 @@ function renderSecDash(){
   const list=D.items.filter(function(x){ return x.s2type || x.legacy2; });
 
   if(!list.length){
-    document.getElementById('v3dash').innerHTML =
-      '<div class="box-note">2차 활용 건이 없습니다.</div>'+
-      '<button class="f ghost" onclick="reload(true)">새로고침</button>';
+    V.setHTML('v3dash','<div class="box-note">2차 활용 건이 없습니다.</div>'+
+      '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
     return;
   }
 
-  /* 플랫폼별 건수 */
   const cats=catSort((function(){
     const o=[]; list.forEach(function(x){ if(x.cat && o.indexOf(x.cat)<0) o.push(x.cat); }); return o;
   })());
@@ -902,7 +545,6 @@ function renderSecDash(){
   const thisYear=String(new Date().getFullYear());
   const months=Object.keys(byMonth).filter(function(m){ return m.slice(0,4)===thisYear; }).sort().reverse();
   const years=Object.keys(byYear).sort().reverse();
-
   const rate=Math.round((D.brandFeeRate||0.145)*1000)/10;
 
   const moneyHtml =
@@ -912,7 +554,8 @@ function renderSecDash(){
     '<div class="sub2" style="margin-bottom:4px">'+thisYear+'년 월별</div>'+
     (months.length
       ? months.map(function(m){
-          return '<div class="row"><span>'+esc(m.replace('-','.'))+'</span><b>'+n(byMonth[m])+'원</b></div>'; }).join('')
+          return '<div class="row"><span>'+esc(m.replace('-','.'))+'</span><b>'+
+            n(byMonth[m])+'원</b></div>'; }).join('')
       : '<div class="sub2">올해 집행 내역이 없습니다.</div>')+
     '<div class="hr"></div>'+
     '<div class="sub2" style="margin-bottom:4px">연도별</div>'+
@@ -920,7 +563,7 @@ function renderSecDash(){
       return '<div class="row"><span>'+esc(y)+'년</span><b>'+n(byYear[y])+'원</b></div>'; }).join('')+
     '</div>';
 
-  /* 브랜더진 수수료 — 과거 방식(판매 목적 라이센스)에는 붙지 않습니다 */
+  /* 브랜더진 수수료 — 과거 방식(판매 목적 라이센스)에는 붙지 않는다 */
   const feeHtml =
     '<div class="money"><div class="row"><span>브랜더진 수수료 '+rate+'%</span></div>'+
     '<div class="money big" style="margin-bottom:10px">'+n(feeTotal)+'원</div>'+
@@ -931,36 +574,34 @@ function renderSecDash(){
     '<div class="row"><span><b>총 지출 (비용 + 수수료)</b></span>'+
       '<b>'+n(grand+feeTotal)+'원</b></div>'+
     '<div class="sub2" style="margin-top:6px">'+
-      '과거 방식인 "판매 목적 라이센스" 건에는 수수료가 붙지 않습니다.</div>'+
-    '</div>';
+      '과거 방식인 "판매 목적 라이센스" 건에는 수수료가 붙지 않습니다.</div></div>';
 
-  document.getElementById('v3dash').innerHTML =
+  V.setHTML('v3dash',
     '<div class="notice"><div class="ttl">전체 누적</div>'+
       '<span class="money big">'+n(list.length)+'건</span>'+
       '<div class="sub2" style="margin-top:4px">비용 '+n(grand)+'원'+
       (feeTotal?' + 수수료 '+n(feeTotal)+'원':'')+'</div></div>'+
     '<div class="chart"><h3>📊 플랫폼별 2차 활용</h3>'+hBars(catPairs)+'</div>'+
     '<div class="chart"><h3>🍩 활용 채널별 비중</h3>'+donut(typePairs,'건')+'</div>'+
-    '<div class="sec s-blu" onclick="toggleBox(\'moneyBox\')">'+
+    '<div class="sec s-blu" onclick="VERDAN.toggleBox(\'moneyBox\')">'+
       '<span>💰 2차 활용 금액 · 수수료</span><span class="cnt">펼치기 ▾</span></div>'+
     '<div id="moneyBox" style="display:none">'+
       '<div class="chart"><h3>💰 2차 활용 금액</h3>'+moneyHtml+'</div>'+
       '<div class="chart"><h3>🧾 수수료</h3>'+feeHtml+'</div></div>'+
     '<div class="sub2">· 금액은 04_브랜더진 W열 등 2차활용 비용 열에서 합산합니다.<br>'+
     '· 집계 기준일은 사용권 구매일이며, 없으면 신청일시를 씁니다.</div>'+
-    '<button class="f ghost" onclick="reload(true)">새로고침</button>';
+    '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
 }
 
-/* ── 관리 · 삭제확인 ──────────────────── */
-/* 게시확인에서 "미확인"으로 처리된 건이 모입니다.
-   같은 '삭제'라도 성격이 달라 두 묶음으로 나눕니다.
+/* ── 관리 · 삭제확인 ────────────────────
+   게시확인에서 "미확인"으로 처리된 건이 모인다.
+   같은 '삭제'라도 성격이 달라 두 묶음으로 나눈다.
    ① 게시기간이 아직 남았는데 내려간 건 → 재업로드 요청 대상 (문제 상황)
    ② 게시기간이 끝난 뒤 내려간 건       → 계약대로 종료된 것 (정상) */
 function renderDeleted(){
   const all=D.items.filter(function(x){ return x.state==='삭제'; })
     .slice().sort(function(a,b){ return String(b.delchk).localeCompare(String(a.delchk)); });
 
-  /* 삭제 확인일이 게시 종료일보다 빠르면 기간 중 삭제 */
   const during=all.filter(function(x){
     return x.postPeriod && x.delchk && x.delchk <= x.postPeriod; });
   const after=all.filter(function(x){ return during.indexOf(x)<0; });
@@ -974,9 +615,9 @@ function renderDeleted(){
          '재업로드를 요청하세요.</div>'+
          during.map(function(x){ return itemHtml(x,'del'); }).join('');
     }
-    /* 종료 후 건은 조치할 게 없으므로 평소엔 건수만 보이고, 눌러야 목록이 나옵니다 */
+    /* 종료 후 건은 조치할 게 없으므로 평소엔 건수만 보이고, 눌러야 목록이 나온다 */
     h+='<div class="sec s-gry" style="margin-top:'+(during.length?'16px':'0')+'" '+
-       'onclick="toggleBox(\'delAfter\')">'+
+       'onclick="VERDAN.toggleBox(\'delAfter\')">'+
        '<span>⚪ 게시기간 종료 후 확인</span>'+
        '<span class="cnt">'+after.length+'건 ▾</span></div>'+
        '<div id="delAfter" style="display:none">'+
@@ -986,13 +627,10 @@ function renderDeleted(){
          : '<div class="box-note">해당하는 건이 없습니다.</div>')+
        '</div>';
   }
-  document.getElementById('v2deleted').innerHTML=
-    h+'<button class="f ghost" onclick="reload(true)">새로고침</button>';
+  V.setHTML('v2deleted', h+'<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
 }
 
 /* ── 관리 · 게시확인 ──────────────────── */
-/* 업로드가 끝나 게시 중인 건입니다. URL을 열어 확인한 뒤 [확인]을 누르면
-   최종확인일이 오늘로 기록됩니다. (할일 · 게시확인과 같은 동작) */
 function renderPosted(){
   const days=(D.thresholds && D.thresholds.postCheck) || 7;
 
@@ -1006,7 +644,7 @@ function renderPosted(){
       return a.dDeadline-b.dDeadline;   /* 급한 것부터 */
     });
 
-  /* ② 게시중 — 게시 중인 건 전부 (확인 후에도 목록에 남습니다) */
+  /* ② 게시중 — 확인 후에도 목록에 남는다 */
   const post=D.items.filter(function(x){ return x.state==='게시중'; })
     .slice().sort(function(a,b){
       const ac=a.check||'', bc=b.check||'';
@@ -1017,7 +655,7 @@ function renderPosted(){
   const due=post.filter(function(x){
     return !x.check || dayGap(x.check, D.today) >= days; }).length;
 
-  document.getElementById('v2posted').innerHTML =
+  V.setHTML('v2posted',
     '<div class="sec s-org"><span>⬆ 미업로드</span>'+
       '<span class="cnt">'+nou.length+'건</span></div>'+
     (nou.length
@@ -1025,7 +663,6 @@ function renderPosted(){
         '누르면 오늘 날짜가 최종확인에 기록됩니다.</div>'+
         nou.map(function(x){ return itemHtml(x,'nou'); }).join('')
       : '<div class="box-ok">🟢 미업로드 건이 없습니다.</div>')+
-
     '<div class="sec s-blu" style="margin-top:18px"><span>📌 게시중</span>'+
       '<span class="cnt">'+post.length+'건</span></div>'+
     (post.length
@@ -1033,20 +670,17 @@ function renderPosted(){
         '일이 넘었거나 아직 확인 전입니다. 확인 후에도 목록에 남습니다.</div>'+
         post.map(function(x){ return itemHtml(x,'pchk'); }).join('')
       : '<div class="box-ok">🟢 게시 중인 건이 없습니다.</div>')+
-
-    '<button class="f ghost" onclick="reload(true)">새로고침</button>';
+    '<button class="f ghost" onclick="VERDAN.reload(true)">새로고침</button>');
 }
 
-/* ── 관리 · 인플루언서 ────────────────── */
-/* 같은 사람의 여러 협업을 한 곳에 모아 보고, 사람 단위 비고를 남깁니다. */
+/* ── 관리 · 인플루언서 ──────────────────
+   같은 사람의 여러 협업을 한 곳에 모아 보고, 사람 단위 비고를 남긴다. */
 function renderInflu(){
   const q=document.getElementById('iName').value.trim().toLowerCase().replace(/^@/,'');
-  const body=document.getElementById('influBody');
   if(!q){
-    body.innerHTML='<div class="box-note">이름이나 계정을 입력하면 결과가 나옵니다.</div>';
+    V.setHTML('influBody','<div class="box-note">이름이나 계정을 입력하면 결과가 나옵니다.</div>');
     return;
   }
-
   const map={};
   D.items.forEach(function(x){
     const key=x.pkey||('이름:'+x.name);
@@ -1059,21 +693,20 @@ function renderInflu(){
 
   const list=Object.keys(map).map(function(k){ return map[k]; });
   if(!list.length){
-    body.innerHTML='<div class="box-note">조건에 맞는 인플루언서가 없습니다.</div>';
+    V.setHTML('influBody','<div class="box-note">조건에 맞는 인플루언서가 없습니다.</div>');
     return;
   }
-  body.innerHTML='<div class="sub2" style="margin-bottom:8px">'+list.length+'명</div>'+
-    list.map(function(p){ return influCard(p); }).join('');
+  V.setHTML('influBody','<div class="sub2" style="margin-bottom:8px">'+list.length+'명</div>'+
+    list.map(influCard).join(''));
 }
 
 function influCard(p){
-  const uid='inf_'+p.key.replace(/[^A-Za-z0-9가-힣]/g,'_');
+  const uid='inf_'+String(p.key).replace(/[^A-Za-z0-9가-힣]/g,'_');
   const open=OPEN[uid]?' open':'';
   const memo=(D.memos&&D.memos[p.key])||{ memo:'', at:'', by:'' };
 
   const cats=[];
   p.rows.forEach(function(x){ if(cats.indexOf(x.cat)<0) cats.push(x.cat); });
-
   const dates=p.rows.map(function(x){ return x.uploadDate; }).filter(Boolean).sort();
 
   const urls=p.rows.filter(function(x){ return x.url; });
@@ -1085,10 +718,8 @@ function influCard(p){
       }).join('')
     : '<span class="sub2">등록된 콘텐츠가 없습니다.</span>';
 
-  const perm=PERM[ROLE]||NOPERM;
-
-  return '<div class="it'+open+'" id="'+uid+'">'+
-    '<div class="hd" onclick="toggleIt(\''+uid+'\')">'+
+  return '<div class="it'+open+'" id="'+esc(uid)+'">'+
+    '<div class="hd" onclick="toggleIt(\''+jsq(uid)+'\')">'+
       '<div><div class="nm">'+esc(p.name)+'</div>'+
         '<div class="meta">'+esc(p.handle||'계정 없음')+'</div></div>'+
       '<div class="right"><span class="badge b-게시중">'+p.rows.length+'건</span>'+
@@ -1105,53 +736,44 @@ function influCard(p){
       '<div class="lb2">콘텐츠</div>'+urlHtml+
       '<div class="hr"></div>'+
       '<div class="lb2">비고'+(memo.at?' <span class="sub2">('+esc(memo.at)+' '+esc(memo.by)+')</span>':'')+'</div>'+
-      (perm.write
-        ? '<textarea class="f memo" id="mm_'+uid+'" rows="3" '+
+      (V.can('write')
+        ? '<textarea class="f memo" id="mm_'+esc(uid)+'" rows="3" '+
             'placeholder="조건 불이행, DM 미응답 등 다음 시딩에 참고할 내용">'+esc(memo.memo)+'</textarea>'+
-          '<button class="f" onclick="doMemo(\''+p.key+'\',\''+uid+'\',\''+esc(p.name)+'\')">비고 저장</button>'+
-          '<div class="msg" id="m_'+uid+'"></div>'
+          '<button class="f" onclick="doMemo(\''+jsq(p.key)+'\',\''+jsq(uid)+'\',\''+jsq(p.name)+'\')">비고 저장</button>'+
+          '<div class="msg" id="m_'+esc(uid)+'"></div>'
         : '<div class="sub2">'+esc(memo.memo||'—')+'</div>')+
     '</div></div>';
 }
 
 function doMemo(key, uid, name){
-  const memo=document.getElementById('mm_'+uid).value;
-  act({ action:'memo', key:key, name:name, memo:memo }, uid, '비고를 저장했습니다.');
+  const el=document.getElementById('mm_'+uid);
+  act({ action:'memo', key:key, name:name, memo:(el?el.value:'') }, uid,
+      '비고를 저장했습니다.', 'memo:'+key);
 }
 
-/* yyyy-MM-dd 두 날짜의 차이(일) */
-function dayGap(from, to){
-  const a=new Date(from+'T00:00:00'), b=new Date(to+'T00:00:00');
-  if(isNaN(a)||isNaN(b)) return 9999;
-  return Math.round((b-a)/86400000);
-}
-
-/* ── 현황 · 전체 ──────────────────────── */
+/* ── 관리 · 전체 ──────────────────────── */
 function renderAllList(){
   const r=applyFilter('a');
-  const body=document.getElementById('allBody');
   if(r.empty){
-    body.innerHTML='<div class="box-note">플랫폼·상품을 고르거나 이름·계정을 입력하면 결과가 나옵니다.</div>';
+    V.setHTML('allBody','<div class="box-note">플랫폼·상품을 고르거나 이름·계정을 입력하면 결과가 나옵니다.</div>');
     return;
   }
-  body.innerHTML=listHtml(r.list,'all');
+  V.setHTML('allBody', listHtml(r.list,'all'));
 }
 
 /* ── 2차활용 · 등록 ───────────────────── */
 function renderSecReg(){
   const r=applyFilter('s');
-  const body=document.getElementById('secRegBody');
   if(r.empty){
-    body.innerHTML='<div class="box-note">플랫폼·상품을 고르거나 이름·계정을 입력해 대상을 찾아주세요.</div>';
+    V.setHTML('secRegBody','<div class="box-note">플랫폼·상품을 고르거나 이름·계정을 입력해 대상을 찾아주세요.</div>');
     return;
   }
-  body.innerHTML=listHtml(r.list,'sec');
+  V.setHTML('secRegBody', listHtml(r.list,'sec'));
 }
 
-/* ── 2차활용 · 현황 ───────────────────── */
-/* 앱에서 등록한 건 + 시트에 예전 방식으로 표시된 건(브랜더진 W열)을 함께 봅니다. */
+/* ── 2차활용 · 전체 ─────────────────────
+   앱에서 등록한 건 + 시트에 예전 방식으로 표시된 건(브랜더진 W열)을 함께 본다. */
 function renderSecList(){
-  /* 2차 활용이 등록됐거나 금액이 잡힌 건만 대상으로 합니다 */
   let list=D.items.filter(function(x){ return x.s2type || x.legacy2; });
 
   const cat=document.getElementById('lCat').value;
@@ -1163,8 +785,7 @@ function renderSecList(){
   if(cat)  list=list.filter(function(x){ return x.cat===cat; });
   if(prod) list=list.filter(function(x){ return x.product===prod; });
   if(chan) list=list.filter(function(x){ return x.s2type===chan; });
-  if(per)  list=list.filter(function(x){
-    return (x.s2period||(x.s2forever?'영구':''))===per; });
+  if(per)  list=list.filter(function(x){ return (x.s2period||(x.s2forever?'영구':''))===per; });
   if(nm)   list=list.filter(function(x){
     return (x.name+' '+(x.handleShown||x.handle||'')).toLowerCase()
       .replace(/@/g,'').indexOf(nm)>=0; });
@@ -1178,27 +799,21 @@ function renderSecList(){
     return String(a.s2e).localeCompare(String(b.s2e));
   });
 
-  const body=document.getElementById('secListBody');
   if(!list.length){
-    body.innerHTML='<div class="box-note">조건에 맞는 2차 활용 건이 없습니다.</div>';
+    V.setHTML('secListBody','<div class="box-note">조건에 맞는 2차 활용 건이 없습니다.</div>');
     return;
   }
 
   const legacy=list.filter(function(x){ return !x.s2type; });
-  const byType={};
-  list.filter(function(x){ return x.s2type; })
-      .forEach(function(x){ byType[x.s2type]=(byType[x.s2type]||0)+1; });
-  const sum=Object.keys(byType).map(function(k){ return esc(k)+' '+byType[k]+'건'; }).join(' · ') || '—';
   const soon=list.filter(function(x){ return x.flags.indexOf('secondEnd')>=0; }).length;
-  const money=list.reduce(function(v,x){ return v+(x.amount||0); },0);
-  const fee=list.reduce(function(v,x){ return v+(x.brandFee||0); },0);
 
-  body.innerHTML=
+  V.setHTML('secListBody',
     (soon ? '<div class="box-danger"><b style="color:#C0392B">🟣 종료 임박 '+soon+'건</b><br>'+
       '만료 전에 연장 협의 또는 소재 내리기를 확인하세요.</div>' : '')+
-    (legacy.length ? '<div class="box-note">⚠️ 금액만 있고 <b>기간이 등록되지 않은 '+legacy.length+'건</b>이 있습니다.<br>'+
+    (legacy.length ? '<div class="box-note">⚠️ 금액만 있고 <b>기간이 등록되지 않은 '+
+      legacy.length+'건</b>이 있습니다.<br>'+
       '항목을 눌러 [2차 활용 등록]에서 채널·기간을 채워주세요.</div>' : '')+
-    list.map(function(x){ return itemHtml(x,'seclist'); }).join('');
+    list.map(function(x){ return itemHtml(x,'seclist'); }).join(''));
 }
 
 /* ── 공통 목록 ────────────────────────── */
@@ -1209,7 +824,6 @@ function listHtml(list, ctx){
     (list.length>300 ? '<div class="box-note">300건까지만 표시했습니다. 검색으로 좁혀주세요.</div>' : '');
 }
 
-/* ── 상태 태그 ────────────────────────── */
 /* 게시중이면 D-N, 끝났으면 종료, 그 외에는 상태 글자 그대로 */
 function tagText(x){
   if(x.state==='게시중') return (x.dPost===null) ? '게시중' : ('D-'+x.dPost);
@@ -1218,7 +832,7 @@ function tagText(x){
 
 /* ── 항목 카드 ────────────────────────── */
 function itemHtml(x, ctx){
-  const uid = ctx+'_'+x.id.replace(':','_');
+  const uid = ctx+'_'+String(x.id).replace(/[^A-Za-z0-9가-힣_-]/g,'_');
   const open = OPEN[uid] ? ' open' : '';
   let note='';
   if(!x.uploadDate && x.dDeadline!==null && x.state!=='대가없음'){
@@ -1235,8 +849,8 @@ function itemHtml(x, ctx){
       '<div class="dd ok">최종확인 '+esc(x.check||'없음')+'</div>';
   }
 
-  return '<div class="it'+open+'" id="'+uid+'">'+
-    '<div class="hd" onclick="toggleIt(\''+uid+'\')">'+
+  return '<div class="it'+open+'" id="'+esc(uid)+'">'+
+    '<div class="hd" onclick="toggleIt(\''+jsq(uid)+'\')">'+
       '<div><div class="nm">'+esc(x.name)+'</div>'+
         '<div class="meta">'+esc(catLabel(x.cat))+(x.campaign?' · '+esc(x.campaign):'')+'<br>'+
         esc(x.product||'—')+'</div></div>'+
@@ -1255,84 +869,56 @@ function toggleIt(uid){
   OPEN[uid]=now;
 }
 
-/* ── 카드에 바로 붙는 버튼 ────────────── */
-/* 펼치지 않고 한 번에 처리할 수 있게 하기 위한 것 */
-/* 콘텐츠 URL 이 있으면 그것을, 없으면 계정 주소를 여는 버튼 */
-function urlBtn(x, fallback){
-  const u = x.url || x.acctUrl;
-  if(!u) return fallback||'';
-  return '<button onclick="event.stopPropagation();window.open(\''+esc(u)+'\',\'_blank\')">URL</button>';
+/* ── 카드에 바로 붙는 버튼 ──────────────
+   펼치지 않고 한 번에 처리할 수 있게 하기 위한 것.
+   onclick 안에 들어가는 값은 전부 jsq 로 감싼다 — 이름이나 URL 에
+   작은따옴표가 들어가면 버튼이 통째로 죽기 때문이다. */
+function openBtn(url, label){
+  if(!url) return '';
+  return '<button onclick="event.stopPropagation();window.open(\''+jsq(url)+'\',\'_blank\')">'+
+    esc(label)+'</button>';
 }
-
 function quickHtml(x, uid, ctx){
-  const perm=PERM[ROLE]||NOPERM;
-  if(!perm.write) return '';
-
-  const acct = x.acctUrl
-    ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.acctUrl)+'\',\'_blank\')">계정</button>'
-    : '';
+  if(!V.can('write')) return '';
+  const acct = openBtn(x.acctUrl, '계정');
+  const anyUrl = openBtn(x.url || x.acctUrl, 'URL');
+  const id = jsq(x.id), u = jsq(uid);
   let b='';
 
   if(ctx==='upc'){
     b = acct +
-      '<button class="pri" onclick="event.stopPropagation();doUpload(\''+x.id+'\',\''+uid+'\',1)">완료</button>'+
-      '<button class="no" onclick="event.stopPropagation();doUpchk(\''+x.id+'\',\''+uid+'\')">미완료</button>';
+      '<button class="pri" onclick="event.stopPropagation();doUpload(\''+id+'\',\''+u+'\')">완료</button>'+
+      '<button class="no" onclick="event.stopPropagation();doUpchk(\''+id+'\',\''+u+'\')">미완료</button>';
   }else if(ctx==='pst'){
-    const open = x.url
-      ? '<button onclick="event.stopPropagation();window.open(\''+esc(x.url)+'\',\'_blank\')">글 열기</button>'
-      : acct;
-    b = open +
-      '<button class="pri" onclick="event.stopPropagation();doCheck(\''+x.id+'\',\''+uid+'\')">확인</button>'+
-      '<button class="no" onclick="event.stopPropagation();doDel(\''+x.id+'\',\''+uid+'\')">미확인</button>';
+    b = (x.url ? openBtn(x.url,'글 열기') : acct) +
+      '<button class="pri" onclick="event.stopPropagation();doCheck(\''+id+'\',\''+u+'\')">확인</button>'+
+      '<button class="no" onclick="event.stopPropagation();doDel(\''+id+'\',\''+u+'\')">미확인</button>';
   }else if(ctx==='nou'){
-    /* 계정을 열어 올라왔는지 확인한 뒤 둘 중 하나를 누릅니다.
-       어느 쪽이든 최종확인에 오늘 날짜가 기록됩니다. */
-    b = urlBtn(x, acct) +
-      '<button class="no" onclick="event.stopPropagation();doRecheck(\''+x.id+'\',\''+uid+'\')">미업로드</button>'+
-      '<button class="pri" onclick="event.stopPropagation();doUpload(\''+x.id+'\',\''+uid+'\',1)">업로드</button>';
+    /* 계정을 열어 올라왔는지 확인한 뒤 둘 중 하나를 누른다.
+       어느 쪽이든 최종확인에 오늘 날짜가 기록된다. */
+    b = (anyUrl || acct) +
+      '<button class="no" onclick="event.stopPropagation();doRecheck(\''+id+'\',\''+u+'\')">미업로드</button>'+
+      '<button class="pri" onclick="event.stopPropagation();doUpload(\''+id+'\',\''+u+'\')">업로드</button>';
   }else if(ctx==='pchk'){
-    b = urlBtn(x, acct) +
-      '<button class="no" onclick="event.stopPropagation();doDel(\''+x.id+'\',\''+uid+'\')">삭제</button>'+
-      '<button class="pri" onclick="event.stopPropagation();doCheck(\''+x.id+'\',\''+uid+'\')">게시중</button>';
+    b = (anyUrl || acct) +
+      '<button class="no" onclick="event.stopPropagation();doDel(\''+id+'\',\''+u+'\')">삭제</button>'+
+      '<button class="pri" onclick="event.stopPropagation();doCheck(\''+id+'\',\''+u+'\')">게시중</button>';
   }else if(ctx==='del'){
     /* 게시기간 중 삭제 — 미처리는 확인만, 처리완료는 업로드완료로 복구 */
-    b = urlBtn(x, acct) +
-      '<button class="no" onclick="event.stopPropagation();doRecheck(\''+x.id+'\',\''+uid+'\')">미처리</button>'+
-      '<button class="pri" onclick="event.stopPropagation();doRestore(\''+x.id+'\',\''+uid+'\')">처리완료</button>';
-  }else if(ctx==='delok'){
-    return '';   /* 게시기간 종료 후 건은 조치할 것이 없어 버튼을 두지 않습니다 */
+    b = (anyUrl || acct) +
+      '<button class="no" onclick="event.stopPropagation();doRecheck(\''+id+'\',\''+u+'\')">미처리</button>'+
+      '<button class="pri" onclick="event.stopPropagation();doRestore(\''+id+'\',\''+u+'\')">처리완료</button>';
   }else{
-    return '';
+    return '';   /* delok · all · sec 등은 조치할 것이 없어 버튼을 두지 않는다 */
   }
 
-  return '<div class="qa">'+b+'</div><div class="qmsg" id="q_'+uid+'"></div>';
-}
-
-/* 2차 활용 표기 문구 */
-function secondText(x){
-  if(!x.s2type){
-    /* 시트에 금액만 있고 채널·기간이 없는 건 = 만료일을 모르는 상태 */
-    return x.legacy2 ? '금액만 있음 · 기간 미등록 ('+n(x.amount)+'원)' : '미등록';
-  }
-  let t=esc(x.s2type)+' · '+esc(x.s2s||'—')+' ~ '+(x.s2forever?'영구':esc(x.s2e||'—'));
-  if(x.s2period) t+=' ('+esc(x.s2period)+')';
-  if(x.amount){
-    t+='<br>비용 '+n(x.amount)+'원';
-    if(x.brandFee) t+=' + 수수료 '+n(x.brandFee)+'원';
-  }
-  if(x.s2memo) t+='<br><span class="sub2">'+esc(x.s2memo)+'</span>';
-  return t;
+  return '<div class="qa">'+b+'</div><div class="qmsg" id="q_'+esc(uid)+'"></div>';
 }
 
 function detailHtml(x, uid, ctx){
-  const perm=PERM[ROLE]||NOPERM;
-
   /* 게시기간 — 업로드 전이면 "—", 업로드했으면 "업로드일 ~ 종료일" */
-  const period = x.uploadDate
-    ? esc(x.uploadDate)+' ~ '+esc(x.postPeriod||'—')
-    : '—';
+  const period = x.uploadDate ? esc(x.uploadDate)+' ~ '+esc(x.postPeriod||'—') : '—';
 
-  /* 계정 — 눌러서 바로 열 수 있게 링크로 */
   const acct = x.acctUrl
     ? '<a href="'+esc(x.acctUrl)+'" target="_blank" rel="noopener">'+
         esc(x.handleShown||x.handle||'열기')+'</a>'
@@ -1341,7 +927,7 @@ function detailHtml(x, uid, ctx){
   /* 2차 활용 — O/X 로 접어두고 눌러야 펼쳐지게 */
   const has = !!(x.s2type || x.legacy2);
   const second = has
-    ? 'O <span class="more" onclick="toggleBox(\'s2_'+uid+'\')">상세보기</span>'
+    ? 'O <span class="more" onclick="VERDAN.toggleBox(\'s2_'+jsq(uid)+'\')">상세보기</span>'
     : 'X';
 
   let h='<div class="kv">'+
@@ -1353,13 +939,13 @@ function detailHtml(x, uid, ctx){
     (x.way && x.way!=='시딩' ? '<span>진행방식</span><b>'+esc(x.way)+'</b>' : '')+
     (x.coop ? '<span>협업유형</span><b>'+esc(x.coop)+'</b>' : '')+
     '<span>2차 활용</span><b>'+second+'</b>'+
-    (x.url ? '<span>콘텐츠</span><b><a href="'+esc(x.url)+'" target="_blank" rel="noopener">링크 열기</a></b>' : '')+
+    (x.url ? '<span>콘텐츠</span><b><a href="'+esc(x.url)+
+      '" target="_blank" rel="noopener">링크 열기</a></b>' : '')+
     '<span>최종확인</span><b>'+esc(x.check||'미확인')+'</b>'+
     '</div>';
 
-  /* 2차 활용 상세 — O 를 눌렀을 때만 보입니다 */
   if(has){
-    h+='<div class="box2" id="s2_'+uid+'" style="display:none">'+
+    h+='<div class="box2" id="s2_'+esc(uid)+'" style="display:none">'+
        '<div class="kv" style="padding-top:0">'+
          '<span>사용권 구매일</span><b>'+esc(x.s2s||'—')+'</b>'+
          '<span>활용 기간</span><b>'+esc(x.s2period|| (x.s2forever?'영구':'—'))+'</b>'+
@@ -1371,75 +957,61 @@ function detailHtml(x, uid, ctx){
        '</div></div>';
   }
 
-  if(!perm.write) return h;
+  if(!V.can('write')) return h;
 
-  /* 2차활용 탭에서만 수정 폼을 제공합니다.
-     현황·할일 탭에서는 조회만 하고, 게시확인은 [할일 > 게시확인]에서 처리합니다. */
-  /* 할일 탭에서는 콘텐츠 URL을 나중에 채울 수 있게 남겨둡니다.
-     현황·전체에서는 조회만 하도록 폼을 두지 않습니다. */
+  /* 할일 탭에서는 콘텐츠 URL을 나중에 채울 수 있게 남겨둔다.
+     관리·전체에서는 조회만 하도록 폼을 두지 않는다. */
   if(ctx==='upc' || ctx==='pst' || ctx==='nou' || ctx==='pchk'){
     return h+'<div class="hr"></div><div class="acts">'+
-      '<input class="f" type="url" id="cu_'+uid+'" placeholder="콘텐츠 URL 등록" '+
+      '<input class="f" type="url" id="cu_'+esc(uid)+'" placeholder="콘텐츠 URL 등록" '+
         'inputmode="url" value="'+esc(x.url)+'">'+
-      '<button class="f ghost" onclick="doUrl(\''+x.id+'\',\''+uid+'\')">URL 저장</button>'+
-      '<div class="msg" id="m_'+uid+'"></div></div>';
+      '<button class="f ghost" onclick="doUrl(\''+jsq(x.id)+'\',\''+jsq(uid)+'\')">URL 저장</button>'+
+      '<div class="msg" id="m_'+esc(uid)+'"></div></div>';
   }
 
   if(ctx==='sec' || ctx==='seclist'){
     h+='<div class="hr"></div><div class="acts">'+
-       '<button class="f ghost" onclick="toggleBox(\'ed_'+uid+'\')">'+
+       '<button class="f ghost" onclick="VERDAN.toggleBox(\'ed_'+jsq(uid)+'\')">'+
          (has?'2차 활용 수정':'2차 활용 등록')+'</button>'+
-       '<div id="ed_'+uid+'" style="display:none">'+secondFormHtml(x, uid)+'</div>'+
-       '<div class="msg" id="m_'+uid+'"></div></div>';
+       '<div id="ed_'+esc(uid)+'" style="display:none">'+secondFormHtml(x, uid)+'</div>'+
+       '<div class="msg" id="m_'+esc(uid)+'"></div></div>';
   }
   return h;
-}
-
-/* 접었다 펴는 공통 동작 */
-function toggleBox(id){
-  const el=document.getElementById(id);
-  if(!el) return;
-  const open = el.style.display==='none';
-  /* 표 안의 행은 block 으로 펴면 레이아웃이 깨지므로 table-row 로 되돌립니다 */
-  el.style.display = open ? (el.tagName==='TR' ? 'table-row' : 'block') : 'none';
 }
 
 function secondFormHtml(x, uid){
   const types=(D.secondTypes||[]).map(function(t){
     return '<option value="'+esc(t)+'"'+(x.s2type===t?' selected':'')+'>'+esc(t)+'</option>'; }).join('');
   const periods=(D.secondPeriods||[]).map(function(p){
-    return '<option value="'+p.v+'"'+(x.s2period===p.t?' selected':'')+'>'+esc(p.t)+'</option>'; }).join('');
+    return '<option value="'+esc(p.v)+'"'+(x.s2period===p.t?' selected':'')+'>'+esc(p.t)+'</option>'; }).join('');
   const cost = x.s2cost ? x.s2cost : (x.amount||'');
 
   /* 날짜칸과 선택칸을 한 줄에 둘씩 넣으면 모바일에서 겹쳐 보이므로
-     각 항목을 한 줄씩 배치하고, 입력칸 높이를 .fld 로 통일합니다. */
+     각 항목을 한 줄씩 배치하고, 입력칸 높이를 .fld 로 통일한다. */
   return '<div class="lb2">사용권 구매일 (계약일)</div>'+
-    '<input class="f fld" type="date" id="ss_'+uid+'" value="'+esc(x.s2s||D.today)+'">'+
-
+    '<input class="f fld" type="date" id="ss_'+esc(uid)+'" value="'+esc(x.s2s||D.today)+'">'+
     '<div class="lb2">활용 기간</div>'+
-    '<select class="fld" id="sp_'+uid+'"><option value="">선택</option>'+periods+'</select>'+
-
+    '<select class="fld" id="sp_'+esc(uid)+'"><option value="">선택</option>'+periods+'</select>'+
     '<div class="lb2">활용 채널</div>'+
-    '<select class="fld" id="st_'+uid+'"><option value="">선택</option>'+types+'</select>'+
-
+    '<select class="fld" id="st_'+esc(uid)+'"><option value="">선택</option>'+types+'</select>'+
     '<div class="lb2">2차활용 비용</div>'+
-    '<input class="f fld" type="number" id="sc_'+uid+'" placeholder="0" inputmode="numeric" '+
+    '<input class="f fld" type="number" id="sc_'+esc(uid)+'" placeholder="0" inputmode="numeric" '+
       'value="'+esc(cost)+'">'+
-
     '<div class="lb2">비고</div>'+
-    '<input class="f fld" type="text" id="sm_'+uid+'" placeholder="메모 (선택)" '+
+    '<input class="f fld" type="text" id="sm_'+esc(uid)+'" placeholder="메모 (선택)" '+
       'value="'+esc(x.s2memo||'')+'">'+
-
-    '<button class="f" onclick="doSecond(\''+x.id+'\',\''+uid+'\')">2차 활용 등록</button>'+
-    (x.s2type ? '<button class="f ghost" onclick="doSecondClear(\''+x.id+'\',\''+uid+'\')">등록 해제</button>' : '')+
+    '<button class="f" onclick="doSecond(\''+jsq(x.id)+'\',\''+jsq(uid)+'\')">2차 활용 등록</button>'+
+    (x.s2type ? '<button class="f ghost" onclick="doSecondClear(\''+jsq(x.id)+'\',\''+
+      jsq(uid)+'\')">등록 해제</button>' : '')+
     '<div class="sub2">구매일 + 선택한 기간으로 <b>활용 마감일이 자동 계산</b>됩니다.<br>'+
     (x.feeExempt
       ? '이 건은 과거 방식이라 수수료가 붙지 않습니다.'
-      : '브랜더진은 비용에 수수료 '+Math.round((D.brandFeeRate||0.145)*1000)/10+'%가 별도로 붙습니다.')+
+      : '브랜더진은 비용에 수수료 '+Math.round((D.brandFeeRate||0.145)*1000)/10+
+        '%가 별도로 붙습니다.')+
     '</div>';
 }
 
-/* 메시지는 펼친 폼과 카드 버튼 양쪽에 같이 씁니다 */
+/* 메시지는 펼친 폼과 카드 버튼 양쪽에 같이 쓴다 */
 function im(uid, t, err){
   ['m_','q_'].forEach(function(pre){
     const el=document.getElementById(pre+uid);
@@ -1447,175 +1019,119 @@ function im(uid, t, err){
   });
 }
 
-/* ── 쓰기 동작 ────────────────────────── */
-async function act(params, uid, okMsg){
-  if(BUSY) return;
-  BUSY=true; im(uid,'저장 중...',false);
+/* ── 쓰기 동작 ──────────────────────────
+   idem 을 주면 같은 작업을 다시 눌러도 서버가 중복을 걸러낼 수 있다. */
+async function act(params, uid, okMsg, idem){
+  if(V.isBusy()) return;
+  V.busy(true); im(uid,'저장 중...',false);
   try{
-    const r=await api(params);
+    const r=await V.api(params, { mode:'write', idem: idem || (params.action+':'+(params.id||'')) });
     if(!r.ok){ im(uid, r.msg||'저장에 실패했습니다.', true); return; }
-    D=r; LAST=Date.now();
-    stamp('갱신 '+r.updated, false);
     im(uid, okMsg, false);
-    setTimeout(function(){ fillFilters(); renderAll(); }, 500);
+    V.setData(r);        /* D 갱신 + 화면 다시 그리기 */
   }catch(e){
     /* 시간 초과는 서버에 들어갔는지 알 수 없다. 중복 저장을 막기 위해 확인부터 안내한다. */
-    im(uid, isTimeout(e) ? '응답이 없습니다. 새로고침으로 반영 여부를 먼저 확인하세요.'
-                         : '오류: '+e.message, true);
-  }finally{ BUSY=false; }
+    im(uid, V.failMsg(e, '새로고침으로 반영 여부를 먼저 확인하세요.'), true);
+  }finally{ V.busy(false); }
 }
 
-/* quick=1 이면 카드 버튼에서 누른 것이라 URL 없이 오늘 날짜로 처리 */
-function doUpload(id, uid, quick){
-  if(quick){
-    act({ action:'upload', id:id }, uid, '오늘 날짜로 업로드 처리했습니다.');
-    return;
-  }
-  const url=(document.getElementById('u_'+uid).value||'').trim();
-  const date=document.getElementById('ud_'+uid).value;
-  act({ action:'upload', id:id, url:url, date:date }, uid, '업로드 정보를 저장했습니다.');
-}
+function doUpload(id, uid){ act({ action:'upload', id:id }, uid, '오늘 날짜로 업로드 처리했습니다.', 'upload:'+id); }
 function doUrl(id, uid){
-  const url=(document.getElementById('cu_'+uid).value||'').trim();
+  const el=document.getElementById('cu_'+uid);
+  const url=((el&&el.value)||'').trim();
   if(!url){ im(uid,'콘텐츠 URL을 입력하세요.',true); return; }
-  act({ action:'url', id:id, url:url }, uid, 'URL을 저장했습니다.');
+  act({ action:'url', id:id, url:url }, uid, 'URL을 저장했습니다.', 'url:'+id);
 }
-function doUpchk(id, uid){
-  act({ action:'upchk', id:id }, uid, '미완료로 기록했습니다. 내일 다시 뜹니다.');
-}
-function doCheck(id, uid){
-  act({ action:'check', id:id }, uid, '게시확인 완료. 7일 뒤 다시 뜹니다.');
-}
+function doUpchk(id, uid){ act({ action:'upchk', id:id }, uid, '미완료로 기록했습니다. 내일 다시 뜹니다.', 'upchk:'+id); }
+function doCheck(id, uid){ act({ action:'check', id:id }, uid, '게시확인 완료. 7일 뒤 다시 뜹니다.', 'check:'+id); }
 function doDel(id, uid){
   if(!confirm('게시글이 내려간 건으로 표시할까요?\n삭제확인 탭으로 옮기고, 시트의 업로드 여부가 "삭제"로 바뀝니다.')) return;
-  act({ action:'del', id:id }, uid, '삭제확인으로 옮겼습니다.');
+  act({ action:'del', id:id }, uid, '삭제확인으로 옮겼습니다.', 'del:'+id);
 }
-function doRecheck(id, uid){
-  act({ action:'recheck', id:id }, uid, '미처리로 확인만 기록했습니다.');
-}
-function doRestore(id, uid){
-  act({ action:'del', id:id, restore:'1' }, uid, '처리완료 — 업로드완료로 복구했습니다.');
-}
+function doRecheck(id, uid){ act({ action:'recheck', id:id }, uid, '미처리로 확인만 기록했습니다.', 'recheck:'+id); }
+function doRestore(id, uid){ act({ action:'del', id:id, restore:'1' }, uid, '처리완료 — 업로드완료로 복구했습니다.', 'restore:'+id); }
 function doSecond(id, uid){
-  const type=document.getElementById('st_'+uid).value;
-  const months=document.getElementById('sp_'+uid).value;
-  const start=document.getElementById('ss_'+uid).value;
-  const cost=document.getElementById('sc_'+uid).value;
-  const memo=document.getElementById('sm_'+uid).value;
+  const g=function(p){ const e=document.getElementById(p+'_'+uid); return e?e.value:''; };
+  const type=g('st'), months=g('sp'), start=g('ss'), cost=g('sc'), memo=g('sm');
   if(!type){ im(uid,'활용 채널을 선택하세요.',true); return; }
   if(months===''){ im(uid,'활용 기간을 선택하세요.',true); return; }
   if(!start){ im(uid,'사용권 구매일을 입력하세요.',true); return; }
-  act({ action:'second', id:id, type:type, months:months, start:start,
-        cost:cost, memo:memo }, uid, '2차 활용을 등록했습니다.');
+  act({ action:'second', id:id, type:type, months:months, start:start, cost:cost, memo:memo },
+      uid, '2차 활용을 등록했습니다.', 'second:'+id+':'+start+':'+months);
 }
 function doSecondClear(id, uid){
   if(!confirm('이 건의 2차 활용 등록을 해제할까요?')) return;
-  act({ action:'second', id:id, clear:'1' }, uid, '2차 활용 등록을 해제했습니다.');
+  act({ action:'second', id:id, clear:'1' }, uid, '2차 활용 등록을 해제했습니다.', 'secclear:'+id);
 }
 
-/* ── 채팅 ─────────────────────────────── */
-/* 규칙으로 답한 것과 AI가 답한 것을 말풍선 색으로 구분합니다. */
+/* ── 채팅 ───────────────────────────────
+   규칙으로 답한 것과 AI가 답한 것을 말풍선 색으로 구분한다. */
 const CHAT_SAMPLES = [
   '오브 스웨이드백 크림 2차 활용 남은 사람 있어?',
   '브랜더진 김민경 2차활용 조건 알려줘',
   '리뷰노트 2025-09에 업로드된 콘텐츠 알려줘',
-  '브랜더진에서 진행한 오브백 블랙 콘텐츠 전부 알려줘',
+  '브랜더진에서 진행한 오브백 블랙 콘텐츠 전부 알려줘'
 ];
 
 function chatReset(){
-  document.getElementById('chatBody').innerHTML='';
-  document.getElementById('qInput').value='';
-  CARDS=[]; CARDN=0;
+  V.setHTML('chatBody',''); V.setVal('qInput','');
+  CARDS=[]; CARDN=0; PENDING_Q='';
   say('bot','플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣어 물어보면 바로 답합니다.');
-  document.getElementById('chatChips').innerHTML =
-    CHAT_SAMPLES.map(function(t){
-      return '<button class="chip" onclick="send(this.textContent)">'+esc(t)+'</button>'; }).join('');
-}
-
-/* 본문 안의 http(s) 주소를 눌러서 열 수 있는 링크로 바꿉니다 */
-function linkify(text){
-  return esc(text).replace(/(https?:\/\/[^\s<]+)/g, function(u){
-    return '<a href="'+u+'" target="_blank" rel="noopener">'+u+'</a>';
-  });
+  V.setHTML('chatChips', CHAT_SAMPLES.map(function(t){
+    return '<button class="chip" onclick="send(\''+jsq(t)+'\')">'+esc(t)+'</button>'; }).join(''));
 }
 
 function say(who, text){
   const b=document.getElementById('chatBody');
   const d=document.createElement('div');
   d.className='cmsg '+who;
-  d.innerHTML=linkify(text);
+  d.innerHTML=V.linkify(text);
   b.appendChild(d);
   const sc=document.getElementById('chatScroll');
   if(sc) sc.scrollTop=sc.scrollHeight;
   return d;
 }
-function send(t){ document.getElementById('qInput').value=t; ask(); }
-
-/* 키보드가 올라오면 화면이 줄어든다. 줄어든 높이에 맞춰 채팅 영역을 다시 잡는다. */
-function fitChat(){
-  const p4=document.getElementById('p4');
-  if(!p4 || p4.className.indexOf('on')===-1){
-    document.body.classList.remove('chatmode');
-    if(p4) p4.style.height='';
-    return;
-  }
-  document.body.classList.add('chatmode');
-  const vv=window.visualViewport;
-  const vh=vv?vv.height:window.innerHeight;
-  const top=document.getElementById('header').offsetHeight+
-            document.getElementById('tabs').offsetHeight;
-  const h=Math.max(vh-top,240)+'px';
-  if(p4.style.height!==h) p4.style.height=h;   /* 값이 같으면 건드리지 않습니다 */
-}
-/* 키보드가 오르내릴 때마다 높이를 다시 계산하면 입력이 버벅입니다.
-   scroll 은 듣지 않고, resize 도 잠시 모아서 한 번만 처리합니다. */
-let fitT=null;
-function fitChatSoon(){ clearTimeout(fitT); fitT=setTimeout(fitChat,120); }
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize',fitChatSoon);
-}
-window.addEventListener('resize',fitChatSoon);
-
-let PENDING_Q='';   /* AI에게 넘길지 확인 중인 질문 */
+function send(t){ V.setVal('qInput', t); ask(); }
 
 async function ask(confirmed){
-  if(BUSY) return;
+  if(V.isBusy()) return;
   const inp=document.getElementById('qInput');
   const q = confirmed ? PENDING_Q : inp.value.trim();
   if(!q) return;
-
   if(!confirmed){ say('me',q); inp.value=''; }
-  document.getElementById('chatChips').innerHTML='';
+  V.setHTML('chatChips','');
 
   const btn=document.getElementById('askBtn');
-  BUSY=true; btn.disabled=true; btn.textContent='...';
+  V.busy(true); btn.disabled=true; btn.textContent='...';
   const wait=say('bot','답변 중...');
 
   try{
     const params={ action:'chat', q:q };
     if(confirmed) params.confirm='1';
-    const r=await api(params);
+    const r=await V.api(params, { mode:'ai' });
     wait.remove();
 
     if(!r.ok){ say('bot', r.msg||'답하지 못했습니다.'); return; }
 
-    /* 규칙으로 못 푼 경우 — 바로 AI로 넘기지 않고 먼저 되묻습니다 */
+    /* 규칙으로 못 푼 경우 — 바로 AI로 넘기지 않고 먼저 되묻는다.
+       비용은 사용자가 동의한 뒤에만 발생해야 한다. */
     if(r.source==='confirm'){
       PENDING_Q=q;
       say('bot', r.reply);
-      document.getElementById('chatChips').innerHTML=
+      V.setHTML('chatChips',
         '<button class="chip" onclick="ask(true)">네, 물어봐 주세요</button>'+
-        '<button class="chip gray" onclick="chatNo()">아니오</button>';
+        '<button class="chip gray" onclick="chatNo()">아니오</button>');
       return;
     }
 
-    /* 목록형 답변은 20건씩 나눠 보여줍니다 */
+    /* 목록형 답변은 20건씩 나눠 보여준다 */
     if(r.cards && r.cards.length){
       CARDS=r.cards; CARDN=0;
       say('bot', r.head || (r.cards.length+'건입니다.'));
       showCards();
       return;
     }
+
     const d=say(r.source==='llm' ? 'ai' : 'bot', r.reply);
     if(r.source==='llm' && r.usage){
       const u=document.createElement('div');
@@ -1626,55 +1142,40 @@ async function ask(confirmed){
     }
   }catch(e){
     wait.remove();
-    say('bot', isTimeout(e) ? '응답이 없습니다. 잠시 후 다시 물어봐 주세요.' : '오류: '+e.message);
+    say('bot', V.failMsg(e,'잠시 후 다시 물어봐 주세요.'));
   }finally{
-    BUSY=false; btn.disabled=false; btn.textContent='전송';
+    V.busy(false); btn.disabled=false; btn.textContent='전송';
   }
 }
-
-/* 채팅 결과 페이지 처리 */
-let CARDS=[], CARDN=0;
-const CARD_PAGE=20;
 
 function showCards(){
   const chunk=CARDS.slice(CARDN, CARDN+CARD_PAGE);
   if(!chunk.length) return;
   say('bot', chunk.join('\n\n'));
   CARDN+=chunk.length;
-
-  const box=document.getElementById('chatChips');
-  if(CARDN<CARDS.length){
-    box.innerHTML='<button class="chip" onclick="showCards()">'+
-      '더보기 ('+CARDN+' / '+CARDS.length+')</button>';
-  }else{
-    box.innerHTML='';
-  }
+  V.setHTML('chatChips', CARDN<CARDS.length
+    ? '<button class="chip" onclick="showCards()">더보기 ('+CARDN+' / '+CARDS.length+')</button>'
+    : '');
   const sc=document.getElementById('chatScroll');
   if(sc) sc.scrollTop=sc.scrollHeight;
 }
 
 function chatNo(){
-  document.getElementById('chatChips').innerHTML='';
+  V.setHTML('chatChips','');
   PENDING_Q='';
   say('bot','다시 질문해주세요.\n플랫폼 · 이름(또는 @계정) · 상품 · 연월을 넣으면 더 정확합니다.');
 }
 
-/* ── 접근로그 ─────────────────────────── */
-/* 접속 = 로그인 성공·실패 / 기록 = 업로드·게시확인 등 값이 바뀐 작업 */
-let LOGS=[], LOGVIEW='access';
-
-async function loadAccess(){
-  const body=document.getElementById('accessBody');
-  body.innerHTML='<div class="box-note">불러오는 중...</div>';
+/* ── 접근로그 ───────────────────────────
+   접속 = 로그인 성공·실패 / 기록 = 값이 바뀐 작업 / 채팅 = 질문·답변 */
+async function loadAccess(force){
+  V.setHTML('accessBody','<div class="box-note">불러오는 중...</div>');
   try{
-    const r=await api({ action:'access' });
-    if(!r.ok){ body.innerHTML='<div class="box-note">'+esc(r.msg||'불러오지 못했습니다.')+'</div>'; return; }
-    accessLoaded=true;
-    LOGS=r.logs||[];
+    LOGS = await V.fetchLogs(force);
+    accessLoaded = true;
     logView(LOGVIEW);
   }catch(e){
-    body.innerHTML='<div class="box-note">'+
-      (isTimeout(e)?'응답이 없습니다. 새로고침을 눌러주세요.':'연결 실패: '+esc(e.message))+'</div>';
+    V.setHTML('accessBody','<div class="box-note">'+esc(V.failMsg(e,'새로고침을 눌러주세요.'))+'</div>');
   }
 }
 
@@ -1683,12 +1184,11 @@ function logView(k){
   document.querySelectorAll('#segLog button').forEach(function(b){
     b.className = (b.dataset.k===k) ? 'on' : '';
   });
-  const body=document.getElementById('accessBody');
   const list=LOGS.filter(function(l){ return l.kind===k; });
 
   if(!list.length){
     const t = k==='access' ? '접속' : (k==='chat' ? '채팅' : '작업');
-    body.innerHTML='<div class="box-note">'+t+' 기록이 없습니다.</div>';
+    V.setHTML('accessBody','<div class="box-note">'+t+' 기록이 없습니다.</div>');
     return;
   }
 
@@ -1697,9 +1197,7 @@ function logView(k){
     if(l.result==='실패') cls='danger';
     else if(l.result==='입력'||l.result==='확인'||l.result==='접속') cls='ok';
 
-    let detail=esc(l.memo);
-
-    /* 채팅은 질문·답변이 길어 [더보기]로 접어둡니다 */
+    /* 채팅은 질문·답변이 길어 [더보기]로 접어둔다 */
     if(k==='chat'){
       const parts=String(l.memo||'').split(' ▸ ');
       const q=parts[0]||'';
@@ -1708,87 +1206,32 @@ function logView(k){
       let tag='';
       if(m){ tag=m[1]; a=a.slice(0,m.index); }
       const id='lg'+i;
-      detail='<span class="more" style="margin:0" onclick="toggleBox(\''+id+'\')">더보기</span>'+
+      const detail='<span class="more" style="margin:0" onclick="VERDAN.toggleBox(\''+id+'\')">더보기</span>'+
         (tag==='llm'?' <span class="badge b-대가없음">AI</span>':'');
-      /* 질문·답변은 표 아래 별도 행으로 넓게 펼칩니다 */
       return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
         '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
         '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
         '<td style="font-size:12px">'+detail+'</td></tr>'+
         '<tr id="'+id+'" style="display:none"><td colspan="4" style="padding:0 10px 12px">'+
           '<div class="qa2"><b>질문</b><div>'+esc(q)+'</div></div>'+
-          '<div class="qa2"><b>답변</b><div>'+linkify(a||'—')+'</div></div>'+
+          '<div class="qa2"><b>답변</b><div>'+V.linkify(a||'—')+'</div></div>'+
         '</td></tr>';
     }
 
     return '<tr><td class="sub2" style="white-space:nowrap">'+esc(l.t)+'</td>'+
       '<td class="ctr '+cls+'" style="font-size:12px;white-space:nowrap">'+esc(l.result)+'</td>'+
       '<td style="font-size:12px;white-space:nowrap">'+esc(l.user)+'</td>'+
-      '<td style="font-size:12px">'+detail+'</td></tr>';
+      '<td style="font-size:12px">'+esc(l.memo)+'</td></tr>';
   }).join('');
 
-  body.innerHTML='<div class="tbl-wrap"><table><thead><tr>'+
+  V.setHTML('accessBody',
+    '<div class="tbl-wrap"><table><thead><tr>'+
     '<th>시각</th><th>결과</th><th>사용자</th>'+
     '<th style="text-align:left">'+
       (k==='access'?'권한':(k==='chat'?'질문 · 답변':'작업 내용'))+'</th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<div class="sub2">'+list.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>';
+    '<div class="sub2">'+list.length+'건 · 시트에는 최근 500건까지 보관됩니다.</div>');
 }
-
-/* ── 새로고침 ─────────────────────────── */
-async function reload(manual){
-  if(BUSY||!PW) return;
-  BUSY=true;
-  try{
-    const r=await api();
-    LAST=Date.now();
-    if(!r.ok){ logout(); gm('다시 로그인해 주세요.'); return; }
-    if(r.role!==ROLE){ start(r); return; }
-    D=r; fillFilters(); renderAll();
-    stamp('갱신 '+r.updated, false);
-  }catch(e){
-    /* 끊긴 요청으로 로그아웃시키지는 않되, 화면 숫자가 예전 것임은 반드시 보이게 한다. */
-    stamp('연결 실패 · 새로고침 필요', true);
-    if(manual) alert('서버 응답이 없습니다.\n잠시 후 새로고침을 다시 눌러주세요.');
-  }finally{ BUSY=false; }
-}
-
-/* ── 세션 감시 ────────────────────────── */
-window.addEventListener('storage',function(e){
-  if(e.key===PW_STORE && !e.newValue && PW) logout();
-});
-function onResume(){
-  if(!PW||BUSY) return;
-  let saved=null; try{ saved=localStorage.getItem(PW_STORE); }catch(e){}
-  if(saved!==PW){ logout(); return; }
-  if(Date.now()-LAST<RECHECK_MS) return;
-  reload(false);
-}
-document.addEventListener('visibilitychange',function(){
-  if(document.visibilityState==='visible') onResume();
-});
-window.addEventListener('pageshow',function(){ onResume(); });
-
-/* ── 자동 로그인 ──────────────────────── */
-(async function(){
-  let sp=null, sn=null;
-  try{ sp=localStorage.getItem(PW_STORE); sn=localStorage.getItem(NM_STORE); }catch(e){}
-  if(sn) document.getElementById('nm').value=sn;
-  if(!sp||!sn) return;
-  PW=sp; USER=sn; gm('접속 중입니다. 잠시만 기다려주세요.'); busy(true);
-  try{
-    const r=await api();
-    if(r.ok){ LAST=Date.now(); start(r); }
-    else{
-      PW=''; USER='';
-      try{ localStorage.removeItem(PW_STORE); }catch(e){}
-      gm('비밀번호가 변경되었습니다. 다시 입력해 주세요.');
-    }
-  }catch(e){
-    PW=''; USER='';
-    gm(isTimeout(e)?'서버 응답이 없습니다. [확인]을 눌러 다시 시도하세요.':'');
-  }finally{ busy(false); }
-})();
 </script>
 </body>
 </html>
